@@ -318,18 +318,22 @@ export default function WorkArea() {
               </div>
 
               {/* תיאור הפרוטוקול עם צ'יפים בצבעים */}
-              <div className="mt-2 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-[11px] text-slate-700">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="font-semibold">
-                    הפרוטוקול האוטומטי ({surgeryType}):
+                            {/* תיאור הפרוטוקול עם צ'יפים בצבעים */}
+              <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-[11px] text-slate-700">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-800">
+                    הפרוטוקול האוטומטי ({surgeryType})
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    דוגמה לסדר טיפות – תמיד לעקוב אחרי הנחיות הרופא.
                   </span>
                 </div>
 
                 {surgeryType === "INTERLASIK" ? (
-                  <ul className="mt-1 list-disc space-y-1 pl-5">
-                    <li>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Sterodex") ?? "#e5e7eb"
@@ -342,13 +346,16 @@ export default function WorkArea() {
                       >
                         Sterodex
                       </span>
-                      יום הניתוח – כל שעה; ימים 1–3 – 6× ביום; ימים 4–7 – 4×
-                      ביום.
+                      <span>
+                        יום הניתוח – טיפות כל שעה בזמן הערות;
+                        ימים 1–3 – 6 פעמים ביום;
+                        ימים 4–7 – 4 פעמים ביום.
+                      </span>
                     </li>
 
-                    <li>
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Vigamox") ?? "#e5e7eb"
@@ -361,12 +368,12 @@ export default function WorkArea() {
                       >
                         Vigamox
                       </span>
-                      ימים 0–7 – 4× ביום.
+                      <span>ימים 1–8 – 4 פעמים ביום.</span>
                     </li>
 
-                    <li>
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Systane Balance") ??
@@ -382,14 +389,17 @@ export default function WorkArea() {
                       >
                         Systane Balance
                       </span>
-                      ימים 0–7 – 6× ביום; ימים 8–30 – 4× ביום.
+                      <span>
+                        ימים 1–8 – 6 פעמים ביום;
+                        ימים 9–31 – 4 פעמים ביום.
+                      </span>
                     </li>
                   </ul>
                 ) : (
-                  <ul className="mt-1 list-disc space-y-1 pl-5">
-                    <li>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Sterodex") ?? "#e5e7eb"
@@ -402,13 +412,17 @@ export default function WorkArea() {
                       >
                         Sterodex
                       </span>
-                      שבוע 1 – 4× ביום; שבוע 2 – 3×; שבוע 3 – בוקר+ערב; שבוע 4 –
-                      פעם 1 ביום.
+                      <span>
+                        שבוע 1 – 4 פעמים ביום;
+                        שבוע 2 – 3 פעמים ביום;
+                        שבוע 3 – בוקר וערב;
+                        שבוע 4 – פעם ביום.
+                      </span>
                     </li>
 
-                    <li>
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Vigamox") ?? "#e5e7eb"
@@ -421,12 +435,12 @@ export default function WorkArea() {
                       >
                         Vigamox
                       </span>
-                      רק שבוע ראשון – 4× ביום.
+                      <span>שבוע ראשון – 4 פעמים ביום.</span>
                     </li>
 
-                    <li>
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Dicloftil") ?? "#e5e7eb"
@@ -439,12 +453,12 @@ export default function WorkArea() {
                       >
                         Dicloftil
                       </span>
-                      3 ימים ראשונים – 3× ביום.
+                      <span>3 הימים הראשונים – 3 פעמים ביום.</span>
                     </li>
 
-                    <li>
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Systane Balance") ??
@@ -460,12 +474,12 @@ export default function WorkArea() {
                       >
                         Systane Balance
                       </span>
-                      חודש שלם – 6× ביום.
+                      <span>חודש שלם – 6 פעמים ביום.</span>
                     </li>
 
-                    <li>
+                    <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Vitapos") ?? "#e5e7eb"
@@ -478,16 +492,17 @@ export default function WorkArea() {
                       >
                         Vitapos
                       </span>
-                      שבוע 2–3 – בוקר ולפני השינה.
+                      <span>שבוע 2–3 – בוקר ולפני השינה.</span>
                     </li>
                   </ul>
                 )}
 
-                <p className="mt-1 text-[10px] text-slate-500">
-                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד הקפד לעבור
-                  על ההנחיות המדויקות של הרופא.
+                <p className="mt-2 text-[10px] text-slate-500">
+                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד מומלץ לוודא מול המרשם
+                  והוראות הרופא.
                 </p>
               </div>
+
 
               {error && (
                 <div className="mt-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
