@@ -3,13 +3,31 @@ import type { DoseSlot } from "../types/prescription";
 
 // המרה מתאריך "2025-11-13" ושעה "07:00" לפורמט ICS: 20251113T070000
 function toIcsDateTime(date: string, time: string): string {
-  // נניח שהפורמט הוא YYYY-MM-DD ו-HH:MM
   const [year, month, day] = date.split("-");
   const [hour, minute] = time.split(":");
   return `${year}${month}${day}T${hour}${minute}00`;
 }
 
-// בניית תוכן ה-ICS עם תזכורת 5 דקות לפני כל אירוע
+// -----------------------------------------------------
+// גרופינג לפי תאריך + שעה
+// -----------------------------------------------------
+function groupSlotsByDateTime(schedule: DoseSlot[]) {
+  const groups: Record<string, DoseSlot[]> = {};
+
+  schedule.forEach((slot) => {
+    const key = `${slot.date} ${slot.time}`;
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(slot);
+  });
+
+  return groups;
+}
+
+// -----------------------------------------------------
+// בניית ICS — אירוע אחד לכל שעה
+// -----------------------------------------------------
 export function buildScheduleIcs(
   schedule: DoseSlot[],
   calendarName = "לוח טיפות אחרי ניתוח"
@@ -23,13 +41,24 @@ export function buildScheduleIcs(
     "METHOD:PUBLISH",
   ];
 
-  schedule.forEach((slot, index) => {
-    const dt = toIcsDateTime(slot.date, slot.time);
-    const uid = slot.id ? `drop-${slot.id}@shaattahtipa` : `drop-${index}@shaattahtipa`;
-    const summary = `טיפות - ${slot.medicationName}`;
-    const description = slot.notes
-      ? slot.notes
-      : "תזכורת לטיפות לפי הפרוטוקול לאחר ניתוח לייזר";
+  const grouped = groupSlotsByDateTime(schedule);
+
+  Object.entries(grouped).forEach(([key, slots], i) => {
+    const [date, time] = key.split(" ");
+    const dt = toIcsDateTime(date, time);
+
+    // 📝 כותרת — כל התרופות של אותה שעה
+    const summary = `טיפות בשעה ${time}`;
+
+    // 📝 תיאור — רשימת כל התרופות + הערות אם יש
+    const description = slots
+      .map((s) => {
+        const note = s.notes ? ` (${s.notes})` : "";
+        return `• ${s.medicationName}${note}`;
+      })
+      .join("\\n");
+
+    const uid = `drops-${date}-${time}-${i}@shaattahtipa`;
 
     lines.push(
       "BEGIN:VEVENT",
@@ -52,7 +81,9 @@ export function buildScheduleIcs(
   return lines.join("\r\n");
 }
 
-// הורדת קובץ ICS בפועל
+// -----------------------------------------------------
+// הורדת ICS
+// -----------------------------------------------------
 export function downloadScheduleIcs(
   schedule: DoseSlot[],
   fileName = "laser-drops-schedule"
