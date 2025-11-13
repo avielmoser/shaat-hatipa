@@ -1,33 +1,33 @@
 // lib/ics.ts
 import type { DoseSlot } from "../types/prescription";
 
-// המרה מתאריך "2025-11-13" ושעה "07:00" לפורמט ICS: 20251113T070000
+// ---------------------------------------------
+// המרה לפורמט ICS: YYYYMMDDTHHMM00
+// ---------------------------------------------
 function toIcsDateTime(date: string, time: string): string {
   const [year, month, day] = date.split("-");
   const [hour, minute] = time.split(":");
   return `${year}${month}${day}T${hour}${minute}00`;
 }
 
-// -----------------------------------------------------
+// ---------------------------------------------
 // גרופינג לפי תאריך + שעה
-// -----------------------------------------------------
+// ---------------------------------------------
 function groupSlotsByDateTime(schedule: DoseSlot[]) {
   const groups: Record<string, DoseSlot[]> = {};
 
   schedule.forEach((slot) => {
     const key = `${slot.date} ${slot.time}`;
-    if (!groups[key]) {
-      groups[key] = [];
-    }
+    if (!groups[key]) groups[key] = [];
     groups[key].push(slot);
   });
 
   return groups;
 }
 
-// -----------------------------------------------------
-// בניית ICS — אירוע אחד לכל שעה
-// -----------------------------------------------------
+// ---------------------------------------------
+// בניית קובץ ICS — אירוע אחד לכל שעה
+// ---------------------------------------------
 export function buildScheduleIcs(
   schedule: DoseSlot[],
   calendarName = "לוח טיפות אחרי ניתוח"
@@ -43,22 +43,23 @@ export function buildScheduleIcs(
 
   const grouped = groupSlotsByDateTime(schedule);
 
-  Object.entries(grouped).forEach(([key, slots], i) => {
+  Object.entries(grouped).forEach(([key, slots], index) => {
     const [date, time] = key.split(" ");
     const dt = toIcsDateTime(date, time);
 
-    // 📝 כותרת — כל התרופות של אותה שעה
-    const summary = `טיפות בשעה ${time}`;
+    // SUMMARY — שמות התרופות בלבד
+    const medList = slots.map((s) => s.medicationName).join(", ");
+    const summary = `טיפות: ${medList}`;
 
-    // 📝 תיאור — רשימת כל התרופות + הערות אם יש
-    const description = slots
-      .map((s) => {
-        const note = s.notes ? ` (${s.notes})` : "";
-        return `• ${s.medicationName}${note}`;
-      })
+    // DESCRIPTION — רק הערות, אם יש
+    const notesText = slots
+      .filter((s) => s.notes)
+      .map((s) => `• ${s.medicationName}: ${s.notes}`)
       .join("\\n");
 
-    const uid = `drops-${date}-${time}-${i}@shaattahtipa`;
+    const description = notesText || "תזכורת לטיפות לפי הפרוטוקול לאחר ניתוח לייזר";
+
+    const uid = `drops-${date}-${time}-${index}@shaattahtipa`;
 
     lines.push(
       "BEGIN:VEVENT",
@@ -81,9 +82,9 @@ export function buildScheduleIcs(
   return lines.join("\r\n");
 }
 
-// -----------------------------------------------------
-// הורדת ICS
-// -----------------------------------------------------
+// ---------------------------------------------
+// הורדת קובץ ICS בפועל
+// ---------------------------------------------
 export function downloadScheduleIcs(
   schedule: DoseSlot[],
   fileName = "laser-drops-schedule"
@@ -92,13 +93,15 @@ export function downloadScheduleIcs(
   const blob = new Blob([icsContent], {
     type: "text/calendar;charset=utf-8",
   });
-  const url = URL.createObjectURL(blob);
 
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `${fileName}.ics`;
+
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+
   URL.revokeObjectURL(url);
 }
