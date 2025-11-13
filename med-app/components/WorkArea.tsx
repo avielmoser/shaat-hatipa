@@ -194,15 +194,42 @@ export default function WorkArea() {
   };
 
   return (
-    <section
-       id="work-area"
-       className="px-3 pb-16 pt-4 sm:px-4 lg:px-8"
-       >
+    <section id="work-area" className="px-3 pb-16 pt-6 sm:px-4 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-4">
+        {/* כותרת משנה + סטפר קטן */}
+        <div className="flex flex-col items-end justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="text-right">
+            <div className="text-xs font-medium uppercase tracking-[0.2em] text-sky-700">
+              לוח טיפות מותאם אישית
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              שלושה צעדים פשוטים: הזנת פרטי הניתוח, בדיקת הפרוטוקול, ויצירת לוח
+              זמנים עם תזכורות ליומן.
+            </p>
+          </div>
 
-      <div className="mx-auto max-w-6xl">
-        {/* תת־כותרת קטנה מעל הכול */}
-        <div className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-sky-700">
-          לוח טיפות מותאם אישית
+          <ol className="flex items-center gap-2 text-[11px] text-slate-500">
+            <li className="flex items-center gap-1">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-[11px] font-semibold text-white">
+                1
+              </span>
+              <span>פרטי הניתוח</span>
+            </li>
+            <span className="text-slate-300">—</span>
+            <li className="flex items-center gap-1">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-700">
+                2
+              </span>
+              <span>סקירת פרוטוקול</span>
+            </li>
+            <span className="text-slate-300">—</span>
+            <li className="flex items-center gap-1">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-700">
+                3
+              </span>
+              <span>לוח זמנים + ייצוא</span>
+            </li>
+          </ol>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,3.3fr)_minmax(0,3fr)] lg:items-stretch">
@@ -221,10 +248,9 @@ export default function WorkArea() {
                 </p>
               </div>
               <div className="hidden sm:inline-flex items-center rounded-full border border-sky-200 bg-white/80 px-3 py-1 text-[10px] font-medium text-sky-700 shadow-sm">
-                  <span className="ml-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                מתאים לניתוחי לייזר INTERLASIK / PRK
+                <span className="ml-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                מתאים לניתוחי INTERLASIK / PRK
               </div>
-
             </div>
 
             <div className="mt-5 space-y-4 text-sm">
@@ -305,10 +331,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor("Sterodex") ??
-                            "#e5e7eb"}22`,
-                          color:
-                            getMedicationColor("Sterodex") ?? "#0f172a",
+                          backgroundColor: `${
+                            getMedicationColor("Sterodex") ?? "#e5e7eb"
+                          }22`,
+                          color: getMedicationColor("Sterodex") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Sterodex") ??
                             "rgba(15,23,42,0.16)",
@@ -324,10 +350,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor("Vigamox") ??
-                            "#e5e7eb"}22`,
-                          color:
-                            getMedicationColor("Vigamox") ?? "#0f172a",
+                          backgroundColor: `${
+                            getMedicationColor("Vigamox") ?? "#e5e7eb"
+                          }22`,
+                          color: getMedicationColor("Vigamox") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Vigamox") ??
                             "rgba(15,23,42,0.16)",
@@ -342,9 +368,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor(
-                            "Systane Balance"
-                          ) ?? "#e5e7eb"}22`,
+                          backgroundColor: `${
+                            getMedicationColor("Systane Balance") ??
+                            "#e5e7eb"
+                          }22`,
                           color:
                             getMedicationColor("Systane Balance") ??
                             "#0f172a",
@@ -364,10 +391,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor("Sterodex") ??
-                            "#e5e7eb"}22`,
-                          color:
-                            getMedicationColor("Sterodex") ?? "#0f172a",
+                          backgroundColor: `${
+                            getMedicationColor("Sterodex") ?? "#e5e7eb"
+                          }22`,
+                          color: getMedicationColor("Sterodex") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Sterodex") ??
                             "rgba(15,23,42,0.16)",
@@ -383,10 +410,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor("Vigamox") ??
-                            "#e5e7eb"}22`,
-                          color:
-                            getMedicationColor("Vigamox") ?? "#0f172a",
+                          backgroundColor: `${
+                            getMedicationColor("Vigamox") ?? "#e5e7eb"
+                          }22`,
+                          color: getMedicationColor("Vigamox") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Vigamox") ??
                             "rgba(15,23,42,0.16)",
@@ -401,10 +428,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor("Dicloftil") ??
-                            "#e5e7eb"}22`,
-                          color:
-                            getMedicationColor("Dicloftil") ?? "#0f172a",
+                          backgroundColor: `${
+                            getMedicationColor("Dicloftil") ?? "#e5e7eb"
+                          }22`,
+                          color: getMedicationColor("Dicloftil") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Dicloftil") ??
                             "rgba(15,23,42,0.16)",
@@ -419,9 +446,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor(
-                            "Systane Balance"
-                          ) ?? "#e5e7eb"}22`,
+                          backgroundColor: `${
+                            getMedicationColor("Systane Balance") ??
+                            "#e5e7eb"
+                          }22`,
                           color:
                             getMedicationColor("Systane Balance") ??
                             "#0f172a",
@@ -439,10 +467,10 @@ export default function WorkArea() {
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium mr-1"
                         style={{
-                          backgroundColor: `${getMedicationColor("Vitapos") ??
-                            "#e5e7eb"}22`,
-                          color:
-                            getMedicationColor("Vitapos") ?? "#0f172a",
+                          backgroundColor: `${
+                            getMedicationColor("Vitapos") ?? "#e5e7eb"
+                          }22`,
+                          color: getMedicationColor("Vitapos") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Vitapos") ??
                             "rgba(15,23,42,0.16)",
@@ -456,7 +484,8 @@ export default function WorkArea() {
                 )}
 
                 <p className="mt-1 text-[10px] text-slate-500">
-                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת.
+                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד הקפד לעבור
+                  על ההנחיות המדויקות של הרופא.
                 </p>
               </div>
 
