@@ -10,28 +10,29 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="px-3 pt-6 pb-4 sm:px-4 lg:px-8">
+    <section className="px-4 pt-12 pb-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         {/* טוקטק עליון קטן */}
-        <div className="mb-3 flex justify-center md:justify-start">
+        <div className="mb-4 flex justify-center md:justify-start">
           <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-medium text-sky-700">
             אחרי ניתוח לייזר? כל הטיפות שלך במקום אחד מסודר
           </span>
         </div>
 
         {/* אזור ראשי – שתי עמודות בדסקטופ, טור אחד במובייל */}
-        <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between md:gap-12">
           {/* צד טקסט / CTA */}
-          <div className="md:max-w-md text-center md:text-right space-y-4">
+          <div className="md:max-w-md text-center md:text-right space-y-5 md:space-y-6">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
               לוח טיפות חכם אחרי ניתוח לייזר
             </h1>
+
             {/* כפתורי פעולה */}
-            <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-start">
-              <button 
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:justify-start">
+              <button
                 type="button"
                 onClick={handleScrollToWorkArea}
-                className="inline-flex items-center justify-center rounded-full bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-sky-500/30 hover:bg-sky-700 transition"
+                className="inline-flex items-center justify-center rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-sky-500/30 hover:bg-sky-700 transition"
               >
                 התחל כאן
               </button>
@@ -56,8 +57,8 @@ export default function HeroSection() {
           </div>
 
           {/* כרטיס דוגמא – ממלא יפה את הצד השני בדסקטופ */}
-          <div className="mx-auto w-full max-w-sm md:max-w-xs">
-            <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
+          <div className="mx-auto mt-6 w-full max-w-sm md:mt-0 md:max-w-xs">
+            <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
               <div className="mb-3 flex items-center justify-between text-[11px] text-slate-500">
                 <span>דוגמת לוח זמנים</span>
                 <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700">
@@ -99,7 +100,7 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
                 המערכת מחלקת את הטיפות לאורך שעות הערות שלך, לפי הפרוטוקול
                 הרפואי שנבחר – כדי שלא תפספס אף מנה חשובה.
               </p>

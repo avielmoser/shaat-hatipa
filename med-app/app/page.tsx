@@ -6,7 +6,7 @@ import WorkArea from "../components/WorkArea";
 export default function Page() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main className="pb-10">
+      <main>
         <HeroSection />
         <WorkArea />
       </main>

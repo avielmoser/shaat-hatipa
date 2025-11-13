@@ -194,23 +194,23 @@ export default function WorkArea() {
   };
 
   return (
-    <section id="work-area" className="px-3 pb-16 pt-6 sm:px-4 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-4">
+    <section id="work-area" className="px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-6">
         {/* כותרת משנה + סטפר קטן */}
-        <div className="flex flex-col items-end justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
           <div className="text-right">
             <div className="text-xs font-medium uppercase tracking-[0.2em] text-sky-700">
               לוח טיפות מותאם אישית
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">
               שלושה צעדים פשוטים: הזנת פרטי הניתוח, בדיקת הפרוטוקול, ויצירת לוח
               זמנים עם תזכורות ליומן.
             </p>
           </div>
 
-          <ol className="flex items-center gap-2 text-[11px] text-slate-500">
+          <ol className="flex items-center justify-end gap-3 text-[11px] text-slate-600 rtl space-x-reverse sm:justify-end">
             <li className="flex items-center gap-1">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-[11px] font-semibold text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-700">
                 1
               </span>
               <span>פרטי הניתוח</span>
@@ -232,17 +232,17 @@ export default function WorkArea() {
           </ol>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,3.3fr)_minmax(0,3fr)] lg:items-stretch">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,3.3fr)_minmax(0,3fr)] lg:gap-10 lg:items-stretch">
           {/* כרטיס הטופס */}
           <div className="relative rounded-3xl border border-slate-200/70 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.12)] sm:p-6">
             <div className="pointer-events-none absolute inset-x-10 -top-6 h-10 rounded-full bg-sky-500/10 blur-2xl" />
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
                   לוח טיפות אחרי ניתוח לייזר
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">
                   בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך לוח זמנים
                   אוטומטי לפי הפרוטוקול הרפואי.
                 </p>
@@ -253,7 +253,7 @@ export default function WorkArea() {
               </div>
             </div>
 
-            <div className="mt-5 space-y-4 text-sm">
+            <div className="mt-6 space-y-4 text-sm">
               {/* סוג ניתוח + תאריך */}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -318,9 +318,8 @@ export default function WorkArea() {
               </div>
 
               {/* תיאור הפרוטוקול עם צ'יפים בצבעים */}
-                            {/* תיאור הפרוטוקול עם צ'יפים בצבעים */}
-              <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-[11px] text-slate-700">
-                <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/70 p-3.5 text-[11px] text-slate-700">
+                <div className="mb-2.5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                   <span className="font-semibold text-slate-800">
                     הפרוטוקול האוטומטי ({surgeryType})
                   </span>
@@ -347,9 +346,8 @@ export default function WorkArea() {
                         Sterodex
                       </span>
                       <span>
-                        יום הניתוח – טיפות כל שעה בזמן הערות;
-                        ימים 1–3 – 6 פעמים ביום;
-                        ימים 4–7 – 4 פעמים ביום.
+                        יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6 פעמים
+                        ביום; ימים 4–7 – 4 פעמים ביום.
                       </span>
                     </li>
 
@@ -373,7 +371,7 @@ export default function WorkArea() {
 
                     <li className="flex items-start gap-2">
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                       className="inline-flex items-center rounded-full border px-2 py-[2px] text-[10px] font-medium whitespace-nowrap"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Systane Balance") ??
@@ -390,8 +388,7 @@ export default function WorkArea() {
                         Systane Balance
                       </span>
                       <span>
-                        ימים 1–8 – 6 פעמים ביום;
-                        ימים 9–31 – 4 פעמים ביום.
+                        ימים 1–8 – 6 פעמים ביום; ימים 9–31 – 4 פעמים ביום.
                       </span>
                     </li>
                   </ul>
@@ -413,10 +410,8 @@ export default function WorkArea() {
                         Sterodex
                       </span>
                       <span>
-                        שבוע 1 – 4 פעמים ביום;
-                        שבוע 2 – 3 פעמים ביום;
-                        שבוע 3 – בוקר וערב;
-                        שבוע 4 – פעם ביום.
+                        שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 –
+                        בוקר וערב; שבוע 4 – פעם ביום.
                       </span>
                     </li>
 
@@ -497,20 +492,19 @@ export default function WorkArea() {
                   </ul>
                 )}
 
-                <p className="mt-2 text-[10px] text-slate-500">
-                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד מומלץ לוודא מול המרשם
-                  והוראות הרופא.
+                <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד מומלץ לוודא
+                  מול המרשם והוראות הרופא.
                 </p>
               </div>
 
-
               {error && (
-                <div className="mt-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
                   {error}
                 </div>
               )}
 
-              <div className="pt-2">
+              <div className="pt-3">
                 <button
                   type="button"
                   onClick={handleGenerate}
@@ -524,7 +518,7 @@ export default function WorkArea() {
           </div>
 
           {/* סיכום + לוח זמנים */}
-          <div ref={resultRef} className="space-y-4 lg:space-y-5">
+          <div ref={resultRef} className="mt-4 space-y-4 lg:mt-0 lg:space-y-5">
             <PrescriptionView prescription={prescription} />
             <ScheduleView schedule={schedule} />
           </div>
