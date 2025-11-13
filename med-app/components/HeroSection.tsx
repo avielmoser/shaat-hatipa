@@ -26,8 +26,6 @@ export default function HeroSection() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
               לוח טיפות חכם אחרי ניתוח לייזר
             </h1>
-
-
             {/* כפתורי פעולה */}
             <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-start">
               <button 
