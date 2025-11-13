@@ -27,13 +27,6 @@ export default function HeroSection() {
               לוח טיפות חכם אחרי ניתוח לייזר
             </h1>
 
-            <p className="text-[13px] sm:text-sm leading-relaxed text-slate-600">
-              הזן פעם אחת את סוג הניתוח{" "}
-              <span className="font-semibold">INTERLASIK / PRK</span>, תאריך
-              הניתוח ושעות הערות שלך – והמערכת תחשב עבורך אוטומטית לוח טיפות
-              יומי מסודר לפי ה־פרוטוקול הרפואי, עם אפשרות {" "}
-              <span className="font-semibold">הוספה ליומן</span> ו־<span className="font-semibold">  ייצוא ל- PDF</span>.
-            </p>
 
             {/* כפתורי פעולה */}
             <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-start">
