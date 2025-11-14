@@ -9,7 +9,62 @@ type SafeResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
-// ולידציה פשוטה ללא ספריות חיצוניות
+/* ================== Rate Limiting בסיסי ================== */
+
+// חלון זמן (מילישניות) וכמות בקשות מקסימלית לחלון
+const RATE_WINDOW_MS = 60_000; // 60 שניות
+const RATE_MAX_REQUESTS = 20; // עד 20 בקשות לדקה לאותו IP (מספיק לדמו)
+
+// מפה גלובלית של IP → מידע על החלון הנוכחי
+type RateInfo = {
+  windowStart: number;
+  count: number;
+};
+
+const rateMap = new Map<string, RateInfo>();
+
+function getClientIp(req: NextRequest): string {
+  // ב־Vercel לרוב משתמשים ב־x-forwarded-for
+  const hdr = req.headers.get("x-forwarded-for");
+  if (hdr) {
+    return hdr.split(",")[0].trim();
+  }
+  // fallback – לא אידיאלי, אבל לדמו זה מספיק
+  // @ts-ignore
+  return (req.ip as string) || "unknown";
+}
+
+function checkRateLimit(req: NextRequest): boolean {
+  const ip = getClientIp(req);
+  const now = Date.now();
+
+  const existing = rateMap.get(ip);
+
+  if (!existing) {
+    rateMap.set(ip, { windowStart: now, count: 1 });
+    return true;
+  }
+
+  const elapsed = now - existing.windowStart;
+
+  if (elapsed > RATE_WINDOW_MS) {
+    // חלון חדש
+    rateMap.set(ip, { windowStart: now, count: 1 });
+    return true;
+  }
+
+  if (existing.count >= RATE_MAX_REQUESTS) {
+    // עבר את הגבול בחלון הזמן
+    return false;
+  }
+
+  existing.count += 1;
+  rateMap.set(ip, existing);
+  return true;
+}
+
+/* ================== ולידציה ================== */
+
 function isValidTime(value: unknown): value is string {
   if (typeof value !== "string") return false;
   const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -108,8 +163,22 @@ function validateLaserInput(
   return { ok: true, data: safe };
 }
 
+/* ================== Handler ================== */
+
 export async function POST(req: NextRequest) {
   try {
+    // בדיקת Rate Limit לפני כל דבר אחר
+    const allowed = checkRateLimit(req);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "נשלחו יותר מדי בקשות בזמן קצר. אנא המתן רגע ונסה שוב.",
+        },
+        { status: 429 }
+      );
+    }
+
     const rawBody = await req.json().catch(() => null);
 
     if (!rawBody) {
@@ -122,7 +191,6 @@ export async function POST(req: NextRequest) {
     const validated = validateLaserInput(rawBody);
 
     if (!validated.ok) {
-      // לא מחזירים פירוט טכני — רק הודעה כללית למשתמש
       return NextResponse.json(
         {
           error:
@@ -135,7 +203,7 @@ export async function POST(req: NextRequest) {
 
     const input = validated.data;
 
-    // כאן נשארת הלוגיקה הקיימת שלך לחישוב לוח הזמנים
+    // שימוש בלוגיקה הקיימת לחישוב לוח הזמנים
     const schedule = buildLaserSchedule(input);
 
     return NextResponse.json(
@@ -146,7 +214,6 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
-    // לוג שרת כללי בלבד — ללא נתוני משתמש
     console.error("generate-schedule error", err);
 
     return NextResponse.json(
