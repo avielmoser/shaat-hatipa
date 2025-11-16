@@ -1,32 +1,41 @@
-// lib/med-colors.ts
+// app/lib/med-colors.ts
+//
+// Provide a deterministic mapping of medication names to accessible colors.  We avoid
+// reds and pinks for non‑error states to ensure the UI remains calm and
+// professional.  Colors are chosen from the Tailwind palette with sufficient
+// contrast and differentiation.
 
-// צבעי ברירת מחדל לכל תרופה
-// אחיד בכל המערכת – Prescription, Schedule, Forms ועוד.
-
-export const MEDICATION_COLORS: Record<string, string> = {
-  "sterodex": "#0284c7", // כחול
-  "sterodex (dexamethasone)": "#0284c7",
-
-  "vigamox": "#a855f7", // סגול
-  "vigamox (moxifloxacin 0.5%)": "#a855f7",
-
-  "systane balance": "#16a34a", // ירוק
-
-  "dicloftil": "#f97316", // כתום
-  "dicloftil 0.1%": "#f97316",
-
-  "vitapos": "#f97373", // ורוד-אדמדם
-  "vitapos (eye ointment)": "#f97373",
-};
-
-// פונקציה שמחזירה צבע לפי שם/ID של תרופה
-export function getMedicationColor(name: string, id?: string): string | undefined {
-  const keyId = id?.toLowerCase() ?? "";
-  const keyName = name.toLowerCase();
-
-  // עדיפות ל־ID אם קיים
-  if (keyId && MEDICATION_COLORS[keyId]) return MEDICATION_COLORS[keyId];
-  if (MEDICATION_COLORS[keyName]) return MEDICATION_COLORS[keyName];
-
-  return undefined;
+/**
+ * Map a medication name or identifier to a hex color.  This helper ensures
+ * consistent color assignment across the application.  If a name is not
+ * explicitly mapped, a color is chosen based on a hash of the name.
+ */
+export function getMedicationColor(name: string, id?: string): string {
+  // Explicit mappings for known medications.  Add more as needed.
+  const explicit: Record<string, string> = {
+    Sterodex: "#0ea5e9", // sky-500
+    Vigamox: "#a855f7", // purple-500
+    "Systane Balance": "#22c55e", // green-500
+    Dicloftil: "#f97316", // orange-500
+    Vitapos: "#eab308", // yellow-500
+  };
+  if (name in explicit) {
+    return explicit[name];
+  }
+  // Fallback: simple hash based on name or id to pick a color
+  const palette = [
+    "#0ea5e9", // sky-500
+    "#22c55e", // green-500
+    "#a855f7", // purple-500
+    "#f59e0b", // amber-500
+    "#38bdf8", // sky-400
+    "#10b981", // emerald-500
+    "#8b5cf6", // violet-500
+  ];
+  const key = id ?? name;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash + key.charCodeAt(i) * 7) % palette.length;
+  }
+  return palette[hash];
 }

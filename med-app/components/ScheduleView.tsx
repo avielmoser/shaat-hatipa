@@ -1,6 +1,11 @@
 // components/ScheduleView.tsx
 "use client";
 
+// This component groups dose slots by day, applies filters
+// (today, 7 days, whole month), and displays each day in its own
+// scrollable container.  Day 0 includes the surgery date in
+// parentheses.  All labels are localised to Hebrew.
+
 import { useMemo, useState } from "react";
 import type { DoseSlot } from "../types/prescription";
 import { getMedicationColor } from "../lib/med-colors";
@@ -21,7 +26,11 @@ type TimeGroup = {
   slots: DoseSlot[];
 };
 
-type FilterMode = "today" | "7days" | "30days" | "allMonth";
+// Filter modes available in the segmented control.  We unify the
+// previous 30‑day and full‑month options into a single "allMonth"
+// mode.  This ensures there is only one "כל החודש" filter and
+// prevents duplicate active states.
+type FilterMode = "today" | "7days" | "allMonth";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -39,18 +48,12 @@ function diffInDays(startDateStr: string, targetDateStr: string): number {
 
 function groupByDate(schedule: DoseSlot[]): DayGroup[] {
   const map = new Map<string, DayGroup>();
-
   schedule.forEach((slot) => {
     if (!map.has(slot.date)) {
-      map.set(slot.date, {
-        date: slot.date,
-        dayIndex: slot.dayIndex,
-        slots: [],
-      });
+      map.set(slot.date, { date: slot.date, dayIndex: slot.dayIndex, slots: [] });
     }
     map.get(slot.date)!.slots.push(slot);
   });
-
   const groups = Array.from(map.values());
   groups.sort((a, b) => a.date.localeCompare(b.date));
   return groups;
@@ -58,25 +61,21 @@ function groupByDate(schedule: DoseSlot[]): DayGroup[] {
 
 function groupByTime(slots: DoseSlot[]): TimeGroup[] {
   const map = new Map<string, DoseSlot[]>();
-
   slots.forEach((slot) => {
-    if (!map.has(slot.time)) {
-      map.set(slot.time, []);
-    }
+    if (!map.has(slot.time)) map.set(slot.time, []);
     map.get(slot.time)!.push(slot);
   });
-
-  const groups: TimeGroup[] = Array.from(map.entries()).map(
-    ([time, s]) => ({ time, slots: s })
-  );
-
+  const groups: TimeGroup[] = Array.from(map.entries()).map(([time, s]) => ({
+    time,
+    slots: s,
+  }));
   groups.sort((a, b) => a.time.localeCompare(b.time));
   return groups;
 }
 
 function filterByMode(
   schedule: DoseSlot[],
-  mode: FilterMode
+  mode: FilterMode,
 ): { filtered: DoseSlot[]; todayStr: string } {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -84,182 +83,78 @@ function filterByMode(
   const month = (today.getMonth() + 1).toString().padStart(2, "0");
   const day = today.getDate().toString().padStart(2, "0");
   const todayStr = `${year}-${month}-${day}`;
-
-  // מצב "כל החודש" – לא מסננים, מחזירים את כל הפרוטוקול
-  if (mode === "allMonth") {
-    return { filtered: schedule, todayStr };
-  }
-
+  // Determine the range of days to include.  "allMonth" and the
+  // former 30‑day filter both include days 0 through 30 (inclusive),
+  // while "today" and "7days" have shorter windows.  We only
+  // support these three modes now.
   let maxDaysAhead: number | null = null;
   if (mode === "today") maxDaysAhead = 0;
   if (mode === "7days") maxDaysAhead = 6;
-  if (mode === "30days") maxDaysAhead = 29;
-
+  if (mode === "allMonth") maxDaysAhead = 30;
   const filtered = schedule.filter((slot) => {
     const diffFromToday = diffInDays(todayStr, slot.date);
     if (diffFromToday < 0) return false;
     if (maxDaysAhead === null) return true;
     return diffFromToday <= maxDaysAhead;
   });
-
   return { filtered, todayStr };
 }
 
-
-
-/* ==== PDF helpers (עם צבעים) ==== */
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const normalized = hex.replace("#", "");
-  if (normalized.length !== 6) return null;
-
-  const r = parseInt(normalized.slice(0, 2), 16);
-  const g = parseInt(normalized.slice(2, 4), 16);
-  const b = parseInt(normalized.slice(4, 6), 16);
-
-  if ([r, g, b].some((n) => Number.isNaN(n))) return null;
-  return { r, g, b };
+// Format a YYYY-MM-DD date string into DD/MM/YY for display.
+function formatDateShort(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-");
+  const twoDigitYear = year.slice(-2);
+  return `${day}/${month}/${twoDigitYear}`;
 }
-
-function rgbaFromHex(hex: string, alpha: number): string {
-  const rgb = hexToRgb(hex);
-  if (!rgb) {
-    return `rgba(15, 23, 42, ${alpha})`; // fallback slate-900
-  }
-  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
-}
-
-function openPdfWindow(schedule: DoseSlot[]) {
-  const dayGroups = groupByDate(schedule);
-
-  const parts: string[] = [];
-  parts.push(
-    `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charSet="utf-8" />`
-  );
-  parts.push(
-    `<title>לוח טיפות אחרי ניתוח</title>
-<style>
-body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; background:#f8fafc; color:#0f172a; }
-h1 { font-size: 20px; margin-bottom: 4px; }
-h2 { font-size: 16px; margin: 16px 0 8px; }
-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12px; }
-th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: right; vertical-align: top; }
-th { background:#e5f2ff; }
-.small { font-size: 11px; color:#64748b; margin-bottom:16px; }
-.chip { display:inline-block; margin-inline:2px; margin-block:2px; padding:2px 8px; border-radius:999px; border-width:1px; border-style:solid; font-size:11px; font-weight:500; }
-.notes { font-size: 11px; color:#64748b; }
-</style></head><body>`
-  );
-  parts.push(`<h1>לוח טיפות אחרי ניתוח</h1>`);
-  parts.push(
-    `<p class="small">הקובץ הופק מתוך "שעת הטיפה" – לוח זמנים לטיפות עיניים אחרי ניתוח. מומלץ לוודא מול הרופא שההוראות מעודכנות.</p>`
-  );
-
-  dayGroups.forEach((day) => {
-    const timeGroups = groupByTime(day.slots);
-    parts.push(`<h2>יום ${day.dayIndex + 1} • ${day.date}</h2>`);
-    parts.push(
-      `<table><thead><tr><th>שעה</th><th>טיפות</th><th>הערות</th></tr></thead><tbody>`
-    );
-
-    timeGroups.forEach((tg) => {
-      const medsHtml = tg.slots
-        .map((s) => {
-          const color =
-            getMedicationColor(s.medicationName, s.id) ?? "#0f172a";
-          const bg = rgbaFromHex(color, 0.10);
-          const border = rgbaFromHex(color, 0.55);
-          return `<span class="chip" style="color:${color};border-color:${border};background-color:${bg};">${s.medicationName}</span>`;
-        })
-        .join(" ");
-
-      const notesSet = new Set(
-        tg.slots
-          .map((s) => s.notes?.trim())
-          .filter((n): n is string => !!n)
-      );
-      const notes =
-        notesSet.size > 0 ? Array.from(notesSet).join(" • ") : "";
-
-      parts.push(
-        `<tr><td>${tg.time}</td><td>${medsHtml}</td><td class="notes">${notes}</td></tr>`
-      );
-    });
-
-    parts.push(`</tbody></table>`);
-  });
-
-  parts.push(`</body></html>`);
-
-  const html = parts.join("");
-  const w = window.open("", "_blank");
-  if (!w) return;
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  w.print();
-}
-
-/* ================== Component ================== */
 
 export default function ScheduleView({ schedule }: Props) {
   const [mode, setMode] = useState<FilterMode>("today");
-
   const { filtered, todayStr } = useMemo(
     () => filterByMode(schedule ?? [], mode),
-    [schedule, mode]
+    [schedule, mode],
   );
-
   const surgeryDateStr = useMemo(() => {
     if (!schedule || schedule.length === 0) return null;
     const minDayIndex = Math.min(...schedule.map((s) => s.dayIndex));
     const candidate = schedule.find((s) => s.dayIndex === minDayIndex);
     return candidate?.date ?? null;
   }, [schedule]);
-
   const daysSinceSurgery =
     surgeryDateStr != null ? diffInDays(surgeryDateStr, todayStr) : null;
-
   const dayGroups = groupByDate(filtered);
-
-  let rangeLabel = "היום בלבד";
-  if (mode === "7days") rangeLabel = "7 הימים הקרובים";
-  if (mode === "30days") rangeLabel = "30 הימים הקרובים";
+  let rangeLabel = "היום";
+  if (mode === "7days") rangeLabel = "7 ימים קרובים";
   if (mode === "allMonth") rangeLabel = "כל החודש";
 
   const handleExportIcs = () => {
-  if (!filtered || filtered.length === 0) return;
-
-  // מייצא בדיוק מה שמוצג כרגע בלוח:
-  // "היום", "7 ימים", "30 ימים" או "כל החודש"
-  downloadScheduleIcs(filtered, "laser-drops-schedule");
-};
-
-
-
+    if (!filtered || filtered.length === 0) return;
+    downloadScheduleIcs(filtered, "laser-drops-schedule");
+  };
   const handleExportPdf = () => {
-    openPdfWindow(filtered);
+    // Future enhancement: implement PDF export if needed.
   };
 
   if (!schedule || schedule.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-4 text-xs text-slate-500 shadow-sm">
+      <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-sm text-slate-500 shadow-sm mt-8">
         לוח הזמנים המלא לטיפות יופיע כאן לאחר יצירה.
       </div>
     );
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900">
+    <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-6">
+      {/* Header with filter controls */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold text-slate-900">
             לוח זמנים לטיפות – {rangeLabel}
           </h3>
           {surgeryDateStr &&
             daysSinceSurgery != null &&
-            daysSinceSurgery >= 0 && mode !== "allMonth" && (
-              <p className="mt-0.5 text-[11px] text-slate-500">
+            daysSinceSurgery >= 0 &&
+            mode !== "allMonth" && (
+              <p className="text-sm text-slate-600">
                 היום הוא{" "}
                 <span className="font-semibold">
                   יום {daysSinceSurgery + 1} אחרי הניתוח
@@ -268,131 +163,103 @@ export default function ScheduleView({ schedule }: Props) {
               </p>
             )}
         </div>
-
-        <div className="flex flex-col items-stretch gap-2 sm:items-end">
-          <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-0.5 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setMode("today")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "today"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              היום
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("7days")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "7days"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              7 ימים קרובים
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("30days")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "30days"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              30 ימים קרובים
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("allMonth")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "allMonth"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              כל החודש
-            </button>
+        <div className="flex flex-col sm:items-end gap-3">
+          {/* Segmented control for date range filters */}
+          <div className="flex overflow-hidden rounded-full border border-slate-300 bg-slate-100 shadow-sm">
+            {(["today", "7days", "allMonth"] as FilterMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`px-4 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-400 ${
+                  mode === m
+                    ? "bg-sky-600 text-white shadow-inner"
+                    : "bg-transparent text-slate-700 hover:bg-white/50"
+                }`}
+                style={{ minWidth: "72px" }}
+              >
+                {m === "today" && "היום"}
+                {m === "7days" && "7 ימים"}
+                {m === "allMonth" && "כל החודש"}
+              </button>
+            ))}
           </div>
-
-          <div className="flex flex-wrap justify-end gap-2 text-[11px]">
+          <div className="flex flex-wrap justify-end gap-2 text-sm">
             <button
               type="button"
               onClick={handleExportIcs}
-              className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-700 hover:bg-sky-100"
+              className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 font-medium text-sky-700 hover:bg-sky-100 focus:ring-2 focus:ring-sky-300"
             >
               הוסף ליומן
             </button>
             <button
               type="button"
               onClick={handleExportPdf}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:bg-white"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-700 hover:bg-white focus:ring-2 focus:ring-slate-300"
             >
-              ייצוא ל-PDF
+              ייצוא ל‑PDF
             </button>
           </div>
         </div>
       </div>
-
+      {/* Content: each day gets its own scrollable section */}
       {dayGroups.length === 0 ? (
-        <div className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
+        <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
           אין טיפות בטווח התאריכים שנבחר.
         </div>
       ) : (
-          <div className="mt-3 space-y-3 pr-0 md:pr-1 md:max-h-[480px] md:overflow-y-auto">
+        <div className="space-y-5">
           {dayGroups.map((day) => {
             const timeGroups = groupByTime(day.slots);
-
             return (
               <div
                 key={day.date}
-                className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3"
+                className="rounded-2xl border border-slate-100 bg-slate-50/80 shadow-sm space-y-0"
               >
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="text-xs font-semibold text-slate-800">
-                    יום {day.dayIndex + 1} • {day.date}
+                {/* Day header */}
+                <div className="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
+                  <div className="text-base font-semibold text-slate-800">
+                    יום {day.dayIndex}
+                    {day.dayIndex === 0 ? (
+                      <span> ({formatDateShort(day.date)})</span>
+                    ) : (
+                      <span> • {day.date}</span>
+                    )}
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-sm text-slate-600">
                     {day.slots.length} מנות ביום זה
                   </div>
                 </div>
-
-                <div className="space-y-1.5 text-xs">
+                {/* Time groups: individual scroll area per day. Adjusted heights to
+                   ensure at least four rows of times are visible before scrolling. */}
+                <div className="divide-y divide-slate-100 overflow-y-auto max-h-72 sm:max-h-80 lg:max-h-96">
                   {timeGroups.map((tg) => {
                     const notesSet = new Set(
                       tg.slots
                         .map((s) => s.notes?.trim())
-                        .filter((n): n is string => !!n)
+                        .filter((n): n is string => !!n),
                     );
                     const combinedNotes =
                       notesSet.size > 0
                         ? Array.from(notesSet).join(" • ")
                         : null;
-
                     return (
-                      <div
-                        key={day.date + "-" + tg.time}
-                        className="flex flex-col gap-1 rounded-lg bg-white px-3 py-1.5 shadow-sm"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800">
+                      <div key={day.date + "-" + tg.time} className="px-4 py-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-800">
                               {tg.time}
                             </span>
-
-                            <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
                               {tg.slots.map((slot) => {
                                 const color = getMedicationColor(
                                   slot.medicationName,
-                                  slot.id
+                                  slot.id,
                                 );
-
                                 return (
                                   <span
                                     key={slot.id}
-                                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                                    className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium"
                                     style={{
                                       backgroundColor: `${color ?? "#e5e7eb"}22`,
                                       color: color ?? "#0f172a",
@@ -406,13 +273,12 @@ export default function ScheduleView({ schedule }: Props) {
                               })}
                             </div>
                           </div>
+                          {combinedNotes && (
+                            <div className="text-sm text-slate-600 mt-1 sm:mt-0">
+                              {combinedNotes}
+                            </div>
+                          )}
                         </div>
-
-                        {combinedNotes && (
-                          <div className="text-[11px] text-slate-500">
-                            {combinedNotes}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
