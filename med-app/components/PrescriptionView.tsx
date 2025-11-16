@@ -1,21 +1,16 @@
 // components/PrescriptionView.tsx
 "use client";
 
-// Import prescription types and colour helper from the app directory to
-// maintain a single source of truth for shared data.
 import type { LaserPrescriptionInput } from "../types/prescription";
-import { getMedicationColor } from "../lib/med-colors";
-
+import { getMedicationColor } from "../lib/medicationColors";
 
 interface Props {
   prescription: LaserPrescriptionInput | null;
 }
 
 /**
- * Display a summary of the selected protocol, including surgery type,
- * date, wake/sleep times, and list of medications with their dosage
- * phases.  The medication list is shown in a scrollable container
- * sized so that the first ~4 items are visible without scrolling.
+ * מציג סיכום של הפרוטוקול שנבחר, כולל תאריך ניתוח, שעות ערות ורשימת תרופות.
+ * התצוגה משתמשת במפת הצבעים החדשה כדי לתת לכל תרופה צבע עקבי.
  */
 export default function PrescriptionView({ prescription }: Props) {
   if (!prescription) return null;
@@ -27,9 +22,9 @@ export default function PrescriptionView({ prescription }: Props) {
       : surgeryType === "PRK"
       ? "פרוטוקול טיפות לאחר ניתוח PRK."
       : "פרוטוקול מותאם אישית.";
+
   return (
     <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] space-y-4">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-lg font-semibold text-slate-900">
@@ -41,7 +36,6 @@ export default function PrescriptionView({ prescription }: Props) {
           {surgeryType}
         </span>
       </div>
-      {/* Surgery details */}
       <div className="grid gap-3 rounded-2xl bg-slate-50/80 p-4 text-sm text-slate-700 sm:grid-cols-2">
         <div>
           <span className="font-semibold">תאריך ניתוח: </span>
@@ -56,7 +50,6 @@ export default function PrescriptionView({ prescription }: Props) {
           {medications.length}
         </div>
       </div>
-      {/* Medication list preview: taller container to show 4 items on most devices */}
       <div className="space-y-4 overflow-y-auto max-h-80 sm:max-h-96 md:max-h-[28rem]">
         {medications.map((m) => {
           const color = getMedicationColor(m.name, m.id);

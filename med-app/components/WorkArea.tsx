@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+
 import type {
   LaserPrescriptionInput,
   DoseSlot,
@@ -14,7 +15,8 @@ import {
   normalizeAwakeWindow,
   isImpossibleAwakeWindow,
 } from "../lib/utils";
-import { getMedicationColor } from "../lib/med-colors";
+
+import { getMedicationColor } from "../lib/medicationColors";
 
 /**
  * Build the Interlasik prescription based on wake/sleep times. Adjusts
