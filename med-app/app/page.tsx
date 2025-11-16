@@ -12,8 +12,7 @@ export default function Page() {
       </main>
 
       <footer className="border-t border-slate-200 bg-white/80 py-4 text-center text-[11px] text-slate-400">
-        שעת הטיפה • כלי עזר אישי בלבד ואינו מחליף הנחיות רפואיות. תמיד יש לפעול
-        לפי הוראות הרופא.
+        פותח ונבנה על ידי אביאל מאוזר
       </footer>
     </div>
   );

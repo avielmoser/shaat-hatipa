@@ -19,15 +19,14 @@ export default function HeroSection() {
           {/* Small tag line */}
           <div className="flex justify-center md:justify-start">
             <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-4 py-1 text-xs font-medium text-sky-700">
-              אחרי ניתוח לייזר? כל הטיפות שלך במקום אחד מסודר
+               כל הטיפות שלך במקום אחד מסודר
             </span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
             לוח טיפות חכם אחרי ניתוח לייזר
           </h1>
           <p className="max-w-md mx-auto md:mx-0 text-base sm:text-lg leading-relaxed text-slate-600">
-            הזן את הפרטים שלך והמערכת תחלק עבורך את הטיפות לאורך שעות הערות,
-            לפי הפרוטוקול הרפואי הנבחר. פשוט, מדויק ומרגיע.
+            ההמערכת יוצרת עבורך לוח זמנים רפואי מדויק ומובנה, בהתאם לסוג הניתוח שביצעת
           </p>
           <div className="flex flex-col sm:flex-row items-center md:items-start md:justify-start gap-4">
             <button
@@ -38,7 +37,8 @@ export default function HeroSection() {
               התחל כאן
             </button>
             <span className="text-sm text-slate-500">
-              שימוש אישי בלבד – לא מחליף רופא
+              כלי עזר לניהול לוח זמנים. אין לראות במידע המוצג תחליף לייעוץ
+            רפואי. 
             </span>
           </div>
           {/* Highlight tags */}
@@ -50,7 +50,7 @@ export default function HeroSection() {
               ייצוא ליומן ו‑PDF
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 py-1 font-medium text-slate-700">
-              פרוטוקול מחושב לפי שעות הערות שלך
+              הפרוטוקול מותאם ומחושב בהתאם לשעות הערות האישיות שלך
             </span>
           </div>
         </div>

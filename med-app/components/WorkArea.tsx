@@ -2,37 +2,37 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-
 import type {
   LaserPrescriptionInput,
   DoseSlot,
   SurgeryType,
   Medication,
 } from "../types/prescription";
+
 import PrescriptionView from "./PrescriptionView";
 import ScheduleView from "./ScheduleView";
 import {
   normalizeAwakeWindow,
   isImpossibleAwakeWindow,
 } from "../lib/utils";
-
 import { getMedicationColor } from "../lib/medicationColors";
 
 /**
- * Build the Interlasik prescription based on wake/sleep times. Adjusts
- * the number of hourly doses on day 1 according to the awake window length.
+ * Build Interlasik prescription. Adjusts the hourly doses on day 1 based on the
+ * awake window length to ensure at least one dose per hour on the surgery day.
  */
 function buildInterlasikPrescription(
   surgeryDate: string,
   wakeTime: string,
-  sleepTime: string,
+  sleepTime: string
 ): LaserPrescriptionInput {
   const { wakeMinutes, normalizedSleepMinutes } = normalizeAwakeWindow(
     wakeTime,
-    sleepTime,
+    sleepTime
   );
   const awakeWindow = normalizedSleepMinutes - wakeMinutes;
   const hourlyDoses = Math.max(1, Math.floor(awakeWindow / 60));
+
   const medications: Medication[] = [
     {
       id: "sterodex",
@@ -60,6 +60,7 @@ function buildInterlasikPrescription(
       ],
     },
   ];
+
   return {
     surgeryType: "INTERLASIK",
     surgeryDate,
@@ -70,13 +71,13 @@ function buildInterlasikPrescription(
 }
 
 /**
- * Build the PRK prescription. This configuration is fixed and does not
- * depend on the awake window.
+ * Build PRK prescription. Defines a fixed tapering schedule for each medication,
+ * independent of the awake window.
  */
 function buildPrkPrescription(
   surgeryDate: string,
   wakeTime: string,
-  sleepTime: string,
+  sleepTime: string
 ): LaserPrescriptionInput {
   const medications: Medication[] = [
     {
@@ -118,6 +119,7 @@ function buildPrkPrescription(
       ],
     },
   ];
+
   return {
     surgeryType: "PRK",
     surgeryDate,
@@ -144,11 +146,13 @@ export default function WorkArea() {
   const [prescription, setPrescription] =
     useState<LaserPrescriptionInput | null>(null);
   const [schedule, setSchedule] = useState<DoseSlot[]>([]);
-  const resultRef = useRef<HTMLDivElement | null>(null);
+
+  // Scroll specifically to the schedule (not just the summary)
+  const scheduleRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (schedule.length > 0 && resultRef.current) {
-      resultRef.current.scrollIntoView({
+    if (schedule.length > 0 && scheduleRef.current) {
+      scheduleRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -160,6 +164,7 @@ export default function WorkArea() {
   const handleGenerate = async () => {
     setError(null);
     setInvalidTime(false);
+
     if (isImpossibleAwakeWindow(wakeTime, sleepTime)) {
       setError("טעות – אינך יכול לקום לפני שהלכת לישון");
       setInvalidTime(true);
@@ -191,6 +196,7 @@ export default function WorkArea() {
       setSchedule(json.schedule);
     } catch (e: any) {
       console.error(e);
+      // Fallback: at least show the protocol even if schedule failed
       setPrescription(body);
       setError(e.message || "משהו השתבש, נסה שוב.");
     } finally {
@@ -201,7 +207,7 @@ export default function WorkArea() {
   return (
     <section id="work-area" className="px-4 pb-24 pt-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-12">
-      {/* Stepper */}
+        {/* Stepper */}
         <ol className="flex items-center justify-center md:justify-end gap-4 text-sm">
           {[
             { idx: 1, label: "פרטי הניתוח" },
@@ -238,7 +244,8 @@ export default function WorkArea() {
             );
           })}
         </ol>
-        {/* Main grid layout */}
+
+        {/* Grid layout: form + results */}
         <div className="grid gap-10 lg:grid-cols-[minmax(0,3.5fr)_minmax(0,3fr)] lg:items-start">
           {/* Form card */}
           <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-6">
@@ -251,7 +258,7 @@ export default function WorkArea() {
                 זמנים אוטומטי לפי הפרוטוקול הרפואי.
               </p>
             </div>
-            {/* Fields */}
+
             <div className="space-y-4 text-sm">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
@@ -269,6 +276,7 @@ export default function WorkArea() {
                     <option value="PRK">PRK</option>
                   </select>
                 </div>
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
                     תאריך הניתוח
@@ -281,6 +289,7 @@ export default function WorkArea() {
                   />
                 </div>
               </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
@@ -297,6 +306,7 @@ export default function WorkArea() {
                     }`}
                   />
                 </div>
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
                     שעה שאתה הולך לישון
@@ -313,12 +323,14 @@ export default function WorkArea() {
                   />
                 </div>
               </div>
+
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {error}
                 </div>
               )}
             </div>
+
             {/* Protocol description preview */}
             <div className="space-y-4 text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
@@ -329,13 +341,17 @@ export default function WorkArea() {
                   דוגמה לסדר טיפות – תמיד לעקוב אחרי הנחיות הרופא.
                 </span>
               </div>
+
               {surgeryType === "INTERLASIK" ? (
                 <ul className="space-y-1 text-slate-700">
                   <li className="flex items-start gap-2">
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Sterodex", "sterodex")}22`,
+                        backgroundColor: `${getMedicationColor(
+                          "Sterodex",
+                          "sterodex"
+                        )}22`,
                         color: getMedicationColor("Sterodex", "sterodex"),
                         borderColor: getMedicationColor("Sterodex", "sterodex"),
                       }}
@@ -343,14 +359,18 @@ export default function WorkArea() {
                       Sterodex
                     </span>
                     <span>
-                      יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6 פעמים ביום; ימים 4–7 – 4 פעמים ביום.
+                      יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6 פעמים
+                      ביום; ימים 4–7 – 4 פעמים ביום.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Vigamox", "vigamox")}22`,
+                        backgroundColor: `${getMedicationColor(
+                          "Vigamox",
+                          "vigamox"
+                        )}22`,
                         color: getMedicationColor("Vigamox", "vigamox"),
                         borderColor: getMedicationColor("Vigamox", "vigamox"),
                       }}
@@ -363,9 +383,18 @@ export default function WorkArea() {
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Systane Balance", "systane-balance")}22`,
-                        color: getMedicationColor("Systane Balance", "systane-balance"),
-                        borderColor: getMedicationColor("Systane Balance", "systane-balance"),
+                        backgroundColor: `${getMedicationColor(
+                          "Systane Balance",
+                          "systane-balance"
+                        )}22`,
+                        color: getMedicationColor(
+                          "Systane Balance",
+                          "systane-balance"
+                        ),
+                        borderColor: getMedicationColor(
+                          "Systane Balance",
+                          "systane-balance"
+                        ),
                       }}
                     >
                       Systane Balance
@@ -381,7 +410,10 @@ export default function WorkArea() {
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Sterodex", "sterodex")}22`,
+                        backgroundColor: `${getMedicationColor(
+                          "Sterodex",
+                          "sterodex"
+                        )}22`,
                         color: getMedicationColor("Sterodex", "sterodex"),
                         borderColor: getMedicationColor("Sterodex", "sterodex"),
                       }}
@@ -389,14 +421,18 @@ export default function WorkArea() {
                       Sterodex
                     </span>
                     <span>
-                      שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 – בוקר וערב; שבוע 4 – פעם ביום.
+                      שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 –
+                      בוקר וערב; שבוע 4 – פעם ביום.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Vigamox", "vigamox")}22`,
+                        backgroundColor: `${getMedicationColor(
+                          "Vigamox",
+                          "vigamox"
+                        )}22`,
                         color: getMedicationColor("Vigamox", "vigamox"),
                         borderColor: getMedicationColor("Vigamox", "vigamox"),
                       }}
@@ -409,9 +445,15 @@ export default function WorkArea() {
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Dicloftil", "dicloftil")}22`,
+                        backgroundColor: `${getMedicationColor(
+                          "Dicloftil",
+                          "dicloftil"
+                        )}22`,
                         color: getMedicationColor("Dicloftil", "dicloftil"),
-                        borderColor: getMedicationColor("Dicloftil", "dicloftil"),
+                        borderColor: getMedicationColor(
+                          "Dicloftil",
+                          "dicloftil"
+                        ),
                       }}
                     >
                       Dicloftil
@@ -422,9 +464,18 @@ export default function WorkArea() {
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Systane Balance", "systane-balance")}22`,
-                        color: getMedicationColor("Systane Balance", "systane-balance"),
-                        borderColor: getMedicationColor("Systane Balance", "systane-balance"),
+                        backgroundColor: `${getMedicationColor(
+                          "Systane Balance",
+                          "systane-balance"
+                        )}22`,
+                        color: getMedicationColor(
+                          "Systane Balance",
+                          "systane-balance"
+                        ),
+                        borderColor: getMedicationColor(
+                          "Systane Balance",
+                          "systane-balance"
+                        ),
                       }}
                     >
                       Systane Balance
@@ -435,7 +486,10 @@ export default function WorkArea() {
                     <span
                       className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                       style={{
-                        backgroundColor: `${getMedicationColor("Vitapos", "vitapos")}22`,
+                        backgroundColor: `${getMedicationColor(
+                          "Vitapos",
+                          "vitapos"
+                        )}22`,
                         color: getMedicationColor("Vitapos", "vitapos"),
                         borderColor: getMedicationColor("Vitapos", "vitapos"),
                       }}
@@ -446,8 +500,14 @@ export default function WorkArea() {
                   </li>
                 </ul>
               )}
+
+              {/* bubble: wait 5 minutes between drops */}
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
+                <span>💧</span>
+                <span>מומלץ להמתין לפחות 5 דקות בין כל סוג טיפות.</span>
+              </div>
             </div>
-            {/* Generate button */}
+
             <div className="pt-4">
               <button
                 type="button"
@@ -461,10 +521,13 @@ export default function WorkArea() {
               </button>
             </div>
           </div>
+
           {/* Results area */}
-          <div ref={resultRef} className="space-y-6">
+          <div className="space-y-6">
             <PrescriptionView prescription={prescription} />
-            <ScheduleView schedule={schedule} />
+            <div ref={scheduleRef}>
+              <ScheduleView schedule={schedule} />
+            </div>
           </div>
         </div>
       </div>
