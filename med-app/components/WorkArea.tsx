@@ -26,8 +26,14 @@ function buildInterlasikPrescription(
   sleepTime: string
 ): LaserPrescriptionInput {
   const wakeMinutes = parseTimeToMinutes(wakeTime);
-  const sleepMinutes = parseTimeToMinutes(sleepTime);
-  const awakeWindow = Math.max(sleepMinutes - wakeMinutes, 60);
+  const rawSleepMinutes = parseTimeToMinutes(sleepTime);
+  // אם שעת השינה שווה או מוקדמת משעת הקימה – נחשב את שעת השינה ללילה הבא
+  const normalizedSleepMinutes =
+    rawSleepMinutes <= wakeMinutes
+      ? rawSleepMinutes + 24 * 60
+      : rawSleepMinutes;
+  // חלון הערות – תמיד לפחות 60 דקות כדי לקבל מינימום מנה לשעה
+  const awakeWindow = Math.max(normalizedSleepMinutes - wakeMinutes, 60);
   const hourlyDoses = Math.max(1, Math.floor(awakeWindow / 60));
 
   const medications = [
@@ -45,15 +51,15 @@ function buildInterlasikPrescription(
       id: "vigamox",
       name: "Vigamox",
       notes: "טיפות אנטיביוטיקה",
-      phases: [{ dayStart: 1, dayEnd: 8, timesPerDay: 4 }], // ימים 0–7
+      phases: [{ dayStart: 1, dayEnd: 8, timesPerDay: 4 }], // ימים 1–8
     },
     {
       id: "systane-balance",
       name: "Systane Balance",
       notes: "דמעות מלאכותיות",
       phases: [
-        { dayStart: 1, dayEnd: 8, timesPerDay: 6 }, // ימים 0–7
-        { dayStart: 9, dayEnd: 31, timesPerDay: 4 }, // ימים 8–30
+        { dayStart: 1, dayEnd: 8, timesPerDay: 6 }, // ימים 1–8
+        { dayStart: 9, dayEnd: 31, timesPerDay: 4 }, // ימים 9–31
       ],
     },
   ];
@@ -64,7 +70,7 @@ function buildInterlasikPrescription(
     wakeTime,
     sleepTime,
     medications,
-  };
+  } as LaserPrescriptionInput;
 }
 
 /* ================== פרוטוקול PRK ================== */
@@ -121,14 +127,13 @@ function buildPrkPrescription(
     wakeTime,
     sleepTime,
     medications,
-  };
+  } as LaserPrescriptionInput;
 }
 
 /* ================== קומפוננטת העבודה ================== */
 
 export default function WorkArea() {
   const [surgeryType, setSurgeryType] = useState<SurgeryType>("INTERLASIK");
-
   const [surgeryDate, setSurgeryDate] = useState<string>(() => {
     const d = new Date();
     const year = d.getFullYear();
@@ -139,7 +144,6 @@ export default function WorkArea() {
 
   const [wakeTime, setWakeTime] = useState<string>("07:00");
   const [sleepTime, setSleepTime] = useState<string>("23:00");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -149,7 +153,6 @@ export default function WorkArea() {
 
   // גלילה לאזור התוצאות לאחר יצירת לוח זמנים
   const resultRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (schedule.length > 0 && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -158,6 +161,24 @@ export default function WorkArea() {
 
   const handleGenerate = async () => {
     setError(null);
+
+    // תאימות שעות: מנרמלים את שעת השינה לפי חציית חצות ובודקים שהחלון הגיוני
+    try {
+      const wakeMinutes = parseTimeToMinutes(wakeTime);
+      const rawSleepMinutes = parseTimeToMinutes(sleepTime);
+      const normalizedSleepMinutes =
+        rawSleepMinutes <= wakeMinutes
+          ? rawSleepMinutes + 24 * 60
+          : rawSleepMinutes;
+      const awakeWindowMinutes = normalizedSleepMinutes - wakeMinutes;
+      if (awakeWindowMinutes <= 0) {
+        setError("טעות – אינך יכול לקום לפני שהלכת לישון");
+        return;
+      }
+    } catch (e) {
+      setError("טעות – אינך יכול לקום לפני שהלכת לישון");
+      return;
+    }
 
     let body: LaserPrescriptionInput;
     if (surgeryType === "INTERLASIK") {
@@ -203,11 +224,10 @@ export default function WorkArea() {
               לוח טיפות מותאם אישית
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
-              שלושה צעדים פשוטים: הזנת פרטי הניתוח, בדיקת הפרוטוקול, ויצירת לוח
-              זמנים עם תזכורות ליומן.
+              שלושה צעדים פשוטים: הזנת פרטי הניתוח, בדיקת הפרוטוקול,
+              ויצירת לוח זמנים עם תזכורות ליומן.
             </p>
           </div>
-
           <ol className="flex items-center justify-end gap-3 text-[11px] text-slate-600 rtl space-x-reverse sm:justify-end">
             <li className="flex items-center gap-1">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-700">
@@ -231,20 +251,18 @@ export default function WorkArea() {
             </li>
           </ol>
         </div>
-
         <div className="grid gap-8 lg:grid-cols-[minmax(0,3.3fr)_minmax(0,3fr)] lg:gap-10 lg:items-stretch">
           {/* כרטיס הטופס */}
           <div className="relative rounded-3xl border border-slate-200/70 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.12)] sm:p-6">
             <div className="pointer-events-none absolute inset-x-10 -top-6 h-10 rounded-full bg-sky-500/10 blur-2xl" />
-
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
                   לוח טיפות אחרי ניתוח לייזר
                 </h2>
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                  בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך לוח זמנים
-                  אוטומטי לפי הפרוטוקול הרפואי.
+                  בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך
+                  לוח זמנים אוטומטי לפי הפרוטוקול הרפואי.
                 </p>
               </div>
               <div className="hidden sm:inline-flex items-center rounded-full border border-sky-200 bg-white/80 px-3 py-1 text-[10px] font-medium text-sky-700 shadow-sm">
@@ -252,7 +270,6 @@ export default function WorkArea() {
                 מתאים לניתוחי INTERLASIK / PRK
               </div>
             </div>
-
             <div className="mt-6 space-y-4 text-sm">
               {/* סוג ניתוח + תאריך */}
               <div className="grid gap-3 sm:grid-cols-2">
@@ -276,7 +293,6 @@ export default function WorkArea() {
                     </span>
                   </div>
                 </div>
-
                 <div>
                   <label className="mb-1 block text-xs font-medium text-slate-700">
                     תאריך הניתוח
@@ -289,7 +305,6 @@ export default function WorkArea() {
                   />
                 </div>
               </div>
-
               {/* שעות ערות */}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -303,7 +318,6 @@ export default function WorkArea() {
                     className="block w-full rounded-2xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200"
                   />
                 </div>
-
                 <div>
                   <label className="mb-1 block text-xs font-medium text-slate-700">
                     שעה שאתה הולך לישון
@@ -316,7 +330,6 @@ export default function WorkArea() {
                   />
                 </div>
               </div>
-
               {/* תיאור הפרוטוקול עם צ'יפים בצבעים */}
               <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/70 p-3.5 text-[11px] text-slate-700">
                 <div className="mb-2.5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
@@ -327,7 +340,6 @@ export default function WorkArea() {
                     דוגמה לסדר טיפות – תמיד לעקוב אחרי הנחיות הרופא.
                   </span>
                 </div>
-
                 {surgeryType === "INTERLASIK" ? (
                   <ul className="space-y-1.5">
                     <li className="flex items-start gap-2">
@@ -337,7 +349,8 @@ export default function WorkArea() {
                           backgroundColor: `${
                             getMedicationColor("Sterodex") ?? "#e5e7eb"
                           }22`,
-                          color: getMedicationColor("Sterodex") ?? "#0f172a",
+                          color:
+                            getMedicationColor("Sterodex") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Sterodex") ??
                             "rgba(15,23,42,0.16)",
@@ -346,11 +359,10 @@ export default function WorkArea() {
                         Sterodex
                       </span>
                       <span>
-                        יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6 פעמים
-                        ביום; ימים 4–7 – 4 פעמים ביום.
+                        יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6
+                        פעמים ביום; ימים 4–7 – 4 פעמים ביום.
                       </span>
                     </li>
-
                     <li className="flex items-start gap-2">
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -358,7 +370,8 @@ export default function WorkArea() {
                           backgroundColor: `${
                             getMedicationColor("Vigamox") ?? "#e5e7eb"
                           }22`,
-                          color: getMedicationColor("Vigamox") ?? "#0f172a",
+                          color:
+                            getMedicationColor("Vigamox") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Vigamox") ??
                             "rgba(15,23,42,0.16)",
@@ -368,10 +381,9 @@ export default function WorkArea() {
                       </span>
                       <span>ימים 1–8 – 4 פעמים ביום.</span>
                     </li>
-
                     <li className="flex items-start gap-2">
                       <span
-                       className="inline-flex items-center rounded-full border px-2 py-[2px] text-[10px] font-medium whitespace-nowrap"
+                        className="inline-flex items-center rounded-full border px-2 py-[2px] text-[10px] font-medium whitespace-nowrap"
                         style={{
                           backgroundColor: `${
                             getMedicationColor("Systane Balance") ??
@@ -401,7 +413,8 @@ export default function WorkArea() {
                           backgroundColor: `${
                             getMedicationColor("Sterodex") ?? "#e5e7eb"
                           }22`,
-                          color: getMedicationColor("Sterodex") ?? "#0f172a",
+                          color:
+                            getMedicationColor("Sterodex") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Sterodex") ??
                             "rgba(15,23,42,0.16)",
@@ -414,7 +427,6 @@ export default function WorkArea() {
                         בוקר וערב; שבוע 4 – פעם ביום.
                       </span>
                     </li>
-
                     <li className="flex items-start gap-2">
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -422,7 +434,8 @@ export default function WorkArea() {
                           backgroundColor: `${
                             getMedicationColor("Vigamox") ?? "#e5e7eb"
                           }22`,
-                          color: getMedicationColor("Vigamox") ?? "#0f172a",
+                          color:
+                            getMedicationColor("Vigamox") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Vigamox") ??
                             "rgba(15,23,42,0.16)",
@@ -432,7 +445,6 @@ export default function WorkArea() {
                       </span>
                       <span>שבוע ראשון – 4 פעמים ביום.</span>
                     </li>
-
                     <li className="flex items-start gap-2">
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -440,7 +452,8 @@ export default function WorkArea() {
                           backgroundColor: `${
                             getMedicationColor("Dicloftil") ?? "#e5e7eb"
                           }22`,
-                          color: getMedicationColor("Dicloftil") ?? "#0f172a",
+                          color:
+                            getMedicationColor("Dicloftil") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Dicloftil") ??
                             "rgba(15,23,42,0.16)",
@@ -450,7 +463,6 @@ export default function WorkArea() {
                       </span>
                       <span>3 הימים הראשונים – 3 פעמים ביום.</span>
                     </li>
-
                     <li className="flex items-start gap-2">
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -471,7 +483,6 @@ export default function WorkArea() {
                       </span>
                       <span>חודש שלם – 6 פעמים ביום.</span>
                     </li>
-
                     <li className="flex items-start gap-2">
                       <span
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -479,7 +490,8 @@ export default function WorkArea() {
                           backgroundColor: `${
                             getMedicationColor("Vitapos") ?? "#e5e7eb"
                           }22`,
-                          color: getMedicationColor("Vitapos") ?? "#0f172a",
+                          color:
+                            getMedicationColor("Vitapos") ?? "#0f172a",
                           borderColor:
                             getMedicationColor("Vitapos") ??
                             "rgba(15,23,42,0.16)",
@@ -491,19 +503,16 @@ export default function WorkArea() {
                     </li>
                   </ul>
                 )}
-
                 <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
-                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד מומלץ לוודא
-                  מול המרשם והוראות הרופא.
+                  החישוב נעשה אוטומטית על בסיס שעות הערות שהזנת. תמיד מומלץ
+                  לוודא מול המרשם והוראות הרופא.
                 </p>
               </div>
-
               {error && (
                 <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
                   {error}
                 </div>
               )}
-
               <div className="pt-3">
                 <button
                   type="button"
@@ -511,12 +520,13 @@ export default function WorkArea() {
                   disabled={loading}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
                 >
-                  {loading ? "יוצר לוח זמנים..." : "צור לוח זמנים לפי הפרוטוקול"}
+                  {loading
+                    ? "יוצר לוח זמנים..."
+                    : "צור לוח זמנים לפי הפרוטוקול"}
                 </button>
               </div>
             </div>
           </div>
-
           {/* סיכום + לוח זמנים */}
           <div ref={resultRef} className="mt-4 space-y-4 lg:mt-0 lg:space-y-5">
             <PrescriptionView prescription={prescription} />
