@@ -146,20 +146,26 @@ export default function WorkArea() {
   const [prescription, setPrescription] =
     useState<LaserPrescriptionInput | null>(null);
   const [schedule, setSchedule] = useState<DoseSlot[]>([]);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
-  // Scroll specifically to the schedule (not just the summary)
   const scheduleRef = useRef<HTMLDivElement | null>(null);
 
+  // גלילה ללוח הזמנים כשעוברים לשלב 3
   useEffect(() => {
-    if (schedule.length > 0 && scheduleRef.current) {
+    if (currentStep === 3 && scheduleRef.current) {
       scheduleRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }
-  }, [schedule.length]);
+  }, [currentStep]);
 
-  const currentStep = schedule.length > 0 ? 3 : prescription ? 2 : 1;
+  const resetResults = () => {
+    setPrescription(null);
+    setSchedule([]);
+    setError(null);
+    setCurrentStep(1);
+  };
 
   const handleGenerate = async () => {
     setError(null);
@@ -194,98 +200,105 @@ export default function WorkArea() {
       const json = await res.json();
       setPrescription(json.prescription);
       setSchedule(json.schedule);
+      setCurrentStep(2); // אחרי יצירה עוברים לסיכום
     } catch (e: any) {
       console.error(e);
-      // Fallback: at least show the protocol even if schedule failed
+      // Fallback: לפחות להראות פרוטוקול גם אם לוח הזמנים נכשל
       setPrescription(body);
       setError(e.message || "משהו השתבש, נסה שוב.");
+      setCurrentStep(2);
     } finally {
       setLoading(false);
     }
   };
+
+  const canGoToSummary = !!prescription;
+  const canGoToSchedule = !!schedule && schedule.length > 0;
 
   return (
     <section
       id="work-area"
       className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
     >
-      <div className="mx-auto max-w-6xl space-y-10 sm:space-y-12">
+      <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
         {/* Stepper */}
-        <ol className="flex items-center justify-center md:justify-end gap-4 text-sm">
+        <ol className="flex items-center justify-center gap-4 text-sm">
           {[
-            { idx: 1, label: "פרטי הניתוח" },
-            { idx: 2, label: "סקירת פרוטוקול" },
-            { idx: 3, label: "לוח זמנים" },
+            { idx: 1 as const, label: "פרטי הניתוח" },
+            { idx: 2 as const, label: "סיכום הפרוטוקול" },
+            { idx: 3 as const, label: "לוח זמנים" },
           ].map((step) => {
             const isActive = currentStep === step.idx;
             const isDone = currentStep > step.idx;
+            const isEnabled =
+              step.idx === 1 ||
+              (step.idx === 2 && canGoToSummary) ||
+              (step.idx === 3 && canGoToSchedule);
+
             return (
               <li key={step.idx} className="flex items-center gap-2">
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
-                    isDone
-                      ? "bg-emerald-500 border-emerald-500 text-white"
-                      : isActive
-                      ? "bg-sky-600 border-sky-600 text-white"
-                      : "bg-slate-200 border-slate-300 text-slate-600"
-                  }`}
+                <button
+                  type="button"
+                  disabled={!isEnabled}
+                  onClick={() => {
+                    if (isEnabled) setCurrentStep(step.idx);
+                  }}
+                  className="flex items-center gap-2 disabled:cursor-not-allowed"
                 >
-                  {step.idx}
-                </span>
-                <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    isActive
-                      ? "text-sky-700"
-                      : isDone
-                      ? "text-emerald-600"
-                      : "text-slate-600"
-                  }`}
-                >
-                  {step.label}
-                </span>
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
+                      isDone
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : isActive
+                        ? "bg-sky-600 border-sky-600 text-white"
+                        : "bg-slate-200 border-slate-300 text-slate-600"
+                    }`}
+                  >
+                    {step.idx}
+                  </span>
+                  <span
+                    className={`text-xs sm:text-sm font-medium ${
+                      isActive
+                        ? "text-sky-700"
+                        : isDone
+                        ? "text-emerald-600"
+                        : isEnabled
+                        ? "text-slate-700"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </button>
               </li>
             );
           })}
         </ol>
 
-        {/* Grid layout: form + results */}
-        <div className="grid gap-8 lg:gap-10 lg:grid-cols-[minmax(0,3.5fr)_minmax(0,3fr)] lg:items-start">
-          {/* Form card */}
-          <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-4 sm:space-y-6">
-            {/* כותרת + כפתור יצירת לוח זמנים למעלה */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="space-y-1">
-                <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
-                  לוח טיפות אחרי ניתוח לייזר
-                </h2>
-                <p className="text-xs sm:text-base text-slate-600">
-                  בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך לוח
-                  זמנים אוטומטי לפי הפרוטוקול הרפואי.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={loading}
-                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-sky-500/30 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
-              >
-                {loading
-                  ? "יוצר לוח זמנים..."
-                  : "צור לוח זמנים לפי הפרוטוקול"}
-              </button>
+        {/* שלב 1 – קלט */}
+        {currentStep === 1 && (
+          <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                שלב 1 – פרטי הניתוח
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600">
+                בחר סוג ניתוח, תאריך ושעות ערות. בשלב הבא יוצג סיכום הפרוטוקול המלא.
+              </p>
             </div>
 
-            <div className="space-y-3 sm:space-y-4 text-sm">
-              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+            <div className="space-y-4 text-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
                     סוג הניתוח
                   </label>
                   <select
                     value={surgeryType}
-                    onChange={(e) =>
-                      setSurgeryType(e.target.value as SurgeryType)
-                    }
+                    onChange={(e) => {
+                      setSurgeryType(e.target.value as SurgeryType);
+                      resetResults();
+                    }}
                     className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
                   >
                     <option value="INTERLASIK">INTERLASIK</option>
@@ -300,13 +313,16 @@ export default function WorkArea() {
                   <input
                     type="date"
                     value={surgeryDate}
-                    onChange={(e) => setSurgeryDate(e.target.value)}
+                    onChange={(e) => {
+                      setSurgeryDate(e.target.value);
+                      resetResults();
+                    }}
                     className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
                   />
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
                     שעה שאתה קם בבוקר
@@ -314,7 +330,10 @@ export default function WorkArea() {
                   <input
                     type="time"
                     value={wakeTime}
-                    onChange={(e) => setWakeTime(e.target.value)}
+                    onChange={(e) => {
+                      setWakeTime(e.target.value);
+                      resetResults();
+                    }}
                     className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${
                       invalidTime
                         ? "border-red-500"
@@ -330,7 +349,10 @@ export default function WorkArea() {
                   <input
                     type="time"
                     value={sleepTime}
-                    onChange={(e) => setSleepTime(e.target.value)}
+                    onChange={(e) => {
+                      setSleepTime(e.target.value);
+                      resetResults();
+                    }}
                     className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${
                       invalidTime
                         ? "border-red-500"
@@ -347,14 +369,14 @@ export default function WorkArea() {
               )}
             </div>
 
-            {/* Protocol description preview */}
-            <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-3 sm:p-4">
+            {/* פרוטוקול אוטומטי – מבט מקדים */}
+            <div className="space-y-3 text-xs sm:text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 sm:mb-2 gap-2">
                 <span className="font-semibold text-slate-800">
                   הפרוטוקול האוטומטי ({surgeryType})
                 </span>
                 <span className="text-[11px] sm:text-sm text-slate-500">
-                  דוגמה לסדר טיפות – תמיד לעקוב אחרי הנחיות הרופא.
+                  זהו תקציר בלבד – תמיד לעקוב אחרי הוראות הרופא.
                 </span>
               </div>
 
@@ -375,8 +397,7 @@ export default function WorkArea() {
                       Sterodex
                     </span>
                     <span>
-                      יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6 פעמים
-                      ביום; ימים 4–7 – 4 פעמים ביום.
+                      יום הניתוח – טיפות כל שעה בזמן הערות; ימים 1–3 – 6 פעמים ביום; ימים 4–7 – 4 פעמים ביום.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -437,8 +458,7 @@ export default function WorkArea() {
                       Sterodex
                     </span>
                     <span>
-                      שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 –
-                      בוקר וערב; שבוע 4 – פעם ביום.
+                      שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 – בוקר וערב; שבוע 4 – פעם ביום.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -517,22 +537,125 @@ export default function WorkArea() {
                 </ul>
               )}
 
-              {/* bubble: wait 5 minutes between drops */}
-              <div className="mt-2 sm:mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
                 <span>💧</span>
                 <span>מומלץ להמתין לפחות 5 דקות בין כל סוג טיפות.</span>
               </div>
             </div>
-          </div>
 
-          {/* Results area */}
-          <div className="space-y-6">
-            <PrescriptionView prescription={prescription} />
-            <div ref={scheduleRef}>
-              <ScheduleView schedule={schedule} />
+            {/* כפתור שלב 1 – sticky בתחתית הכרטיס במובייל גם כשגוללים */}
+            <div className="pt-2 sticky bottom-0 bg-white/95 pb-2">
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-sky-500/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+              >
+                {loading ? "יוצר לוח זמנים..." : "המשך לשלב 2 – יצירת הפרוטוקול"}
+              </button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* שלב 2 – סיכום הפרוטוקול */}
+        {currentStep === 2 && (
+          <div className="space-y-4 pb-16">
+            <div className="rounded-3xl border border-slate-200 bg-white/95 p-4 sm:p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                    שלב 2 – סיכום הוראות אחרי ניתוח
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600">
+                    כאן תוכל לראות את הפרוטוקול המחושב לפי הנתונים שהזנת,
+                    לפני מעבר ללוח הזמנים המפורט.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[11px] sm:text-xs text-slate-500">
+                  <span className="rounded-full bg-slate-100 px-3 py-1">
+                    {surgeryType}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">
+                    {surgeryDate}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">
+                    שעות ערות: {wakeTime}–{sleepTime}
+                  </span>
+                </div>
+              </div>
+
+              {/* כפתורים לשלב 2 – תצוגה רגילה למסכים גדולים */}
+              <div className="hidden sm:flex flex-col gap-3 sm:flex-row sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(1)}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  חזרה לעריכת פרטי הניתוח
+                </button>
+                <button
+                  type="button"
+                  disabled={!canGoToSchedule}
+                  onClick={() => setCurrentStep(3)}
+                  className="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm shadow-sky-500/30 hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+                >
+                  מעבר לשלב 3 – לוח זמנים
+                </button>
+              </div>
+            </div>
+
+            <PrescriptionView prescription={prescription} />
+
+            {/* פס כפתורים קבוע לתחתית המסך – מובייל בלבד */}
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 sm:hidden">
+              <div className="mx-auto max-w-3xl flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(1)}
+                  className="flex-1 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  חזרה לשלב 1
+                </button>
+                <button
+                  type="button"
+                  disabled={!canGoToSchedule}
+                  onClick={() => setCurrentStep(3)}
+                  className="flex-1 inline-flex items-center justify-center rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/30 hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+                >
+                  לשלב 3 – לוח זמנים
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* שלב 3 – לוח הזמנים */}
+        {currentStep === 3 && (
+          <div ref={scheduleRef} className="space-y-4">
+            <div className="rounded-3xl border border-slate-200 bg-white/95 p-4 sm:p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                    שלב 3 – לוח זמנים לטיפות
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600">
+                    זהו לוח הזמנים המלא לפי הפרוטוקול שחושב. אפשר להוסיף ליומן,
+                    לייצא ל-PDF ולהראות לרופא.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(2)}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  חזרה לשלב 2 – סיכום הפרוטוקול
+                </button>
+              </div>
+            </div>
+
+            <ScheduleView schedule={schedule} />
+          </div>
+        )}
       </div>
     </section>
   );
