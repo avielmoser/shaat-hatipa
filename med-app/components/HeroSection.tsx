@@ -70,14 +70,12 @@ export default function HeroSection() {
                   08:00
                 </span>
                 <span className="font-semibold text-sky-800">Sterodex</span>
-                <span className="text-xs text-slate-500">טיפות סטרואידים</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-purple-50 px-3 py-2">
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-800">
                   12:00
                 </span>
                 <span className="font-semibold text-purple-700">Vigamox</span>
-                <span className="text-xs text-slate-500">טיפות אנטיביוטיקה</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2">
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-800">
@@ -86,7 +84,6 @@ export default function HeroSection() {
                 <span className="font-semibold text-emerald-700">
                   Systane Balance
                 </span>
-                <span className="text-xs text-slate-500">דמעות מלאכותיות</span>
               </div>
             </div>
             <p className="mt-4 text-xs leading-relaxed text-slate-500">

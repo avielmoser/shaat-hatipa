@@ -205,8 +205,11 @@ export default function WorkArea() {
   };
 
   return (
-    <section id="work-area" className="px-4 pb-24 pt-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-12">
+    <section
+      id="work-area"
+      className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
+    >
+      <div className="mx-auto max-w-6xl space-y-10 sm:space-y-12">
         {/* Stepper */}
         <ol className="flex items-center justify-center md:justify-end gap-4 text-sm">
           {[
@@ -246,21 +249,34 @@ export default function WorkArea() {
         </ol>
 
         {/* Grid layout: form + results */}
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,3.5fr)_minmax(0,3fr)] lg:items-start">
+        <div className="grid gap-8 lg:gap-10 lg:grid-cols-[minmax(0,3.5fr)_minmax(0,3fr)] lg:items-start">
           {/* Form card */}
-          <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-slate-900">
-                לוח טיפות אחרי ניתוח לייזר
-              </h2>
-              <p className="text-base text-slate-600">
-                בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך לוח
-                זמנים אוטומטי לפי הפרוטוקול הרפואי.
-              </p>
+          <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-4 sm:space-y-6">
+            {/* כותרת + כפתור יצירת לוח זמנים למעלה */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="space-y-1">
+                <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                  לוח טיפות אחרי ניתוח לייזר
+                </h2>
+                <p className="text-xs sm:text-base text-slate-600">
+                  בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך לוח
+                  זמנים אוטומטי לפי הפרוטוקול הרפואי.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={loading}
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-sky-500/30 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+              >
+                {loading
+                  ? "יוצר לוח זמנים..."
+                  : "צור לוח זמנים לפי הפרוטוקול"}
+              </button>
             </div>
 
-            <div className="space-y-4 text-sm">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-3 sm:space-y-4 text-sm">
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
                     סוג הניתוח
@@ -290,7 +306,7 @@ export default function WorkArea() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-slate-700">
                     שעה שאתה קם בבוקר
@@ -325,19 +341,19 @@ export default function WorkArea() {
               </div>
 
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-700">
                   {error}
                 </div>
               )}
             </div>
 
             {/* Protocol description preview */}
-            <div className="space-y-4 text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+            <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 sm:mb-2 gap-2">
                 <span className="font-semibold text-slate-800">
                   הפרוטוקול האוטומטי ({surgeryType})
                 </span>
-                <span className="text-sm text-slate-500">
+                <span className="text-[11px] sm:text-sm text-slate-500">
                   דוגמה לסדר טיפות – תמיד לעקוב אחרי הנחיות הרופא.
                 </span>
               </div>
@@ -346,7 +362,7 @@ export default function WorkArea() {
                 <ul className="space-y-1 text-slate-700">
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Sterodex",
@@ -365,7 +381,7 @@ export default function WorkArea() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Vigamox",
@@ -381,7 +397,7 @@ export default function WorkArea() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Systane Balance",
@@ -408,7 +424,7 @@ export default function WorkArea() {
                 <ul className="space-y-1 text-slate-700">
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Sterodex",
@@ -427,7 +443,7 @@ export default function WorkArea() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Vigamox",
@@ -443,7 +459,7 @@ export default function WorkArea() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Dicloftil",
@@ -462,7 +478,7 @@ export default function WorkArea() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Systane Balance",
@@ -484,7 +500,7 @@ export default function WorkArea() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
                       style={{
                         backgroundColor: `${getMedicationColor(
                           "Vitapos",
@@ -502,23 +518,10 @@ export default function WorkArea() {
               )}
 
               {/* bubble: wait 5 minutes between drops */}
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
+              <div className="mt-2 sm:mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
                 <span>💧</span>
                 <span>מומלץ להמתין לפחות 5 דקות בין כל סוג טיפות.</span>
               </div>
-            </div>
-
-            <div className="pt-4">
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-sky-500/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
-              >
-                {loading
-                  ? "יוצר לוח זמנים..."
-                  : "צור לוח זמנים לפי הפרוטוקול"}
-              </button>
             </div>
           </div>
 
