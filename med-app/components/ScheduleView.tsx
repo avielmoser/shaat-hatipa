@@ -60,15 +60,18 @@ function groupByDate(schedule: DoseSlot[]): DayGroup[] {
 
 function groupByTime(slots: DoseSlot[]): TimeGroup[] {
   const map = new Map<string, DoseSlot[]>();
+
   slots.forEach((slot) => {
     if (!map.has(slot.time)) {
       map.set(slot.time, []);
     }
     map.get(slot.time)!.push(slot);
   });
+
   const groups: TimeGroup[] = Array.from(map.entries()).map(
     ([time, s]) => ({ time, slots: s })
   );
+
   groups.sort((a, b) => a.time.localeCompare(b.time));
   return groups;
 }
@@ -251,7 +254,8 @@ export default function ScheduleView({ schedule }: Props) {
                   </div>
                 </div>
 
-                <div className="space-y-1.5 text-xs overflow-y-auto max-h-48">
+                {/* כאן הגדלנו את הגובה המקסימלית וצופפנו רווחים */}
+                <div className="space-y-1 text-xs overflow-y-auto max-h-72 md:max-h-80">
                   {timeGroups.map((tg) => {
                     const notesSet = new Set(
                       tg.slots
@@ -266,7 +270,7 @@ export default function ScheduleView({ schedule }: Props) {
                     return (
                       <div
                         key={day.date + "-" + tg.time}
-                        className="flex flex-col gap-1 rounded-lg bg-white px-3 py-1.5 shadow-sm"
+                        className="flex flex-col gap-0.5 rounded-lg bg-white px-2.5 py-1 shadow-sm"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
