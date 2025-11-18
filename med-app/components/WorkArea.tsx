@@ -14,6 +14,18 @@ import ScheduleView from "./ScheduleView";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
 import { getMedicationColor } from "../lib/medicationColors";
 
+type Step = 1 | 2 | 3;
+
+const stepperItems: { idx: Step; label: string }[] = [
+  { idx: 1, label: "פרטי הניתוח" },
+  { idx: 2, label: "סקירת פרוטוקול" },
+  { idx: 3, label: "לוח זמנים" },
+];
+
+/**
+ * Build Interlasik prescription. Adjusts the hourly doses on day 1 based on the
+ * awake window length to ensure at least one dose per hour on the surgery day.
+ */
 function buildInterlasikPrescription(
   surgeryDate: string,
   wakeTime: string,
@@ -30,7 +42,7 @@ function buildInterlasikPrescription(
     {
       id: "sterodex",
       name: "Sterodex",
-      notes: "טיפות סטרואידים אחרי ניתוח",
+      notes: "",
       phases: [
         { dayStart: 1, dayEnd: 1, timesPerDay: hourlyDoses },
         { dayStart: 2, dayEnd: 4, timesPerDay: 6 },
@@ -40,13 +52,13 @@ function buildInterlasikPrescription(
     {
       id: "vigamox",
       name: "Vigamox",
-      notes: "טיפות אנטיביוטיקה",
+      notes: "",
       phases: [{ dayStart: 1, dayEnd: 8, timesPerDay: 4 }],
     },
     {
       id: "systane-balance",
       name: "Systane Balance",
-      notes: "דמעות מלאכותיות",
+      notes: "",
       phases: [
         { dayStart: 1, dayEnd: 8, timesPerDay: 6 },
         { dayStart: 9, dayEnd: 31, timesPerDay: 4 },
@@ -63,6 +75,10 @@ function buildInterlasikPrescription(
   };
 }
 
+/**
+ * Build PRK prescription. Defines a fixed tapering schedule for each medication,
+ * independent of the awake window.
+ */
 function buildPrkPrescription(
   surgeryDate: string,
   wakeTime: string,
@@ -72,7 +88,7 @@ function buildPrkPrescription(
     {
       id: "sterodex",
       name: "Sterodex (Dexamethasone)",
-      notes: "סטרואידים לפי פרוטוקול PRK",
+      notes: "",
       phases: [
         { dayStart: 1, dayEnd: 7, timesPerDay: 4 },
         { dayStart: 8, dayEnd: 14, timesPerDay: 3 },
@@ -83,25 +99,25 @@ function buildPrkPrescription(
     {
       id: "vigamox",
       name: "Vigamox (Moxifloxacin 0.5%)",
-      notes: "אנטיביוטיקה – רק שבוע ראשון",
+      notes: "",
       phases: [{ dayStart: 1, dayEnd: 7, timesPerDay: 4 }],
     },
     {
       id: "dicloftil",
       name: "Dicloftil 0.1%",
-      notes: "NSAID – 3 ימים ראשונים בלבד",
+      notes: "",
       phases: [{ dayStart: 1, dayEnd: 3, timesPerDay: 3 }],
     },
     {
       id: "systane-balance",
       name: "Systane Balance",
-      notes: "דמעות מלאכותיות – חודש שלם",
+      notes: "",
       phases: [{ dayStart: 1, dayEnd: 30, timesPerDay: 6 }],
     },
     {
       id: "vitapos",
       name: "Vitapos (Eye Ointment)",
-      notes: "משחה – שבוע 2–3 בוקר ולילה",
+      notes: "",
       phases: [
         { dayStart: 8, dayEnd: 14, timesPerDay: 2 },
         { dayStart: 15, dayEnd: 21, timesPerDay: 2 },
@@ -118,9 +134,9 @@ function buildPrkPrescription(
   };
 }
 
-type Step = 1 | 2 | 3;
-
 export default function WorkArea() {
+  const [step, setStep] = useState<Step>(1);
+
   const [surgeryType, setSurgeryType] = useState<SurgeryType>("INTERLASIK");
   const [surgeryDate, setSurgeryDate] = useState<string>(() => {
     const d = new Date();
@@ -131,31 +147,73 @@ export default function WorkArea() {
   });
   const [wakeTime, setWakeTime] = useState<string>("07:00");
   const [sleepTime, setSleepTime] = useState<string>("23:00");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [invalidTime, setInvalidTime] = useState(false);
-
+  const [invalidTime, setInvalidTime] = useState<boolean>(false);
   const [prescription, setPrescription] =
     useState<LaserPrescriptionInput | null>(null);
   const [schedule, setSchedule] = useState<DoseSlot[]>([]);
 
-  const [activeStep, setActiveStep] = useState<Step>(1);
-
-  const summaryRef = useRef<HTMLDivElement | null>(null);
+  const step1Ref = useRef<HTMLDivElement | null>(null);
+  const step2Ref = useRef<HTMLDivElement | null>(null);
+  const step3Ref = useRef<HTMLDivElement | null>(null);
   const scheduleRef = useRef<HTMLDivElement | null>(null);
 
-  // גלילה אוטומטית כשעוברים שלב
-  useEffect(() => {
-    if (activeStep === 2 && summaryRef.current) {
-      summaryRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    if (activeStep === 3 && scheduleRef.current) {
-      scheduleRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [activeStep]);
+  };
 
-  const handleGenerate = async () => {
+  useEffect(() => {
+    if (schedule.length > 0 && step === 3 && scheduleRef.current) {
+      scheduleRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [schedule.length, step]);
+
+  // ===== ניווט בין שלבים =====
+
+  const goToStep1 = () => {
+    setStep(1);
+    scrollToRef(step1Ref);
+  };
+
+  const goToStep2 = () => {
+    if (!prescription) return;
+    setStep(2);
+    scrollToRef(step2Ref);
+  };
+
+  const goToStep3 = () => {
+    if (schedule.length === 0) return;
+    setStep(3);
+    scrollToRef(step3Ref);
+  };
+
+  const handleStepClick = (target: Step) => {
+    if (target === step) return;
+
+    if (target === 1) {
+      goToStep1();
+      return;
+    }
+
+    if (target === 2) {
+      goToStep2();
+      return;
+    }
+
+    if (target === 3) {
+      goToStep3();
+    }
+  };
+
+  // ===== לוגיקת כפתורים =====
+
+  const handleContinueToStep2 = () => {
     setError(null);
     setInvalidTime(false);
 
@@ -164,6 +222,22 @@ export default function WorkArea() {
       setInvalidTime(true);
       return;
     }
+
+    let body: LaserPrescriptionInput;
+    if (surgeryType === "INTERLASIK") {
+      body = buildInterlasikPrescription(surgeryDate, wakeTime, sleepTime);
+    } else {
+      body = buildPrkPrescription(surgeryDate, wakeTime, sleepTime);
+    }
+
+    setPrescription(body);
+    setSchedule([]);
+    setStep(2);
+    scrollToRef(step2Ref);
+  };
+
+  const handleGenerateSchedule = async () => {
+    setError(null);
 
     let body: LaserPrescriptionInput;
     if (surgeryType === "INTERLASIK") {
@@ -186,9 +260,10 @@ export default function WorkArea() {
       }
 
       const json = await res.json();
-      setPrescription(json.prescription);
+      setPrescription(json.prescription ?? body);
       setSchedule(json.schedule);
-      setActiveStep(2);
+      setStep(3);
+      scrollToRef(step3Ref);
     } catch (e: any) {
       console.error(e);
       setPrescription(body);
@@ -198,40 +273,38 @@ export default function WorkArea() {
     }
   };
 
-  const goToStep2 = () => {
-    setActiveStep(2);
-  };
-
-  const goToStep3 = () => {
-    setActiveStep(3);
-    // ביטוח לגלילה גם אם ה-useEffect מתעכב
-    setTimeout(() => {
-      if (scheduleRef.current) {
-        scheduleRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    }, 0);
-  };
+  const hasPrescription = !!prescription;
+  const hasSchedule = schedule.length > 0;
 
   return (
     <section
       id="work-area"
       className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
     >
-      <div className="mx-auto max-w-6xl space-y-8 sm:space-y-10">
+      <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
         {/* Stepper */}
-        <ol className="flex items-center justify-center md:justify-end gap-4 text-sm">
-          {[
-            { idx: 1 as Step, label: "פרטי הניתוח" },
-            { idx: 2 as Step, label: "סקירת פרוטוקול" },
-            { idx: 3 as Step, label: "לוח זמנים" },
-          ].map((step) => {
-            const isActive = activeStep === step.idx;
-            const isDone = activeStep > step.idx;
+        <ol className="flex items-center justify-center gap-4 text-sm">
+          {stepperItems.map((stepItem) => {
+            const isActive = step === stepItem.idx;
+            const isDone = step > stepItem.idx;
+
+            const canGoForward =
+              stepItem.idx === 1 ||
+              (stepItem.idx === 2 && hasPrescription) ||
+              (stepItem.idx === 3 && hasSchedule);
+
             return (
-              <li key={step.idx} className="flex items-center gap-2">
+              <li
+                key={stepItem.idx}
+                onClick={() => {
+                  if (canGoForward) {
+                    handleStepClick(stepItem.idx);
+                  }
+                }}
+                className={`flex items-center gap-2 ${
+                  canGoForward ? "cursor-pointer" : "cursor-default"
+                }`}
+              >
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
                     isDone
@@ -241,7 +314,7 @@ export default function WorkArea() {
                       : "bg-slate-200 border-slate-300 text-slate-600"
                   }`}
                 >
-                  {step.idx}
+                  {stepItem.idx}
                 </span>
                 <span
                   className={`text-xs sm:text-sm font-medium ${
@@ -249,29 +322,32 @@ export default function WorkArea() {
                       ? "text-sky-700"
                       : isDone
                       ? "text-emerald-600"
-                      : "text-slate-600"
+                      : canGoForward
+                      ? "text-slate-700 hover:text-sky-700"
+                      : "text-slate-500"
                   }`}
                 >
-                  {step.label}
+                  {stepItem.label}
                 </span>
               </li>
             );
           })}
         </ol>
 
-        {/* שלב 1 – טופס קלט */}
-        {activeStep === 1 && (
-          <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="space-y-1">
-                <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
-                  לוח טיפות אחרי ניתוח לייזר
-                </h2>
-                <p className="text-xs sm:text-base text-slate-600">
-                  בחר סוג ניתוח, תאריך ושעות ערות – והמערכת תיצור עבורך לוח
-                  זמנים אוטומטי לפי הפרוטוקול הרפואי.
-                </p>
-              </div>
+        {/* ===== שלב 1 – פרטי ניתוח ===== */}
+        {step === 1 && (
+          <div
+            ref={step1Ref}
+            className="relative rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-4 sm:space-y-6"
+          >
+            <div className="space-y-1">
+              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                פרטי הניתוח
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600">
+                בחר סוג ניתוח, תאריך ושעות ערות – לאחר מכן תראה סיכום מסודר של
+                הפרוטוקול ולבסוף לוח זמנים מפורט לטיפות.
+              </p>
             </div>
 
             <div className="space-y-3 sm:space-y-4 text-sm">
@@ -346,14 +422,14 @@ export default function WorkArea() {
               )}
             </div>
 
-            {/* תקציר פרוטוקול */}
+            {/* תיאור פרוטוקול אוטומטי קצר */}
             <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 sm:mb-2 gap-2">
                 <span className="font-semibold text-slate-800">
                   הפרוטוקול האוטומטי ({surgeryType})
                 </span>
                 <span className="text-[11px] sm:text-sm text-slate-500">
-                  דוגמה כללית – תמיד לפעול לפי הנחיות הרופא.
+                  סיכום כללי – תמיד לעקוב אחרי ההנחיות שקיבלת מהרופא.
                 </span>
               </div>
 
@@ -436,8 +512,8 @@ export default function WorkArea() {
                       Sterodex
                     </span>
                     <span>
-                      שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 – בוקר
-                      וערב; שבוע 4 – פעם ביום.
+                      שבוע 1 – 4 פעמים ביום; שבוע 2 – 3 פעמים ביום; שבוע 3 –
+                      בוקר וערב; שבוע 4 – פעם ביום.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -516,60 +592,112 @@ export default function WorkArea() {
                 </ul>
               )}
 
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
+              <div className="mt-2 sm:mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
                 <span>💧</span>
                 <span>מומלץ להמתין לפחות 5 דקות בין כל סוג טיפות.</span>
               </div>
             </div>
 
-            <div className="pt-2 sm:pt-4">
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-sky-500/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
-              >
-                {loading ? "יוצר לוח זמנים..." : "המשך לשלב 2 – סקירת הוראות"}
-              </button>
+            {/* מרווח שלא יתחבא מאחורי הכפתור הצף */}
+            <div className="h-12 sm:h-14" />
+
+            {/* כפתור צף לשלב 2 */}
+            <div className="pointer-events-none sticky bottom-4 z-30">
+              <div className="pointer-events-auto mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
+                <button
+                  type="button"
+                  onClick={handleContinueToStep2}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white shadow-sm hover:bg-sky-700"
+                >
+                  המשך לשלב 2 – סקירת פרוטוקול
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* שלב 2 – סיכום הוראות */}
-        {activeStep === 2 && (
-          <div className="space-y-4 sm:space-y-6">
-            <div ref={summaryRef}>
-              <PrescriptionView prescription={prescription} />
-            </div>
-
-            {/* כפתור דביק למובייל – מעבר לשלב 3 */}
-            <div className="sm:hidden fixed inset-x-0 bottom-0 z-20 bg-white/95 border-t border-slate-200 px-4 py-3">
+        {/* ===== שלב 2 – סיכום הוראות ===== */}
+        {step === 2 && prescription && (
+          <div className="relative space-y-4" ref={step2Ref}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                סקירת פרוטוקול
+              </h2>
               <button
                 type="button"
-                onClick={goToStep3}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-sky-500/30 transition hover:bg-sky-700"
+                onClick={goToStep1}
+                className="text-xs sm:text-sm text-slate-500 hover:text-slate-700 underline-offset-2 hover:underline"
               >
-                לשלב 3 – לוח זמנים
+                חזרה לשלב 1 – פרטי הניתוח
               </button>
             </div>
 
-            {/* כפתור לשלב 3 בדסקטופ / טאבלט */}
-            <div className="hidden sm:flex justify-end">
-              <button
-                type="button"
-                onClick={goToStep3}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-sky-500/30 transition hover:bg-sky-700"
-              >
-                לשלב 3 – לוח זמנים
-              </button>
+            <PrescriptionView prescription={prescription} />
+
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            {/* מרווח שלא יתחבא מאחורי בר הכפתורים */}
+            <div className="h-14 sm:h-16" />
+
+            {/* בר כפתורים צף – לשלב 3 + חזרה ל־1 */}
+            <div className="pointer-events-none sticky bottom-4 z-30">
+              <div className="pointer-events-auto mx-auto max-w-md rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <button
+                    type="button"
+                    onClick={handleGenerateSchedule}
+                    disabled={loading}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+                  >
+                    {loading
+                      ? "יוצר לוח זמנים..."
+                      : "המשך לשלב 3 – לוח זמנים"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToStep1}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm sm:text-base font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    חזרה לשלב 1
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* שלב 3 – לוח זמנים */}
-        {activeStep === 3 && (
-          <div ref={scheduleRef} className="space-y-4 sm:space-y-6">
-            <ScheduleView schedule={schedule} />
+        {/* ===== שלב 3 – לוח זמנים ===== */}
+        {step === 3 && hasSchedule && (
+          <div className="relative space-y-4" ref={step3Ref}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+                לוח זמנים לטיפות
+              </h2>
+            </div>
+
+            <div ref={scheduleRef}>
+              <ScheduleView schedule={schedule} />
+            </div>
+
+            {/* מרווח לכפתור הצף */}
+            <div className="h-14 sm:h-16" />
+
+            {/* כפתור חזרה צף מעל לוח הזמנים */}
+            <div className="pointer-events-none sticky bottom-4 z-30">
+              <div className="pointer-events-auto mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
+                <button
+                  type="button"
+                  onClick={goToStep2}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm sm:text-base font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  חזרה לשלב 2 – סקירת פרוטוקול
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
