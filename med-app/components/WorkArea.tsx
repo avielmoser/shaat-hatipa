@@ -145,8 +145,8 @@ export default function WorkArea() {
     const day = d.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}`;
   });
-  const [wakeTime, setWakeTime] = useState<string>("07:00");
-  const [sleepTime, setSleepTime] = useState<string>("23:00");
+  const [wakeTime, setWakeTime] = useState<string>("08:00");
+  const [sleepTime, setSleepTime] = useState<string>("22:00");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [invalidTime, setInvalidTime] = useState<boolean>(false);
