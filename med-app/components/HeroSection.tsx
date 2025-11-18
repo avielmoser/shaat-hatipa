@@ -46,7 +46,7 @@ export default function HeroSection() {
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                  <span className="font-medium text-slate-800">FML</span>
+                  <span className="font-medium text-slate-800">Dicloftil  </span>
                 </div>
                 <span className="text-sm font-semibold text-slate-900">
                   09:00
@@ -55,7 +55,7 @@ export default function HeroSection() {
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  <span className="font-medium text-slate-800">Optive</span>
+                  <span className="font-medium text-slate-800">Vitapos</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-900">
                   09:15
@@ -71,9 +71,10 @@ export default function HeroSection() {
         </div>
 
         {/* טקסט + CTA – בצד ימין בדסקטופ */}
-        <div className="flex-1 space-y-6 text-center md:text-right order-1 md:order-2">
+        <div className="flex-1 flex flex-col items-center space-y-6 text-center">
           {/* תגית קטנה */}
-          <div className="flex justify-center md:justify-end">
+          <div className="flex justify-center">
+
             <span className="inline-flex items-center rounded-full bg-sky-100 px-4 py-1 text-xs font-medium text-sky-700">
               כל הטיפות שלך במקום אחד מסודר
             </span>
@@ -90,7 +91,7 @@ export default function HeroSection() {
             הניתוח שביצעת ולשעות הערות האישיות שלך.
           </p>
 
-          <div className="flex flex-col items-center gap-4 sm:flex-row md:items-start md:justify-end">
+          <div className="flex flex-col items-center gap-3">
             <button
               type="button"
               onClick={handleScrollToWorkArea}
@@ -105,7 +106,7 @@ export default function HeroSection() {
           </div>
 
           {/* תגיות הדגשה */}
-          <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs md:justify-end">
+          <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
               מותאם ל-INTERLASIK / PRK
             </span>
