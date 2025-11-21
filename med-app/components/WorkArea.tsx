@@ -273,6 +273,35 @@ export default function WorkArea() {
     }
   };
 
+  // ===== כפתורים חדשים לשלב 3 =====
+
+  const getTodayISO = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const goHome = () => {
+    setStep(1);
+    scrollToRef(step1Ref);
+  };
+
+  const resetAll = () => {
+    setStep(1);
+    setSurgeryType("INTERLASIK");
+    setSurgeryDate(getTodayISO());
+    setWakeTime("08:00");
+    setSleepTime("22:00");
+    setLoading(false);
+    setError(null);
+    setInvalidTime(false);
+    setPrescription(null);
+    setSchedule([]);
+    scrollToRef(step1Ref);
+  };
+
   const hasPrescription = !!prescription;
   const hasSchedule = schedule.length > 0;
 
@@ -739,18 +768,46 @@ export default function WorkArea() {
             {/* מרווח לכפתור הצף */}
             <div className="h-14 sm:h-16" />
 
-            {/* כפתור חזרה צף מעל לוח הזמנים */}
-            <div className="pointer-events-none sticky bottom-4 z-30">
-              <div className="pointer-events-auto mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
-                <button
-                  type="button"
-                  onClick={goToStep2}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:text-base"
-                >
-                  חזרה לשלב 2 – סקירת פרוטוקול
-                </button>
-              </div>
-            </div>
+            {/* בר כפתורים צף מעל לוח הזמנים */}
+<div className="pointer-events-none sticky bottom-4 z-30">
+  <div className="pointer-events-auto mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg shadow-slate-900/15">
+    
+    {/* 3 כפתורים – יפים, מרווחים, שווים */}
+    <div className="grid grid-cols-3 gap-3">
+      
+      {/* שמאל: חזרה לשלב 2 */}
+      <button
+        type="button"
+        onClick={goToStep2}
+        className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:text-base"
+      >
+        חזרה לשלב 2
+        <br />
+        סקירת פרוטוקול
+      </button>
+
+      {/* אמצע: חזרה לדף הראשי */}
+      <button
+        type="button"
+        onClick={goHome}
+        className="h-12 w-full rounded-xl bg-slate-100 px-3 text-sm font-semibold text-slate-900 hover:bg-slate-200 sm:text-base"
+      >
+        חזרה לדף הראשי
+      </button>
+
+      {/* ימין: מחיקה */}
+      <button
+        type="button"
+        onClick={resetAll}
+        className="h-12 w-full rounded-xl bg-red-50 px-3 text-sm font-semibold text-red-700 hover:bg-red-100 sm:text-base"
+      >
+        מחיקה
+      </button>
+
+    </div>
+  </div>
+</div>
+
           </div>
         )}
       </div>
