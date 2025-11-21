@@ -280,10 +280,14 @@ export default function WorkArea() {
     <section
       id="work-area"
       className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
+      aria-label="אזור עבודה לבניית לוח זמנים לטיפות"
     >
       <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
         {/* Stepper */}
-        <ol className="flex items-center justify-center gap-4 text-sm">
+        <ol
+          className="flex items-center justify-center gap-4 text-sm"
+          aria-label="שלבי יצירת לוח זמנים"
+        >
           {stepperItems.map((stepItem) => {
             const isActive = step === stepItem.idx;
             const isDone = step > stepItem.idx;
@@ -294,41 +298,49 @@ export default function WorkArea() {
               (stepItem.idx === 3 && hasSchedule);
 
             return (
-              <li
-                key={stepItem.idx}
-                onClick={() => {
-                  if (canGoForward) {
-                    handleStepClick(stepItem.idx);
-                  }
-                }}
-                className={`flex items-center gap-2 ${
-                  canGoForward ? "cursor-pointer" : "cursor-default"
-                }`}
-              >
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
-                    isDone
-                      ? "bg-emerald-500 border-emerald-500 text-white"
-                      : isActive
-                      ? "bg-sky-600 border-sky-600 text-white"
-                      : "bg-slate-200 border-slate-300 text-slate-600"
+              <li key={stepItem.idx} className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canGoForward) {
+                      handleStepClick(stepItem.idx);
+                    }
+                  }}
+                  disabled={!canGoForward}
+                  className={`flex items-center gap-2 rounded-full px-2 py-1 text-right transition ${
+                    canGoForward
+                      ? "cursor-pointer"
+                      : "cursor-not-allowed opacity-60"
                   }`}
+                  aria-current={isActive ? "step" : undefined}
+                  aria-label={`שלב ${stepItem.idx}: ${stepItem.label}`}
                 >
-                  {stepItem.idx}
-                </span>
-                <span
-                  className={`text-xs sm:text-sm font-medium ${
-                    isActive
-                      ? "text-sky-700"
-                      : isDone
-                      ? "text-emerald-600"
-                      : canGoForward
-                      ? "text-slate-700 hover:text-sky-700"
-                      : "text-slate-500"
-                  }`}
-                >
-                  {stepItem.label}
-                </span>
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
+                      isDone
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : isActive
+                        ? "bg-sky-600 border-sky-600 text-white"
+                        : "bg-slate-200 border-slate-300 text-slate-600"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {stepItem.idx}
+                  </span>
+                  <span
+                    className={`text-xs sm:text-sm font-medium ${
+                      isActive
+                        ? "text-sky-700"
+                        : isDone
+                        ? "text-emerald-600"
+                        : canGoForward
+                        ? "text-slate-700 hover:text-sky-700"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {stepItem.label}
+                  </span>
+                </button>
               </li>
             );
           })}
@@ -338,25 +350,33 @@ export default function WorkArea() {
         {step === 1 && (
           <div
             ref={step1Ref}
-            className="relative rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] space-y-4 sm:space-y-6"
+            className="relative space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:space-y-6 sm:p-6"
+            aria-labelledby="step1-title"
           >
             <div className="space-y-1">
-              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+              <h2
+                id="step1-title"
+                className="text-lg font-semibold text-slate-900 sm:text-2xl"
+              >
                 פרטי הניתוח
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600">
+              <p className="text-xs text-slate-600 sm:text-sm">
                 בחר סוג ניתוח, תאריך ושעות ערות – לאחר מכן תראה סיכום מסודר של
                 הפרוטוקול ולבסוף לוח זמנים מפורט לטיפות.
               </p>
             </div>
 
-            <div className="space-y-3 sm:space-y-4 text-sm">
-              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+            <div className="space-y-3 text-sm sm:space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">
+                  <label
+                    htmlFor="surgery-type"
+                    className="block text-sm font-medium text-slate-700"
+                  >
                     סוג הניתוח
                   </label>
                   <select
+                    id="surgery-type"
                     value={surgeryType}
                     onChange={(e) =>
                       setSurgeryType(e.target.value as SurgeryType)
@@ -369,10 +389,14 @@ export default function WorkArea() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">
+                  <label
+                    htmlFor="surgery-date"
+                    className="block text-sm font-medium text-slate-700"
+                  >
                     תאריך הניתוח
                   </label>
                   <input
+                    id="surgery-date"
                     type="date"
                     value={surgeryDate}
                     onChange={(e) => setSurgeryDate(e.target.value)}
@@ -381,12 +405,16 @@ export default function WorkArea() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">
-                    שעה שאתה קם בבוקר
+                  <label
+                    htmlFor="wake-time"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    שעת תחילת היום
                   </label>
                   <input
+                    id="wake-time"
                     type="time"
                     value={wakeTime}
                     onChange={(e) => setWakeTime(e.target.value)}
@@ -395,14 +423,20 @@ export default function WorkArea() {
                         ? "border-red-500"
                         : "border-slate-300 focus:border-sky-400"
                     }`}
+                    aria-invalid={invalidTime || undefined}
+                    aria-describedby={invalidTime ? "time-error" : undefined}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">
-                    שעה שאתה הולך לישון
+                  <label
+                    htmlFor="sleep-time"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    שעת סיום היום
                   </label>
                   <input
+                    id="sleep-time"
                     type="time"
                     value={sleepTime}
                     onChange={(e) => setSleepTime(e.target.value)}
@@ -411,24 +445,29 @@ export default function WorkArea() {
                         ? "border-red-500"
                         : "border-slate-300 focus:border-sky-400"
                     }`}
+                    aria-invalid={invalidTime || undefined}
+                    aria-describedby={invalidTime ? "time-error" : undefined}
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-700">
+                <div
+                  id="time-error"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 sm:text-sm"
+                >
                   {error}
                 </div>
               )}
             </div>
 
             {/* תיאור פרוטוקול אוטומטי קצר */}
-            <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm rounded-2xl border border-sky-100 bg-sky-50/60 p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 sm:mb-2 gap-2">
+            <div className="space-y-3 rounded-2xl border border-sky-100 bg-sky-50/60 p-3 text-xs sm:space-y-4 sm:p-4 sm:text-sm">
+              <div className="mb-1.5 flex flex-col gap-2 sm:mb-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="font-semibold text-slate-800">
                   הפרוטוקול האוטומטי ({surgeryType})
                 </span>
-                <span className="text-[11px] sm:text-sm text-slate-500">
+                <span className="text-[11px] text-slate-500 sm:text-sm">
                   סיכום כללי – תמיד לעקוב אחרי ההנחיות שקיבלת מהרופא.
                 </span>
               </div>
@@ -592,8 +631,8 @@ export default function WorkArea() {
                 </ul>
               )}
 
-              <div className="mt-2 sm:mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 border border-amber-200">
-                <span>💧</span>
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800 sm:mt-3">
+                <span aria-hidden="true">💧</span>
                 <span>מומלץ להמתין לפחות 5 דקות בין כל סוג טיפות.</span>
               </div>
             </div>
@@ -607,7 +646,7 @@ export default function WorkArea() {
                 <button
                   type="button"
                   onClick={handleContinueToStep2}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white shadow-sm hover:bg-sky-700"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 sm:text-base"
                 >
                   המשך לשלב 2 – סקירת פרוטוקול
                 </button>
@@ -618,15 +657,22 @@ export default function WorkArea() {
 
         {/* ===== שלב 2 – סיכום הוראות ===== */}
         {step === 2 && prescription && (
-          <div className="relative space-y-4" ref={step2Ref}>
+          <div
+            className="relative space-y-4"
+            ref={step2Ref}
+            aria-labelledby="step2-title"
+          >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+              <h2
+                id="step2-title"
+                className="text-lg font-semibold text-slate-900 sm:text-2xl"
+              >
                 סקירת פרוטוקול
               </h2>
               <button
                 type="button"
                 onClick={goToStep1}
-                className="text-xs sm:text-sm text-slate-500 hover:text-slate-700 underline-offset-2 hover:underline"
+                className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline sm:text-sm"
               >
                 חזרה לשלב 1 – פרטי הניתוח
               </button>
@@ -635,7 +681,7 @@ export default function WorkArea() {
             <PrescriptionView prescription={prescription} />
 
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-700">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 sm:text-sm">
                 {error}
               </div>
             )}
@@ -651,7 +697,7 @@ export default function WorkArea() {
                     type="button"
                     onClick={handleGenerateSchedule}
                     disabled={loading}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400 sm:text-base"
                   >
                     {loading
                       ? "יוצר לוח זמנים..."
@@ -660,7 +706,7 @@ export default function WorkArea() {
                   <button
                     type="button"
                     onClick={goToStep1}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm sm:text-base font-semibold text-slate-700 hover:bg-slate-50"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:text-base"
                   >
                     חזרה לשלב 1
                   </button>
@@ -672,9 +718,16 @@ export default function WorkArea() {
 
         {/* ===== שלב 3 – לוח זמנים ===== */}
         {step === 3 && hasSchedule && (
-          <div className="relative space-y-4" ref={step3Ref}>
+          <div
+            className="relative space-y-4"
+            ref={step3Ref}
+            aria-labelledby="step3-title"
+          >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg sm:text-2xl font-semibold text-slate-900">
+              <h2
+                id="step3-title"
+                className="text-lg font-semibold text-slate-900 sm:text-2xl"
+              >
                 לוח זמנים לטיפות
               </h2>
             </div>
@@ -692,7 +745,7 @@ export default function WorkArea() {
                 <button
                   type="button"
                   onClick={goToStep2}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm sm:text-base font-semibold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:text-base"
                 >
                   חזרה לשלב 2 – סקירת פרוטוקול
                 </button>
