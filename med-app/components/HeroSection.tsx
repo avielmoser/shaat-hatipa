@@ -2,8 +2,11 @@
 "use client";
 
 import React from "react";
+import { useClinicBrand } from "./ClinicBrandProvider";
 
 export default function HeroSection() {
+  const { brand, clinicId } = useClinicBrand();
+
   const handleScrollToWorkArea = () => {
     const section = document.getElementById("work-area");
     if (section) {
@@ -33,7 +36,6 @@ export default function HeroSection() {
             </div>
 
             <div className="space-y-3 text-sm">
-              {/* אפשר אחר־כך להחליף למפה אמיתית מהנתונים שלך */}
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
@@ -46,7 +48,7 @@ export default function HeroSection() {
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                  <span className="font-medium text-slate-800">Dicloftil  </span>
+                  <span className="font-medium text-slate-800">Dicloftil</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-900">
                   09:00
@@ -72,15 +74,37 @@ export default function HeroSection() {
 
         {/* טקסט + CTA – בצד ימין בדסקטופ */}
         <div className="flex-1 flex flex-col items-center space-y-6 text-center">
-          {/* תגית קטנה */}
-          <div className="flex justify-center">
+         {/* לוגו מרפאה (אם יש) + תגית */}
+<div className="flex flex-col items-center gap-3">
+  {clinicId && (
+    <div className="flex flex-col items-center gap-2">
+      <img
+        src={brand.logoUrl}
+        alt=""
+        className="max-h-14 w-auto object-contain"
+        loading="eager"
+        onError={(e) => {
+          // אם הלוגו לא נטען – מסתירים אותו לגמרי (בלי alt שחוזר)
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+     
+    </div>
+  )}
 
-            <span className="inline-flex items-center rounded-full bg-sky-100 px-4 py-1 text-xs font-medium text-sky-700">
-              כל הטיפות שלך במקום אחד מסודר
-            </span>
-          </div>
+  <span
+    className="inline-flex items-center rounded-full px-4 py-1 text-xs font-medium"
+    style={{
+      backgroundColor: clinicId ? "var(--clinic-secondary)" : undefined,
+      color: clinicId ? "var(--clinic-primary)" : undefined,
+    }}
+  >
+    כל הטיפות שלך במקום אחד מסודר
+  </span>
+</div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-slate-900">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] xl:text-[2.8rem] font-bold leading-snug tracking-tight text-slate-900">
+
             לוח זמנים אישי לטיפות
             <br />
             עיניים אחרי ניתוח לייזר
@@ -93,12 +117,33 @@ export default function HeroSection() {
 
           <div className="flex flex-col items-center gap-3">
             <button
-              type="button"
-              onClick={handleScrollToWorkArea}
-              className="inline-flex items-center justify-center rounded-full bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-md shadow-sky-500/30 transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2"
-            >
+  type="button"
+  onClick={handleScrollToWorkArea}
+  className="
+    inline-flex items-center justify-center rounded-full
+    px-6 py-3 text-base font-semibold text-white
+    shadow-md transition
+    bg-sky-600 hover:bg-sky-700
+    focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2
+  "
+  style={
+    clinicId
+      ? { backgroundColor: "var(--clinic-button)" } // צבע מרפאה
+      : undefined // נשאר הדיפולט של Tailwind
+  }
+  onMouseEnter={(e) => {
+    if (!clinicId) return;
+    (e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.95)";
+  }}
+  onMouseLeave={(e) => {
+    if (!clinicId) return;
+    (e.currentTarget as HTMLButtonElement).style.filter = "none";
+  }}
+>
+
               התחל בבניית לוח זמנים אישי
             </button>
+
             <span className="max-w-xs text-xs text-slate-500">
               כלי עזר לניהול לוח זמנים. אין לראות במידע המוצג תחליף לייעוץ
               רפואי.
