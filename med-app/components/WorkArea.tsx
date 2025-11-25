@@ -52,26 +52,37 @@ function buildInterlasikPrescription(
       name: "Sterodex",
       notes: "",
       phases: [
-        { dayStart: 1, dayEnd: 1, timesPerDay: hourlyDoses }, // יום הניתוח
+        // יום 1 – כל שעה בזמן ערות
+        { dayStart: 1, dayEnd: 1, timesPerDay: hourlyDoses },
+
+        // ימים 2–4 – 6 פעמים ביום
         { dayStart: 2, dayEnd: 4, timesPerDay: 6 },
-        { dayStart: 5, dayEnd: 8, timesPerDay: 4 },
+
+        // ימים 5–7 – 4 פעמים ביום
+        { dayStart: 5, dayEnd: 7, timesPerDay: 4 },
       ],
     },
+
     {
       id: "vigamox",
       name: "Vigamox",
       notes: "",
       phases: [
-        { dayStart: 1, dayEnd: 8, timesPerDay: 4 },
+        // ימים 1–7 – 4 פעמים ביום
+        { dayStart: 1, dayEnd: 7, timesPerDay: 4 },
       ],
     },
+
     {
       id: "systane-balance",
       name: "Systane Balance",
       notes: "",
       phases: [
-        { dayStart: 1, dayEnd: 8, timesPerDay: 6 },
-        { dayStart: 9, dayEnd: 32, timesPerDay: 4 },
+        // ימים 1–7 – 6 פעמים ביום
+        { dayStart: 1, dayEnd: 7, timesPerDay: 6 },
+
+        // ימים 8–32 – 4 פעמים ביום
+        { dayStart: 8, dayEnd: 32, timesPerDay: 4 },
       ],
     },
   ];
@@ -84,6 +95,7 @@ function buildInterlasikPrescription(
     medications,
   };
 }
+
 
 
 /**
