@@ -43,6 +43,7 @@ function diffInDays(startDateStr: string, targetDateStr: string): number {
 
 function groupByDate(schedule: DoseSlot[]): DayGroup[] {
   const map = new Map<string, DayGroup>();
+
   schedule.forEach((slot) => {
     if (!map.has(slot.date)) {
       map.set(slot.date, {
@@ -53,6 +54,7 @@ function groupByDate(schedule: DoseSlot[]): DayGroup[] {
     }
     map.get(slot.date)!.slots.push(slot);
   });
+
   const groups = Array.from(map.values());
   groups.sort((a, b) => a.date.localeCompare(b.date));
   return groups;
@@ -78,7 +80,7 @@ function groupByTime(slots: DoseSlot[]): TimeGroup[] {
 
 function filterByMode(
   schedule: DoseSlot[],
-  mode: FilterMode,
+  mode: FilterMode
 ): { filtered: DoseSlot[]; todayStr: string } {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -86,22 +88,24 @@ function filterByMode(
   const month = (today.getMonth() + 1).toString().padStart(2, "0");
   const day = today.getDate().toString().padStart(2, "0");
   const todayStr = `${year}-${month}-${day}`;
+
   if (mode === "allMonth") {
     return { filtered: schedule, todayStr };
   }
+
   let maxDaysAhead: number | null = null;
   if (mode === "today") maxDaysAhead = 0;
   if (mode === "7days") maxDaysAhead = 6;
+
   const filtered = schedule.filter((slot) => {
     const diffFromToday = diffInDays(todayStr, slot.date);
     if (diffFromToday < 0) return false;
     if (maxDaysAhead === null) return true;
     return diffFromToday <= maxDaysAhead;
   });
+
   return { filtered, todayStr };
 }
-
-// ... (the rest of the code stays mostly the same as before: header, filters, groupings)
 
 export default function ScheduleView({ schedule }: Props) {
   const [mode, setMode] = useState<FilterMode>("today");
@@ -127,7 +131,6 @@ export default function ScheduleView({ schedule }: Props) {
   if (mode === "7days") rangeLabel = "7 הימים הקרובים";
   if (mode === "allMonth") rangeLabel = "כל החודש";
 
-  // new: PDF loading state
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const handleExportIcs = () => {
@@ -203,6 +206,7 @@ export default function ScheduleView({ schedule }: Props) {
               כל החודש
             </button>
           </div>
+
           <div className="flex flex-wrap justify-end gap-2 text-[11px]">
             <button
               type="button"
@@ -240,6 +244,8 @@ export default function ScheduleView({ schedule }: Props) {
         <div className="mt-3 space-y-3 pr-0 md:pr-1">
           {dayGroups.map((day) => {
             const timeGroups = groupByTime(day.slots);
+            const displayDayIndex = day.dayIndex + 1; // יום 1 = יום הניתוח
+
             return (
               <div
                 key={day.date}
@@ -247,14 +253,13 @@ export default function ScheduleView({ schedule }: Props) {
               >
                 <div className="mb-2 flex items-center justify-between">
                   <div className="text-xs font-semibold text-slate-800">
-                    יום {day.dayIndex} • {day.date}
+                    יום {displayDayIndex} • {day.date}
                   </div>
                   <div className="text-[11px] text-slate-500">
                     {day.slots.length} מנות ביום זה
                   </div>
                 </div>
 
-                {/* כאן הגדלנו את הגובה המקסימלית וצופפנו רווחים */}
                 <div className="space-y-1 text-xs overflow-y-auto max-h-72 md:max-h-80">
                   {timeGroups.map((tg) => {
                     const notesSet = new Set(
