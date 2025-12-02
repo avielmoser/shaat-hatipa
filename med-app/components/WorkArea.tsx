@@ -12,149 +12,16 @@ import type {
 import PrescriptionView from "./PrescriptionView";
 import ScheduleView from "./ScheduleView";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
-import { getMedicationColor } from "../lib/medicationColors";
+import { getInterlasikMedications, getPrkMedications } from "../constants/protocols";
 
 type Step = 1 | 2 | 3;
 
 const stepperItems: { idx: Step; label: string }[] = [
-  { idx: 1, label: "פרטי הניתוח" },
-  { idx: 2, label: "סקירת פרוטוקול" },
-  { idx: 3, label: "לוח זמנים" },
+  { idx: 1, label: "Surgery Details" },
+  { idx: 2, label: "Protocol Review" },
+  { idx: 3, label: "Schedule" },
 ];
 
-/**
- * Build Interlasik prescription with correct protocol:
- * Sterodex:
- *   יום 0 – כל שעה
- *   יום 1–3 – 6 פעמים ביום
- *   יום 4–7 – 4 פעמים ביום
- * Vigamox:
- *   ימים 0–7 – 4 פעמים ביום
- * Systane Balance:
- *   ימים 0–7 – 6 פעמים ביום
- *   ימים 8–31 – 4 פעמים ביום
- */
-function buildInterlasikPrescription(
-  surgeryDate: string,
-  wakeTime: string,
-  sleepTime: string
-): LaserPrescriptionInput {
-  const { wakeMinutes, normalizedSleepMinutes } = normalizeAwakeWindow(
-    wakeTime,
-    sleepTime
-  );
-  const awakeWindow = normalizedSleepMinutes - wakeMinutes;
-  const hourlyDoses = Math.max(1, Math.floor(awakeWindow / 60));
-
-  const medications: Medication[] = [
-    {
-      id: "sterodex",
-      name: "Sterodex",
-      notes: "",
-      phases: [
-        // יום 1 – כל שעה בזמן ערות
-        { dayStart: 1, dayEnd: 1, timesPerDay: hourlyDoses },
-
-        // ימים 2–4 – 6 פעמים ביום
-        { dayStart: 2, dayEnd: 4, timesPerDay: 6 },
-
-        // ימים 5–7 – 4 פעמים ביום
-        { dayStart: 5, dayEnd: 7, timesPerDay: 4 },
-      ],
-    },
-
-    {
-      id: "vigamox",
-      name: "Vigamox",
-      notes: "",
-      phases: [
-        // ימים 1–7 – 4 פעמים ביום
-        { dayStart: 1, dayEnd: 7, timesPerDay: 4 },
-      ],
-    },
-
-    {
-      id: "systane-balance",
-      name: "Systane Balance",
-      notes: "",
-      phases: [
-        // ימים 1–7 – 6 פעמים ביום
-        { dayStart: 1, dayEnd: 7, timesPerDay: 6 },
-
-        // ימים 8–32 – 4 פעמים ביום
-        { dayStart: 8, dayEnd: 32, timesPerDay: 4 },
-      ],
-    },
-  ];
-
-  return {
-    surgeryType: "INTERLASIK",
-    surgeryDate,
-    wakeTime,
-    sleepTime,
-    medications,
-  };
-}
-
-
-
-/**
- * Build PRK prescription. Fixed tapering schedule per medication.
- */
-function buildPrkPrescription(
-  surgeryDate: string,
-  wakeTime: string,
-  sleepTime: string
-): LaserPrescriptionInput {
-  const medications: Medication[] = [
-    {
-      id: "sterodex",
-      name: "Sterodex (Dexamethasone)",
-      notes: "",
-      phases: [
-        { dayStart: 1, dayEnd: 7, timesPerDay: 4 },
-        { dayStart: 8, dayEnd: 14, timesPerDay: 3 },
-        { dayStart: 15, dayEnd: 21, timesPerDay: 2 },
-        { dayStart: 22, dayEnd: 28, timesPerDay: 1 },
-      ],
-    },
-    {
-      id: "vigamox",
-      name: "Vigamox (Moxifloxacin 0.5%)",
-      notes: "",
-      phases: [{ dayStart: 1, dayEnd: 7, timesPerDay: 4 }],
-    },
-    {
-      id: "dicloftil",
-      name: "Dicloftil 0.1%",
-      notes: "",
-      phases: [{ dayStart: 1, dayEnd: 3, timesPerDay: 3 }],
-    },
-    {
-      id: "systane-balance",
-      name: "Systane Balance",
-      notes: "",
-      phases: [{ dayStart: 1, dayEnd: 30, timesPerDay: 6 }],
-    },
-    {
-      id: "vitapos",
-      name: "Vitapos (Eye Ointment)",
-      notes: "",
-      phases: [
-        { dayStart: 8, dayEnd: 14, timesPerDay: 2 },
-        { dayStart: 15, dayEnd: 21, timesPerDay: 2 },
-      ],
-    },
-  ];
-
-  return {
-    surgeryType: "PRK",
-    surgeryDate,
-    wakeTime,
-    sleepTime,
-    medications,
-  };
-}
 
 export default function WorkArea() {
   const [step, setStep] = useState<Step>(1);
@@ -196,7 +63,7 @@ export default function WorkArea() {
     }
   }, [schedule.length, step]);
 
-  // ===== ניווט בין שלבים =====
+  // ===== Navigation =====
 
   const goToStep1 = () => {
     setStep(1);
@@ -233,24 +100,35 @@ export default function WorkArea() {
     }
   };
 
-  // ===== לוגיקת כפתורים =====
+  // ===== Button Logic =====
+
+  const buildPrescription = (): LaserPrescriptionInput => {
+    const { awakeMinutes } = normalizeAwakeWindow(wakeTime, sleepTime);
+    const medications =
+      surgeryType === "INTERLASIK"
+        ? getInterlasikMedications(awakeMinutes)
+        : getPrkMedications();
+
+    return {
+      surgeryType,
+      surgeryDate,
+      wakeTime,
+      sleepTime,
+      medications,
+    };
+  };
 
   const handleContinueToStep2 = () => {
     setError(null);
     setInvalidTime(false);
 
     if (isImpossibleAwakeWindow(wakeTime, sleepTime)) {
-      setError("טעות – אינך יכול לקום לפני שהלכת לישון");
+      setError("Error – You cannot wake up before you go to sleep");
       setInvalidTime(true);
       return;
     }
 
-    let body: LaserPrescriptionInput;
-    if (surgeryType === "INTERLASIK") {
-      body = buildInterlasikPrescription(surgeryDate, wakeTime, sleepTime);
-    } else {
-      body = buildPrkPrescription(surgeryDate, wakeTime, sleepTime);
-    }
+    const body = buildPrescription();
 
     setPrescription(body);
     setSchedule([]);
@@ -261,12 +139,7 @@ export default function WorkArea() {
   const handleGenerateSchedule = async () => {
     setError(null);
 
-    let body: LaserPrescriptionInput;
-    if (surgeryType === "INTERLASIK") {
-      body = buildInterlasikPrescription(surgeryDate, wakeTime, sleepTime);
-    } else {
-      body = buildPrkPrescription(surgeryDate, wakeTime, sleepTime);
-    }
+    const body = buildPrescription();
 
     setLoading(true);
     try {
@@ -278,7 +151,7 @@ export default function WorkArea() {
 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        throw new Error(json?.error || "שגיאה ביצירת לוח זמנים");
+        throw new Error(json?.error || "Error generating schedule");
       }
 
       const json = await res.json();
@@ -289,13 +162,13 @@ export default function WorkArea() {
     } catch (e: any) {
       console.error(e);
       setPrescription(body);
-      setError(e.message || "משהו השתבש, נסה שוב.");
+      setError(e.message || "Something went wrong, please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ===== כפתורים לשלב 3 =====
+  // ===== Step 3 Buttons =====
 
   const goHome = () => {
     setStep(1);
@@ -309,13 +182,13 @@ export default function WorkArea() {
     <section
       id="work-area"
       className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
-      aria-label="אזור עבודה לבניית לוח זמנים לטיפות"
+      aria-label="Drop schedule builder workspace"
     >
       <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
         {/* Stepper */}
         <ol
           className="flex items-center justify-center gap-4 text-sm"
-          aria-label="שלבי יצירת לוח זמנים"
+          aria-label="Schedule creation steps"
         >
           {stepperItems.map((stepItem) => {
             const isActive = step === stepItem.idx;
@@ -336,36 +209,33 @@ export default function WorkArea() {
                     }
                   }}
                   disabled={!canGoForward}
-                  className={`flex items-center gap-2 rounded-full px-2 py-1 text-right transition ${
-                    canGoForward
-                      ? "cursor-pointer"
-                      : "cursor-not-allowed opacity-60"
-                  }`}
+                  className={`flex items-center gap-2 rounded-full px-2 py-1 transition ${canGoForward
+                    ? "cursor-pointer"
+                    : "cursor-not-allowed opacity-60"
+                    }`}
                   aria-current={isActive ? "step" : undefined}
-                  aria-label={`שלב ${stepItem.idx}: ${stepItem.label}`}
+                  aria-label={`Step ${stepItem.idx}: ${stepItem.label}`}
                 >
                   <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
-                      isDone
-                        ? "bg-emerald-500 border-emerald-500 text-white"
-                        : isActive
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${isDone
+                      ? "bg-emerald-500 border-emerald-500 text-white"
+                      : isActive
                         ? "bg-sky-600 border-sky-600 text-white"
                         : "bg-slate-200 border-slate-300 text-slate-600"
-                    }`}
+                      }`}
                     aria-hidden="true"
                   >
                     {stepItem.idx}
                   </span>
                   <span
-                    className={`text-xs sm:text-sm font-medium ${
-                      isActive
-                        ? "text-sky-700"
-                        : isDone
+                    className={`text-xs sm:text-sm font-medium ${isActive
+                      ? "text-sky-700"
+                      : isDone
                         ? "text-emerald-600"
                         : canGoForward
-                        ? "text-slate-700 hover:text-sky-700"
-                        : "text-slate-500"
-                    }`}
+                          ? "text-slate-700 hover:text-sky-700"
+                          : "text-slate-500"
+                      }`}
                   >
                     {stepItem.label}
                   </span>
@@ -375,7 +245,7 @@ export default function WorkArea() {
           })}
         </ol>
 
-        {/* ===== שלב 1 – פרטי ניתוח ===== */}
+        {/* ===== Step 1 – Surgery Details ===== */}
         {step === 1 && (
           <div
             ref={step1Ref}
@@ -387,11 +257,10 @@ export default function WorkArea() {
                 id="step1-title"
                 className="text-lg font-semibold text-slate-900 sm:text-2xl"
               >
-                פרטי הניתוח
+                Surgery Details
               </h2>
               <p className="text-xs text-slate-600 sm:text-sm">
-                בחר סוג ניתוח, תאריך ושעות ערות – לאחר מכן תראה סיכום מסודר של
-                הפרוטוקול ולבסוף לוח זמנים מפורט לטיפות.
+                Select surgery type, date, and waking hours – then you'll see a structured protocol summary and finally a detailed drop schedule.
               </p>
             </div>
 
@@ -402,14 +271,15 @@ export default function WorkArea() {
                     htmlFor="surgery-type"
                     className="block text-sm font-medium text-slate-700"
                   >
-                    סוג הניתוח
+                    Surgery Type
                   </label>
                   <select
                     id="surgery-type"
                     value={surgeryType}
-                    onChange={(e) =>
-                      setSurgeryType(e.target.value as SurgeryType)
-                    }
+                    onChange={(e) => {
+                      setSurgeryType(e.target.value as SurgeryType);
+                      setSchedule([]); // Reset schedule on change
+                    }}
                     className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
                   >
                     <option value="INTERLASIK">INTERLASIK</option>
@@ -422,13 +292,16 @@ export default function WorkArea() {
                     htmlFor="surgery-date"
                     className="block text-sm font-medium text-slate-700"
                   >
-                    תאריך הניתוח
+                    Surgery Date
                   </label>
                   <input
                     id="surgery-date"
                     type="date"
                     value={surgeryDate}
-                    onChange={(e) => setSurgeryDate(e.target.value)}
+                    onChange={(e) => {
+                      setSurgeryDate(e.target.value);
+                      setSchedule([]); // Reset schedule on change
+                    }}
                     className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
                   />
                 </div>
@@ -440,18 +313,17 @@ export default function WorkArea() {
                     htmlFor="wake-time"
                     className="block text-sm font-medium text-slate-700"
                   >
-                    שעת תחילת היום
+                    Wake Up Time
                   </label>
                   <input
                     id="wake-time"
                     type="time"
                     value={wakeTime}
                     onChange={(e) => setWakeTime(e.target.value)}
-                    className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${
-                      invalidTime
-                        ? "border-red-500"
-                        : "border-slate-300 focus:border-sky-400"
-                    }`}
+                    className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${invalidTime
+                      ? "border-red-500"
+                      : "border-slate-300 focus:border-sky-400"
+                      }`}
                     aria-invalid={invalidTime || undefined}
                     aria-describedby={invalidTime ? "time-error" : undefined}
                   />
@@ -462,18 +334,17 @@ export default function WorkArea() {
                     htmlFor="sleep-time"
                     className="block text-sm font-medium text-slate-700"
                   >
-                    שעת סיום היום
+                    Bedtime
                   </label>
                   <input
                     id="sleep-time"
                     type="time"
                     value={sleepTime}
                     onChange={(e) => setSleepTime(e.target.value)}
-                    className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${
-                      invalidTime
-                        ? "border-red-500"
-                        : "border-slate-300 focus:border-sky-400"
-                    }`}
+                    className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${invalidTime
+                      ? "border-red-500"
+                      : "border-slate-300 focus:border-sky-400"
+                      }`}
                     aria-invalid={invalidTime || undefined}
                     aria-describedby={invalidTime ? "time-error" : undefined}
                   />
@@ -490,10 +361,10 @@ export default function WorkArea() {
               )}
             </div>
 
-            {/* מרווח שלא יתחבא מאחורי הכפתור הצף */}
+            {/* Spacer */}
             <div className="h-12 sm:h-14" />
 
-            {/* כפתור צף לשלב 2 */}
+            {/* Floating Button Step 2 */}
             <div className="pointer-events-none sticky bottom-4 z-30">
               <div className="pointer-events-auto mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
                 <button
@@ -501,14 +372,14 @@ export default function WorkArea() {
                   onClick={handleContinueToStep2}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 sm:text-base"
                 >
-                  המשך לשלב 2 – סקירת פרוטוקול
+                  Continue to Step 2 – Protocol Review
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ===== שלב 2 – סיכום הוראות ===== */}
+        {/* ===== Step 2 – Protocol Review ===== */}
         {step === 2 && prescription && (
           <div
             className="relative space-y-4"
@@ -520,14 +391,14 @@ export default function WorkArea() {
                 id="step2-title"
                 className="text-lg font-semibold text-slate-900 sm:text-2xl"
               >
-                סקירת פרוטוקול
+                Protocol Review
               </h2>
               <button
                 type="button"
                 onClick={goToStep1}
                 className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline sm:text-sm"
               >
-                חזרה לשלב 1 – פרטי הניתוח
+                Back to Step 1 – Surgery Details
               </button>
             </div>
 
@@ -539,10 +410,10 @@ export default function WorkArea() {
               </div>
             )}
 
-            {/* מרווח שלא יתחבא מאחורי בר הכפתורים */}
+            {/* Spacer */}
             <div className="h-14 sm:h-16" />
 
-            {/* בר כפתורים צף – לשלב 3 + חזרה ל־1 */}
+            {/* Floating Buttons */}
             <div className="pointer-events-none sticky bottom-4 z-30">
               <div className="pointer-events-auto mx-auto max-w-md rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -553,15 +424,15 @@ export default function WorkArea() {
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400 sm:text-base"
                   >
                     {loading
-                      ? "יוצר לוח זמנים..."
-                      : "המשך לשלב 3 – לוח זמנים"}
+                      ? "Generating Schedule..."
+                      : "Continue to Step 3 – Schedule"}
                   </button>
                   <button
                     type="button"
                     onClick={goToStep1}
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:text-base"
                   >
-                    חזרה לשלב 1
+                    Back to Step 1
                   </button>
                 </div>
               </div>
@@ -569,7 +440,7 @@ export default function WorkArea() {
           </div>
         )}
 
-        {/* ===== שלב 3 – לוח זמנים ===== */}
+        {/* ===== Step 3 – Schedule ===== */}
         {step === 3 && hasSchedule && (
           <div
             className="relative space-y-4"
@@ -581,7 +452,7 @@ export default function WorkArea() {
                 id="step3-title"
                 className="text-lg font-semibold text-slate-900 sm:text-2xl"
               >
-                לוח זמנים לטיפות
+                Drop Schedule
               </h2>
             </div>
 
@@ -589,10 +460,10 @@ export default function WorkArea() {
               <ScheduleView schedule={schedule} />
             </div>
 
-            {/* מרווח לכפתור הצף */}
+            {/* Spacer */}
             <div className="h-14 sm:h-16" />
 
-            {/* בר כפתורים צף מעל לוח הזמנים */}
+            {/* Floating Buttons */}
             <div className="pointer-events-none sticky bottom-4 z-30">
               <div className="pointer-events-auto mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg shadow-slate-900/15">
                 <div className="grid grid-cols-2 gap-3">
@@ -601,9 +472,9 @@ export default function WorkArea() {
                     onClick={goToStep2}
                     className="h-14 md:h-16 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 leading-snug hover:bg-slate-50 sm:text-base"
                   >
-                    חזרה לשלב 2
+                    Back to Step 2
                     <br />
-                    סקירת פרוטוקול
+                    Protocol Review
                   </button>
 
                   <button
@@ -611,7 +482,7 @@ export default function WorkArea() {
                     onClick={goHome}
                     className="h-14 md:h-16 w-full rounded-xl bg-slate-100 px-3 text-sm font-semibold text-slate-900 hover:bg-slate-200 sm:text-base"
                   >
-                    חזרה לדף הראשי
+                    Back to Home
                   </button>
                 </div>
               </div>

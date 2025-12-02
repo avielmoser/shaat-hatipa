@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="he" dir="rtl" className="scroll-smooth">
+    <html lang="en" dir="ltr" className="scroll-smooth">
       <body className="min-h-screen bg-slate-50 text-slate-900 antialiased relative overflow-x-hidden font-sans">
         {/* הרקע שלך נשאר כמו שהוא... */}
 

@@ -127,9 +127,9 @@ export default function ScheduleView({ schedule }: Props) {
 
   const dayGroups = groupByDate(filtered);
 
-  let rangeLabel = "היום בלבד";
-  if (mode === "7days") rangeLabel = "7 הימים הקרובים";
-  if (mode === "allMonth") rangeLabel = "כל החודש";
+  let rangeLabel = "Today Only";
+  if (mode === "7days") rangeLabel = "Next 7 Days";
+  if (mode === "allMonth") rangeLabel = "All Month";
 
   const [pdfLoading, setPdfLoading] = useState(false);
 
@@ -142,8 +142,8 @@ export default function ScheduleView({ schedule }: Props) {
     if (!schedule || schedule.length === 0 || pdfLoading) return;
     setPdfLoading(true);
     try {
-      const fileName = `לו״ז טיפות - ${surgeryDateStr || todayStr}.pdf`;
-      openSchedulePdf(schedule, fileName);
+      const fileName = `Drops-Schedule-${surgeryDateStr || todayStr}.pdf`;
+      openSchedulePdf(filtered, fileName);
     } finally {
       setPdfLoading(false);
     }
@@ -154,16 +154,16 @@ export default function ScheduleView({ schedule }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">
-            לוח זמנים לטיפות – {rangeLabel}
+            Drop Schedule – {rangeLabel}
           </h3>
           {surgeryDateStr &&
             daysSinceSurgery != null &&
             daysSinceSurgery >= 0 &&
             mode !== "allMonth" && (
               <p className="mt-0.5 text-[11px] text-slate-500">
-                היום הוא{" "}
+                Today is{" "}
                 <span className="font-semibold">
-                  יום {daysSinceSurgery + 1} אחרי הניתוח
+                  Post-Op Day {daysSinceSurgery + 1}
                 </span>{" "}
                 ({todayStr}).
               </p>
@@ -175,35 +175,32 @@ export default function ScheduleView({ schedule }: Props) {
             <button
               type="button"
               onClick={() => setMode("today")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "today"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
+              className={`rounded-full px-3 py-1 transition ${mode === "today"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "text-slate-600 hover:bg-white"
+                }`}
             >
-              היום
+              Today
             </button>
             <button
               type="button"
               onClick={() => setMode("7days")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "7days"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
+              className={`rounded-full px-3 py-1 transition ${mode === "7days"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "text-slate-600 hover:bg-white"
+                }`}
             >
-              7 ימים קרובים
+              Next 7 Days
             </button>
             <button
               type="button"
               onClick={() => setMode("allMonth")}
-              className={`rounded-full px-3 py-1 transition ${
-                mode === "allMonth"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
+              className={`rounded-full px-3 py-1 transition ${mode === "allMonth"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "text-slate-600 hover:bg-white"
+                }`}
             >
-              כל החודש
+              All Month
             </button>
           </div>
 
@@ -213,38 +210,37 @@ export default function ScheduleView({ schedule }: Props) {
               onClick={handleExportIcs}
               className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-700 hover:bg-sky-100"
             >
-              הוסף ליומן
+              Add to Calendar
             </button>
             <button
               type="button"
               onClick={handleExportPdf}
               disabled={pdfLoading}
-              className={`inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium ${
-                pdfLoading
-                  ? "cursor-not-allowed text-slate-400"
-                  : "text-slate-700 hover:bg-white"
-              }`}
+              className={`inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium ${pdfLoading
+                ? "cursor-not-allowed text-slate-400"
+                : "text-slate-700 hover:bg-white"
+                }`}
             >
-              {pdfLoading ? "מייצא..." : "ייצוא ל-PDF"}
+              {pdfLoading ? "Exporting..." : "Export to PDF"}
             </button>
           </div>
         </div>
       </div>
 
-      {/* בועת המתנה בין טיפות */}
+      {/* Wait 5 minutes bubble */}
       <div className="mt-3 mb-4 rounded-lg bg-yellow-50 px-3 py-2 text-[11px] text-yellow-800 border border-yellow-100">
-        המתן 5 דקות בין טיפות
+        Wait 5 minutes between drops
       </div>
 
       {dayGroups.length === 0 ? (
         <div className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          אין טיפות בטווח התאריכים שנבחר.
+          No drops in the selected date range.
         </div>
       ) : (
         <div className="mt-3 space-y-3 pr-0 md:pr-1">
           {dayGroups.map((day) => {
             const timeGroups = groupByTime(day.slots);
-            const displayDayIndex = day.dayIndex + 1; // יום 1 = יום הניתוח
+            const displayDayIndex = day.dayIndex + 1; // Day 1 = Surgery Day
 
             return (
               <div
@@ -253,10 +249,10 @@ export default function ScheduleView({ schedule }: Props) {
               >
                 <div className="mb-2 flex items-center justify-between">
                   <div className="text-xs font-semibold text-slate-800">
-                    יום {displayDayIndex} • {day.date}
+                    Day {displayDayIndex} • {day.date}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    {day.slots.length} מנות ביום זה
+                    {day.slots.length} doses this day
                   </div>
                 </div>
 

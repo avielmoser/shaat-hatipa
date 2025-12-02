@@ -1,4 +1,5 @@
 import type { LaserPrescriptionInput, DoseSlot, Medication } from "../types/prescription";
+import { getMedicationColor } from "../constants/theme";
 
 /**
  * Convert a time string in HH:mm format into the number of minutes
@@ -49,19 +50,6 @@ function addDays(dateStr: string, daysToAdd: number): string {
   return `${year}-${month}-${day}`;
 }
 
-const MED_COLORS = [
-  "#0ea5e9", // sky-500
-  "#a855f7", // purple-500
-  "#22c55e", // green-500
-  "#f97316", // orange-500
-  "#ec4899", // pink-500
-  "#eab308", // yellow-500
-];
-
-function getMedicationColor(medIndex: number): string {
-  return MED_COLORS[medIndex % MED_COLORS.length];
-}
-
 /**
  * Determine whether a candidate minute value (0–1439) falls within the user's awake window.
  * If the normalized sleep time is greater than 24 hours (1440 minutes), the awake window spans
@@ -101,7 +89,7 @@ function resolveMedicationCollisions(
   // Group slots by date and medication
   const groupMap = new Map<string, DoseSlot[]>();
   for (const slot of slots) {
-    const key = `${slot.date}|${(slot as any).medicationId}`;
+    const key = `${slot.date}|${slot.medicationId}`;
     if (!groupMap.has(key)) groupMap.set(key, []);
     groupMap.get(key)!.push(slot);
   }
@@ -109,30 +97,46 @@ function resolveMedicationCollisions(
   // Resolve collisions within each group
   for (const group of groupMap.values()) {
     // Sort by current time to preserve ordering
-    group.sort((a, b) => parseTimeToMinutes((a as any).time) - parseTimeToMinutes((b as any).time));
+    group.sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
     const occupied = new Set<number>();
+
     for (const slot of group) {
-      const origMinutes = parseTimeToMinutes((slot as any).time);
+      const origMinutes = parseTimeToMinutes(slot.time);
       let candidate = origMinutes;
-      if (occupied.has(candidate)) {
+      let found = false;
+
+      // If original time is free, take it
+      if (!occupied.has(candidate)) {
+        found = true;
+      } else {
         // Try offsets in 15-minute increments until a free slot is found
-        const maxSteps = 10; // up to ±150 minutes
-        outer: for (let step = 1; step <= maxSteps; step++) {
+        const maxSteps = 12; // up to ±180 minutes
+        for (let step = 1; step <= maxSteps; step++) {
           const offsets = [step * 15, -step * 15];
           for (const offset of offsets) {
             const newMin = origMinutes + offset;
+            // Check bounds (0 to 24*60)
             if (newMin < 0 || newMin >= 24 * 60) continue;
-            if (newMin % 15 !== 0) continue;
+            // Must be 15 min increment (already enforced by offset)
+            // Must be within awake window
             if (!isWithinAwakeWindow(newMin, wakeMinutes, normalizedSleepMinutes)) continue;
+            // Must be free
             if (occupied.has(newMin)) continue;
+
             candidate = newMin;
-            break outer;
+            found = true;
+            break;
           }
+          if (found) break;
         }
-        // אם לא נמצא מקום פנוי, נשאר בזמן המקורי (נדיר מאוד)
       }
+
+      // If still not found, we force it (overlap) but log a warning, 
+      // or we could just let it overlap. The 'occupied' set will track it.
+      // For now, we accept the overlap if we can't find space.
+
       occupied.add(candidate);
-      (slot as any).time = minutesToTimeStr(candidate);
+      slot.time = minutesToTimeStr(candidate);
     }
   }
 }

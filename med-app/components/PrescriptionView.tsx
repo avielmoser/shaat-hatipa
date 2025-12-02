@@ -20,18 +20,18 @@ export default function PrescriptionView({ prescription }: Props) {
 
   const surgeryTypeText =
     surgeryType === "INTERLASIK"
-      ? "פרוטוקול טיפות לאחר ניתוח INTERLASIK."
+      ? "Post-INTERLASIK drop protocol."
       : surgeryType === "PRK"
-      ? "פרוטוקול טיפות לאחר ניתוח PRK."
-      : "פרוטוקול מותאם אישית.";
+        ? "Post-PRK drop protocol."
+        : "Custom protocol.";
 
   return (
     <div className="space-y-3 sm:space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
-      {/* כותרת + באדג' סוג ניתוח */}
+      {/* Header + Surgery Type Badge */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5 sm:space-y-1">
           <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-            סיכום הוראות אחרי ניתוח
+            Post-Op Instructions Summary
           </h3>
           <p className="text-xs sm:text-sm text-slate-600">{surgeryTypeText}</p>
         </div>
@@ -40,23 +40,23 @@ export default function PrescriptionView({ prescription }: Props) {
         </span>
       </div>
 
-      {/* פרטי בסיס: תאריך, שעות ערות, כמות תרופות */}
+      {/* Basic Details: Date, Waking Hours, Med Count */}
       <div className="grid gap-2.5 rounded-2xl bg-slate-50/80 p-3 text-[13px] text-slate-700 sm:grid-cols-2 sm:gap-3 sm:p-4 sm:text-sm">
         <div>
-          <span className="font-semibold">תאריך ניתוח: </span>
+          <span className="font-semibold">Surgery Date: </span>
           {surgeryDate}
         </div>
         <div>
-          <span className="font-semibold">שעות ערות: </span>
+          <span className="font-semibold">Waking Hours: </span>
           {wakeTime}–{sleepTime}
         </div>
         <div>
-          <span className="font-semibold">מספר סוגי טיפות: </span>
+          <span className="font-semibold">Number of Medications: </span>
           {medications.length}
         </div>
       </div>
 
-      {/* רשימת תרופות + שלבים */}
+      {/* Medication List + Phases */}
       <div className="max-h-80 space-y-3 overflow-y-auto sm:max-h-96 sm:space-y-4 md:max-h-[28rem]">
         {medications.map((m) => {
           const color = getMedicationColor(m.name, m.id);
@@ -72,7 +72,7 @@ export default function PrescriptionView({ prescription }: Props) {
               className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"
             >
               <div className="flex items-center justify-between gap-2">
-                {/* באדג' תרופה – קומפקטי במובייל */}
+                {/* Medication Badge */}
                 <span
                   className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-1.5 py-0.5 text-[11px] font-semibold sm:px-2 sm:py-0.5 sm:text-xs"
                   style={chipStyle}
@@ -87,7 +87,7 @@ export default function PrescriptionView({ prescription }: Props) {
                 </span>
 
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] text-slate-600 sm:text-xs">
-                  {m.phases.length} שלבי טיפול
+                  {m.phases.length} Treatment Phases
                 </span>
               </div>
 
@@ -95,20 +95,20 @@ export default function PrescriptionView({ prescription }: Props) {
                 {m.phases.map((p, idx) => {
                   const range =
                     p.dayStart === p.dayEnd
-                      ? `יום ${p.dayStart}`
-                      : `ימים ${p.dayStart}–${p.dayEnd}`;
+                      ? `Day ${p.dayStart}`
+                      : `Days ${p.dayStart}–${p.dayEnd}`;
 
-                  // Sterodex ביום 1 → תמיד "כל שעה"
+                  // Sterodex on Day 1 → always "Every hour"
                   const isSurgeryDaySterodex =
                     m.name.toLowerCase() === "sterodex" &&
                     p.dayStart === 1 &&
                     p.dayEnd === 1;
 
                   const freq = isSurgeryDaySterodex
-                    ? "כל שעה"
+                    ? "Every hour"
                     : p.timesPerDay === 1
-                    ? "פעם אחת ביום"
-                    : `${p.timesPerDay} פעמים ביום`;
+                      ? "Once a day"
+                      : `${p.timesPerDay} times a day`;
 
                   return (
                     <li key={idx}>

@@ -12,7 +12,7 @@ export default function Page() {
       </main>
 
       <footer className="border-t border-slate-200 bg-white/80 py-4 text-center text-[11px] text-slate-400">
-        פותח ונבנה על ידי אביאל מאוזר
+        Developed and built by Aviel Moser
       </footer>
     </div>
   );

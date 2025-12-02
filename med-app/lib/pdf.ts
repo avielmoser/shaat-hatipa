@@ -51,46 +51,50 @@ function buildPrintableHtml(schedule: DoseSlot[], fileName: string): string {
   const dayGroups = groupByDate(schedule);
   const parts: string[] = [];
   parts.push(
-    `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charSet="utf-8"><title>${escapeHtml(
+    `<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charSet="utf-8"><title>${escapeHtml(
       fileName,
     )}</title><style>
     body{font-family:Arial,sans-serif;margin:24px;background:#fafafa;color:#0f172a;}
     h1{font-size:20px;margin-bottom:12px;}
     h2{font-size:16px;margin:18px 0 8px;}
     table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
-    th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:right;}
+    th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left;}
     th{background:#e5f2ff;}
     .chip{display:inline-block;margin:2px;padding:2px 6px;border-radius:999px;border:1px solid;line-height:1;}
     </style></head><body>`,
   );
   parts.push(`<h1>${escapeHtml(fileName)}</h1>`);
-  dayGroups.forEach((day) => {
-    const timeGroups = groupByTime(day.slots);
-    parts.push(`<h2>יום ${day.slots[0].dayIndex} • ${escapeHtml(day.date)}</h2>`);
-    parts.push(`<table><thead><tr><th>שעה</th><th>טיפות</th><th>הערות</th></tr></thead><tbody>`);
-    timeGroups.forEach((tg) => {
-      const medsHtml = tg.slots
-        .map((s) => {
-          const color = getMedicationColor(s.medicationName, s.id) ?? "#0f172a";
-          return `<span class="chip" style="color:${color};border-color:${color};background-color:${color}22;">${escapeHtml(
-            s.medicationName,
-          )}</span>`;
-        })
-        .join(" ");
-      const notesSet = new Set(
-        tg.slots
-          .map((s) => s.notes?.trim())
-          .filter((n): n is string => !!n),
-      );
-      const notes = notesSet.size > 0 ? Array.from(notesSet).join(" • ") : "";
-      parts.push(
-        `<tr><td>${escapeHtml(tg.time)}</td><td>${medsHtml}</td><td>${escapeHtml(
-          notes,
-        )}</td></tr>`,
-      );
+  if (dayGroups.length === 0) {
+    parts.push(`<p style="text-align:center;color:#64748b;margin-top:40px;">No doses scheduled for this period.</p>`);
+  } else {
+    dayGroups.forEach((day) => {
+      const timeGroups = groupByTime(day.slots);
+      parts.push(`<h2>Day ${day.slots[0].dayIndex} • ${escapeHtml(day.date)}</h2>`);
+      parts.push(`<table><thead><tr><th>Time</th><th>Drops</th><th>Notes</th></tr></thead><tbody>`);
+      timeGroups.forEach((tg) => {
+        const medsHtml = tg.slots
+          .map((s) => {
+            const color = getMedicationColor(s.medicationName, s.id) ?? "#0f172a";
+            return `<span class="chip" style="color:${color};border-color:${color};background-color:${color}22;">${escapeHtml(
+              s.medicationName,
+            )}</span>`;
+          })
+          .join(" ");
+        const notesSet = new Set(
+          tg.slots
+            .map((s) => s.notes?.trim())
+            .filter((n): n is string => !!n),
+        );
+        const notes = notesSet.size > 0 ? Array.from(notesSet).join(" • ") : "";
+        parts.push(
+          `<tr><td>${escapeHtml(tg.time)}</td><td>${medsHtml}</td><td>${escapeHtml(
+            notes,
+          )}</td></tr>`,
+        );
+      });
+      parts.push("</tbody></table>");
     });
-    parts.push("</tbody></table>");
-  });
+  }
   parts.push("</body></html>");
   return parts.join("");
 }

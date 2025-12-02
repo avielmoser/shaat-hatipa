@@ -6,23 +6,23 @@ export default function HowItWorksSection() {
   const steps = [
     {
       number: 1,
-      title: "העלאת המרשם או הזנת הנתונים",
-      desc: "המערכת מקבלת את סוגי הטיפות והמרווחים המומלצים, לפי פרוטוקול רפואי קבוע או לפי הזנה ידנית שלך.",
+      title: "Upload Prescription or Enter Data",
+      desc: "The system accepts drop types and recommended intervals, based on a fixed medical protocol or your manual input.",
     },
     {
       number: 2,
-      title: "חישוב לוח זמנים חכם",
-      desc: "האלגוריתם מחשב את השעות המדויקות לפי שעות הערות שלך, זמן הניתוח, ומרווחי הטיפול הנדרשים.",
+      title: "Smart Schedule Calculation",
+      desc: "The algorithm calculates exact times based on your waking hours, surgery time, and required treatment intervals.",
     },
     {
       number: 3,
-      title: "אישור ידני מהיר",
-      desc: "אתה בודק שכל השעות נוחות לך – אפשר לשנות ולשמור התאמות אישיות לפני קבלת הלוח הסופי.",
+      title: "Quick Manual Approval",
+      desc: "You verify that all times are convenient – you can change and save personal adjustments before receiving the final schedule.",
     },
     {
       number: 4,
-      title: "ייצוא והוספה ליומן שלך",
-      desc: "בלחיצה אחת אפשר להוריד קובץ .ICS ולהוסיף את הטיפות ישירות ליומן – או לצפות בלוח השבועי באפליקציה.",
+      title: "Export and Add to Calendar",
+      desc: "With one click, you can download an .ICS file and add the drops directly to your calendar – or view the weekly schedule in the app.",
     },
   ];
 
@@ -30,10 +30,10 @@ export default function HowItWorksSection() {
     <div className="space-y-6 sm:space-y-8">
       <div className="text-center sm:text-start">
         <h2 className="text-lg font-semibold text-sky-600 sm:text-xl">
-          איך זה עובד
+          How It Works
         </h2>
         <p className="mt-1 text-sm text-slate-500 sm:text-base">
-          כל התהליך מתבצע תוך שניות – ברור, חכם, ועם שליטה מלאה בידיים שלך.
+          The entire process takes seconds – clear, smart, and fully under your control.
         </p>
       </div>
 
