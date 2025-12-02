@@ -11,7 +11,7 @@ export default function Page() {
         <WorkArea />
       </main>
 
-      <footer className="border-t border-slate-200 bg-white/80 py-4 text-center text-[11px] text-slate-400">
+      <footer className="border-t border-slate-200 bg-white/80 py-4 text-center text-sm text-slate-500">
         Developed and built by Aviel Moser
       </footer>
     </div>

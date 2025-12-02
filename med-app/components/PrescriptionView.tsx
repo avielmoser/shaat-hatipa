@@ -33,15 +33,15 @@ export default function PrescriptionView({ prescription }: Props) {
           <h3 className="text-base sm:text-lg font-semibold text-slate-900">
             Post-Op Instructions Summary
           </h3>
-          <p className="text-xs sm:text-sm text-slate-600">{surgeryTypeText}</p>
+          <p className="text-sm sm:text-base text-slate-800">{surgeryTypeText}</p>
         </div>
-        <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-700 sm:px-3 sm:py-1 sm:text-sm">
+        <span className="rounded-full border-2 border-sky-200 bg-sky-50 px-3 py-1 text-sm font-bold text-sky-800 sm:px-4 sm:py-1.5 sm:text-base">
           {surgeryType}
         </span>
       </div>
 
       {/* Basic Details: Date, Waking Hours, Med Count */}
-      <div className="grid gap-2.5 rounded-2xl bg-slate-50/80 p-3 text-[13px] text-slate-700 sm:grid-cols-2 sm:gap-3 sm:p-4 sm:text-sm">
+      <div className="grid gap-3 rounded-2xl bg-slate-50/80 p-4 text-base text-slate-800 sm:grid-cols-2 sm:gap-4 sm:p-5 sm:text-lg">
         <div>
           <span className="font-semibold">Surgery Date: </span>
           {surgeryDate}
@@ -74,7 +74,7 @@ export default function PrescriptionView({ prescription }: Props) {
               <div className="flex items-center justify-between gap-2">
                 {/* Medication Badge */}
                 <span
-                  className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-1.5 py-0.5 text-[11px] font-semibold sm:px-2 sm:py-0.5 sm:text-xs"
+                  className="inline-flex max-w-full items-center gap-2 rounded-full border-2 px-3 py-1 text-sm font-bold sm:px-4 sm:py-1.5 sm:text-base"
                   style={chipStyle}
                 >
                   <span
@@ -86,12 +86,12 @@ export default function PrescriptionView({ prescription }: Props) {
                   </span>
                 </span>
 
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] text-slate-600 sm:text-xs">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800 font-medium sm:text-base">
                   {m.phases.length} Treatment Phases
                 </span>
               </div>
 
-              <ul className="list-inside list-disc space-y-1 pr-3 text-[13px] text-slate-700 sm:text-sm">
+              <ul className="list-inside list-disc space-y-2 pr-3 text-base text-slate-900 sm:text-lg">
                 {m.phases.map((p, idx) => {
                   const range =
                     p.dayStart === p.dayEnd
@@ -118,7 +118,7 @@ export default function PrescriptionView({ prescription }: Props) {
                 })}
 
                 {m.notes && (
-                  <li className="text-[13px] font-medium text-slate-700 sm:text-sm">
+                  <li className="text-base font-bold text-slate-900 sm:text-lg">
                     {m.notes}
                   </li>
                 )}

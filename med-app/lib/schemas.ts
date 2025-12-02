@@ -7,6 +7,9 @@ export const phaseSchema = z.object({
 }).refine((data) => data.dayEnd >= data.dayStart, {
     message: "dayEnd must be greater than or equal to dayStart",
     path: ["dayEnd"],
+}).refine((data) => data.dayEnd <= 365, {
+    message: "dayEnd cannot exceed 365 days",
+    path: ["dayEnd"],
 });
 
 export const medicationSchema = z.object({

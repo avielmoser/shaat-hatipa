@@ -11,6 +11,9 @@ import type {
 
 import PrescriptionView from "./PrescriptionView";
 import ScheduleView from "./ScheduleView";
+import SurgeryForm from "./SurgeryForm";
+import ProtocolReview from "./ProtocolReview";
+import ScheduleDisplay from "./ScheduleDisplay";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
 import { getInterlasikMedications, getPrkMedications } from "../constants/protocols";
 
@@ -43,17 +46,20 @@ export default function WorkArea() {
     useState<LaserPrescriptionInput | null>(null);
   const [schedule, setSchedule] = useState<DoseSlot[]>([]);
 
+  // ... existing refs ...
   const step1Ref = useRef<HTMLDivElement | null>(null);
   const step2Ref = useRef<HTMLDivElement | null>(null);
   const step3Ref = useRef<HTMLDivElement | null>(null);
   const scheduleRef = useRef<HTMLDivElement | null>(null);
 
+  // ... existing scrollToRef ...
   const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
+  // ... existing useEffect ...
   useEffect(() => {
     if (schedule.length > 0 && step === 3 && scheduleRef.current) {
       scheduleRef.current.scrollIntoView({
@@ -187,7 +193,7 @@ export default function WorkArea() {
       <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
         {/* Stepper */}
         <ol
-          className="flex items-center justify-center gap-4 text-sm"
+          className="flex items-center justify-center gap-4 text-base"
           aria-label="Schedule creation steps"
         >
           {stepperItems.map((stepItem) => {
@@ -217,7 +223,7 @@ export default function WorkArea() {
                   aria-label={`Step ${stepItem.idx}: ${stepItem.label}`}
                 >
                   <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition ${isDone
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold transition ${isDone
                       ? "bg-emerald-500 border-emerald-500 text-white"
                       : isActive
                         ? "bg-sky-600 border-sky-600 text-white"
@@ -228,13 +234,13 @@ export default function WorkArea() {
                     {stepItem.idx}
                   </span>
                   <span
-                    className={`text-xs sm:text-sm font-medium ${isActive
-                      ? "text-sky-700"
+                    className={`text-sm sm:text-base font-bold ${isActive
+                      ? "text-sky-800"
                       : isDone
-                        ? "text-emerald-600"
+                        ? "text-emerald-700"
                         : canGoForward
-                          ? "text-slate-700 hover:text-sky-700"
-                          : "text-slate-500"
+                          ? "text-slate-700 hover:text-sky-800"
+                          : "text-slate-600"
                       }`}
                   >
                     {stepItem.label}
@@ -247,245 +253,51 @@ export default function WorkArea() {
 
         {/* ===== Step 1 – Surgery Details ===== */}
         {step === 1 && (
-          <div
-            ref={step1Ref}
-            className="relative space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:space-y-6 sm:p-6"
-            aria-labelledby="step1-title"
-          >
-            <div className="space-y-1">
-              <h2
-                id="step1-title"
-                className="text-lg font-semibold text-slate-900 sm:text-2xl"
-              >
-                Surgery Details
-              </h2>
-              <p className="text-xs text-slate-600 sm:text-sm">
-                Select surgery type, date, and waking hours – then you'll see a structured protocol summary and finally a detailed drop schedule.
-              </p>
-            </div>
-
-            <div className="space-y-3 text-sm sm:space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="surgery-type"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    Surgery Type
-                  </label>
-                  <select
-                    id="surgery-type"
-                    value={surgeryType}
-                    onChange={(e) => {
-                      setSurgeryType(e.target.value as SurgeryType);
-                      setSchedule([]); // Reset schedule on change
-                    }}
-                    className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  >
-                    <option value="INTERLASIK">INTERLASIK</option>
-                    <option value="PRK">PRK</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label
-                    htmlFor="surgery-date"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    Surgery Date
-                  </label>
-                  <input
-                    id="surgery-date"
-                    type="date"
-                    value={surgeryDate}
-                    onChange={(e) => {
-                      setSurgeryDate(e.target.value);
-                      setSchedule([]); // Reset schedule on change
-                    }}
-                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="wake-time"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    Wake Up Time
-                  </label>
-                  <input
-                    id="wake-time"
-                    type="time"
-                    value={wakeTime}
-                    onChange={(e) => setWakeTime(e.target.value)}
-                    className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${invalidTime
-                      ? "border-red-500"
-                      : "border-slate-300 focus:border-sky-400"
-                      }`}
-                    aria-invalid={invalidTime || undefined}
-                    aria-describedby={invalidTime ? "time-error" : undefined}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label
-                    htmlFor="sleep-time"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    Bedtime
-                  </label>
-                  <input
-                    id="sleep-time"
-                    type="time"
-                    value={sleepTime}
-                    onChange={(e) => setSleepTime(e.target.value)}
-                    className={`block w-full rounded-lg border px-3 py-2 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 ${invalidTime
-                      ? "border-red-500"
-                      : "border-slate-300 focus:border-sky-400"
-                      }`}
-                    aria-invalid={invalidTime || undefined}
-                    aria-describedby={invalidTime ? "time-error" : undefined}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div
-                  id="time-error"
-                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 sm:text-sm"
-                >
-                  {error}
-                </div>
-              )}
-            </div>
-
-            {/* Spacer */}
-            <div className="h-12 sm:h-14" />
-
-            {/* Floating Button Step 2 */}
-            <div className="pointer-events-none sticky bottom-4 z-30">
-              <div className="pointer-events-auto mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
-                <button
-                  type="button"
-                  onClick={handleContinueToStep2}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 sm:text-base"
-                >
-                  Continue to Step 2 – Protocol Review
-                </button>
-              </div>
-            </div>
+          <div ref={step1Ref}>
+            <SurgeryForm
+              surgeryType={surgeryType}
+              setSurgeryType={(val) => {
+                setSurgeryType(val);
+                setSchedule([]);
+              }}
+              surgeryDate={surgeryDate}
+              setSurgeryDate={(val) => {
+                setSurgeryDate(val);
+                setSchedule([]);
+              }}
+              wakeTime={wakeTime}
+              setWakeTime={setWakeTime}
+              sleepTime={sleepTime}
+              setSleepTime={setSleepTime}
+              invalidTime={invalidTime}
+              error={error}
+              onNext={handleContinueToStep2}
+            />
           </div>
         )}
 
         {/* ===== Step 2 – Protocol Review ===== */}
         {step === 2 && prescription && (
-          <div
-            className="relative space-y-4"
-            ref={step2Ref}
-            aria-labelledby="step2-title"
-          >
-            <div className="flex items-center justify-between">
-              <h2
-                id="step2-title"
-                className="text-lg font-semibold text-slate-900 sm:text-2xl"
-              >
-                Protocol Review
-              </h2>
-              <button
-                type="button"
-                onClick={goToStep1}
-                className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline sm:text-sm"
-              >
-                Back to Step 1 – Surgery Details
-              </button>
-            </div>
-
-            <PrescriptionView prescription={prescription} />
-
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 sm:text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Spacer */}
-            <div className="h-14 sm:h-16" />
-
-            {/* Floating Buttons */}
-            <div className="pointer-events-none sticky bottom-4 z-30">
-              <div className="pointer-events-auto mx-auto max-w-md rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/15">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <button
-                    type="button"
-                    onClick={handleGenerateSchedule}
-                    disabled={loading}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400 sm:text-base"
-                  >
-                    {loading
-                      ? "Generating Schedule..."
-                      : "Continue to Step 3 – Schedule"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={goToStep1}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:text-base"
-                  >
-                    Back to Step 1
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div ref={step2Ref}>
+            <ProtocolReview
+              prescription={prescription}
+              error={error}
+              loading={loading}
+              onBack={goToStep1}
+              onGenerate={handleGenerateSchedule}
+            />
           </div>
         )}
 
         {/* ===== Step 3 – Schedule ===== */}
         {step === 3 && hasSchedule && (
-          <div
-            className="relative space-y-4"
-            ref={step3Ref}
-            aria-labelledby="step3-title"
-          >
-            <div className="flex items-center justify-between">
-              <h2
-                id="step3-title"
-                className="text-lg font-semibold text-slate-900 sm:text-2xl"
-              >
-                Drop Schedule
-              </h2>
-            </div>
-
+          <div ref={step3Ref}>
             <div ref={scheduleRef}>
-              <ScheduleView schedule={schedule} />
-            </div>
-
-            {/* Spacer */}
-            <div className="h-14 sm:h-16" />
-
-            {/* Floating Buttons */}
-            <div className="pointer-events-none sticky bottom-4 z-30">
-              <div className="pointer-events-auto mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg shadow-slate-900/15">
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={goToStep2}
-                    className="h-14 md:h-16 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 leading-snug hover:bg-slate-50 sm:text-base"
-                  >
-                    Back to Step 2
-                    <br />
-                    Protocol Review
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={goHome}
-                    className="h-14 md:h-16 w-full rounded-xl bg-slate-100 px-3 text-sm font-semibold text-slate-900 hover:bg-slate-200 sm:text-base"
-                  >
-                    Back to Home
-                  </button>
-                </div>
-              </div>
+              <ScheduleDisplay
+                schedule={schedule}
+                onBack={goToStep2}
+                onHome={goHome}
+              />
             </div>
           </div>
         )}

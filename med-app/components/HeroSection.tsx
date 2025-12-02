@@ -27,9 +27,9 @@ export default function HeroSection() {
                 <p className="text-sm font-semibold text-slate-900">
                   Sample Daily Schedule
                 </p>
-                <p className="text-xs text-slate-500">Day 1 Post-Op</p>
+                <p className="text-sm font-medium text-slate-700">Day 1 Post-Op</p>
               </div>
-              <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+              <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-800">
                 Post-Op Day 1
               </span>
             </div>
@@ -64,7 +64,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <p className="mt-4 text-xs leading-relaxed text-slate-500">
+            <p className="mt-4 text-sm leading-relaxed text-slate-600">
               This is just an example. The system will coordinate your drops throughout your waking hours, according to the appropriate medical protocol.
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function HeroSection() {
               <div className="flex flex-col items-center gap-2">
                 <img
                   src={brand.logoUrl}
-                  alt=""
+                  alt={brand.name || "Clinic Logo"}
                   className="max-h-14 w-auto object-contain"
                   loading="eager"
                   onError={(e) => {
@@ -109,7 +109,7 @@ export default function HeroSection() {
             After Laser Surgery
           </h1>
 
-          <p className="mx-auto max-w-md md:mx-0 text-base sm:text-lg leading-relaxed text-slate-600">
+          <p className="mx-auto max-w-md md:mx-0 text-lg sm:text-xl leading-relaxed text-slate-700">
             The system generates a precise and structured medical schedule for you, based on your surgery type and personal waking hours.
           </p>
 
@@ -119,10 +119,10 @@ export default function HeroSection() {
               onClick={handleScrollToWorkArea}
               className="
     inline-flex items-center justify-center rounded-full
-    px-6 py-3 text-base font-semibold text-white
-    shadow-md transition
+    px-8 py-4 text-lg font-bold text-white
+    shadow-lg transition
     bg-sky-600 hover:bg-sky-700
-    focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2
+    focus:outline-none focus:ring-4 focus:ring-sky-500 focus:ring-offset-2
   "
               style={
                 clinicId
@@ -139,23 +139,23 @@ export default function HeroSection() {
               }}
             >
 
-              Start Building Your Personal Schedule
+              Start Now
             </button>
 
-            <span className="max-w-xs text-xs text-slate-500">
+            <span className="max-w-xs text-sm text-slate-600">
               Schedule management tool. The information presented does not replace medical advice.
             </span>
           </div>
 
           {/* Highlight Tags */}
-          <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
+          <div className="mt-2 flex flex-wrap justify-center gap-2 text-sm">
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-800">
               Optimized for INTERLASIK / PRK
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-800">
               Export to Calendar & PDF
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 py-1 font-medium text-slate-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 py-1 font-medium text-slate-800">
               Protocol calculated by your personal waking hours
             </span>
           </div>

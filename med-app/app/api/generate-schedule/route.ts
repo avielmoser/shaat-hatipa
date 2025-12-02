@@ -2,38 +2,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildLaserSchedule } from "../../../lib/schedule-builder";
 import { laserPrescriptionInputSchema } from "../../../lib/schemas";
+import { validateRequest } from "../../../lib/api-utils";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    // TODO: Implement proper rate limiting using @upstash/ratelimit and Redis.
-    // The previous in-memory implementation was ineffective in serverless environments.
+    // Rate limiting is handled in middleware.ts using @upstash/ratelimit
 
-    const rawBody = await req.json().catch(() => null);
+    const validation = await validateRequest(
+      req,
+      laserPrescriptionInputSchema
+    );
 
-    if (!rawBody) {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validation.response;
     }
 
-    const validationResult = laserPrescriptionInputSchema.safeParse(rawBody);
-
-    if (!validationResult.success) {
-      // Format Zod errors into a readable string
-      const errorMessage = (validationResult.error as any).errors
-        .map((e: any) => `${e.path.join(".")}: ${e.message}`)
-        .join(", ");
-
-      return NextResponse.json(
-        { error: `Validation Error: ${errorMessage}` },
-        { status: 400 }
-      );
-    }
-
-    const input = validationResult.data;
+    const input = validation.data;
 
     // Use the unified scheduling logic
     const schedule = buildLaserSchedule(input);
