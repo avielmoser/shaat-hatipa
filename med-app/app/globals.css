@@ -164,11 +164,3 @@ body {
   animation-delay: 4s;
 }
 
-
-html {
-  direction: ltr;
-}
-
-body {
-  text-align: left;
-}

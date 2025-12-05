@@ -1,0 +1,156 @@
+{
+    "HomePage": {
+        "title": "ShaatHaTipa",
+        "description": "Personal drop schedule generator after surgery"
+    },
+    "Navbar": {
+        "title": "ShaatHaTipa",
+        "subtitle": "Smart Drop Schedule",
+        "buildSchedule": "Build Schedule",
+        "disclaimer": "Trial Version · Not Medical Advice",
+        "languageSwitcherLabel": "Language Selection"
+    },
+    "Hero": {
+        "sampleSchedule": "Sample Daily Schedule",
+        "day1PostOp": "Day 1 Post-Op",
+        "postOpDay1": "Post-Op Day 1",
+        "exampleDisclaimer": "This is just an example. The system will coordinate your drops throughout your waking hours, according to the appropriate medical protocol.",
+        "allDropsInOnePlace": "All your drops in one organized place",
+        "title": "Personal post-surgery schedule",
+        "subtitle": "Guided and personalized by your medical protocol",
+        "description": "The system generates a structured medical schedule,<br />personalized to your surgery type and waking hours.",
+        "feature1": "Tailored to your medical protocol",
+        "feature2": "Precise timing based on your day",
+        "feature3": "One-click export to Calendar & PDF",
+        "startNow": "Start Now",
+        "medicalAdviceDisclaimer": "Schedule management tool. The information presented does not replace medical advice.",
+        "tagInterlasik": "",
+        "tagExport": "Export to Calendar & PDF",
+        "tagProtocol": "Protocol calculated by your personal waking hours"
+    },
+    "Wizard": {
+        "steps": {
+            "1": "Surgery Details",
+            "2": "Protocol Review",
+            "3": "Schedule"
+        },
+        "step1": {
+            "title": "Surgery Details",
+            "description": "Select surgery type, date, and waking hours – then you'll see a structured protocol summary and finally a detailed drop schedule.",
+            "surgeryType": "Surgery Type",
+            "surgeryDate": "Surgery Date",
+            "wakeTime": "Wake Up Time",
+            "bedtime": "Bedtime",
+            "nextButton": "Next: Review Protocol",
+            "errors": {
+                "impossibleWakeTime": "Error – You cannot wake up before you go to sleep"
+            }
+        },
+        "step2": {
+            "title": "Protocol Review",
+            "backToStep1": "Back to Step 1 – Surgery Details",
+            "disclaimerAgree": "I agree to the Medical Disclaimer",
+            "disclaimerText": "This schedule is generated based on general protocols and is not a substitute for professional medical advice. I agree to follow my surgeon's specific instructions above all else.",
+            "generateButton": "Generate Schedule",
+            "generatingButton": "Generating Schedule...",
+            "backButton": "Back to Step 1"
+        },
+        "step3": {
+            "title": "Drop Schedule",
+            "backToStep2": "Back to Step 2<br />Protocol Review",
+            "backToHome": "Back to Home"
+        },
+        "errors": {
+            "generic": "Something went wrong, please try again."
+        }
+    },
+    "Schedule": {
+        "title": "Drop Schedule – {range}",
+        "ranges": {
+            "today": "Today Only",
+            "next7Days": "Next 7 Days",
+            "allMonth": "All Month"
+        },
+        "todayIs": "Today is <bold>Post-Op Day {day}</bold> ({date}).",
+        "filters": {
+            "today": "Today",
+            "next7Days": "Next 7 Days",
+            "allMonth": "All Month"
+        },
+        "export": {
+            "calendar": "Add to Calendar",
+            "pdf": "Export to PDF",
+            "exporting": "Exporting..."
+        },
+        "warning": "⚠️ Wait 5 minutes between drops",
+        "empty": "No drops in the selected date range.",
+        "dayHeader": "Day {day} • {date}",
+        "dosesCount": "{count} doses this day"
+    },
+    "Prescription": {
+        "title": "Post-Op Instructions Summary",
+        "protocols": {
+            "INTERLASIK": "Post-INTERLASIK drop protocol.",
+            "PRK": "Post-PRK drop protocol.",
+            "custom": "Custom protocol."
+        },
+        "labels": {
+            "surgeryDate": "Surgery Date:",
+            "wakingHours": "Waking Hours:",
+            "medCount": "Number of Medications:"
+        },
+        "phases": {
+            "treatmentPhases": "{count} Treatment Phases",
+            "day": "Day {day}",
+            "days": "Days {start}–{end}",
+            "everyHour": "Every hour",
+            "onceADay": "Once a day",
+            "timesADay": "{count} times a day"
+        }
+    },
+    "Footer": {
+        "copyright": "ShaatHaTipa © {year}",
+        "disclaimer": "Schedule management tool. The information presented does not replace medical advice.",
+        "backToWizard": "Back to Schedule Builder",
+        "links": "Terms of Use · Privacy Policy"
+    },
+    "HowItWorks": {
+        "title": "How It Works",
+        "subtitle": "The entire process takes seconds – clear, smart, and fully under your control.",
+        "steps": {
+            "1": {
+                "title": "Upload Prescription or Enter Data",
+                "desc": "The system accepts drop types and recommended intervals, based on a fixed medical protocol or your manual input."
+            },
+            "2": {
+                "title": "Smart Schedule Calculation",
+                "desc": "The algorithm calculates exact times based on your waking hours, surgery time, and required treatment intervals."
+            },
+            "3": {
+                "title": "Quick Manual Approval",
+                "desc": "You verify that all times are convenient – you can change and save personal adjustments before receiving the final schedule."
+            },
+            "4": {
+                "title": "Export and Add to Calendar",
+                "desc": "With one click, you can download an .ICS file and add the drops directly to your calendar – or view the weekly schedule in the app."
+            }
+        }
+    },
+    "FAQ": {
+        "title": "Frequently Asked Questions",
+        "items": {
+            "1": {
+                "q": "Does the system save my data?",
+                "a": "No. The information is used only for displaying the result and is not saved for personal identification."
+            },
+            "2": {
+                "q": "Does the drop time replace a doctor?",
+                "a": "Absolutely not. The tool is designed to help understand prescriptions conveniently, but you should always verify every instruction with your treating physician."
+            },
+            "3": {
+                "q": "Which prescriptions are supported?",
+                "a": "Printed prescriptions in Hebrew or English, specifically standard eye drops and pills."
+            }
+        }
+    }
+}

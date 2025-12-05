@@ -41,7 +41,7 @@ export default function AccessibilityPage() {
       {/* תוכן העמוד */}
       <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
         <section className="space-y-4 sm:space-y-6">
-          <div className="space-y-2 text-center sm:text-right">
+          <div className="space-y-2 text-center sm:text-start">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               הצהרת נגישות
             </h1>
@@ -80,7 +80,7 @@ export default function AccessibilityPage() {
             <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
               מה עשינו בפועל כדי לשפר נגישות?
             </h2>
-            <ul className="list-disc space-y-2 pr-5 text-sm text-slate-600 sm:text-base">
+            <ul className="list-disc space-y-2 pe-5 text-sm text-slate-600 sm:text-base">
               <li>מבנה עמודים ברור עם כותרות מסודרות וסדר לוגי של תוכן.</li>
               <li>טפסים עם תוויות (labels) ברורות וקישור מלא בין שדות להנחיות.</li>
               <li>אפשרות ניווט באמצעות מקלדת בלבד (Tab, Shift+Tab, Enter).</li>

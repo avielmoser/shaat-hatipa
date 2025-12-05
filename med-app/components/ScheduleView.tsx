@@ -5,10 +5,12 @@
 // "המתן 5 דקות בין טיפות". משתמש במפת הצבעים החדשה כדי לצבוע את התרופות.
 
 import { useMemo, useState } from "react";
+import { useTranslations } from 'next-intl';
 import type { DoseSlot } from "../types/prescription";
 import { getMedicationColor } from "../lib/medicationColors";
 import { downloadScheduleIcs } from "../lib/ics";
 import { openSchedulePdf } from "../lib/pdf";
+import { trackEvent } from "../lib/analytics";
 
 interface Props {
   schedule: DoseSlot[];
@@ -108,6 +110,7 @@ function filterByMode(
 }
 
 export default function ScheduleView({ schedule }: Props) {
+  const t = useTranslations('Schedule');
   const [mode, setMode] = useState<FilterMode>("today");
 
   const { filtered, todayStr } = useMemo(
@@ -127,23 +130,43 @@ export default function ScheduleView({ schedule }: Props) {
 
   const dayGroups = groupByDate(filtered);
 
-  let rangeLabel = "Today Only";
-  if (mode === "7days") rangeLabel = "Next 7 Days";
-  if (mode === "allMonth") rangeLabel = "All Month";
+  let rangeLabel = t('ranges.today');
+  if (mode === "7days") rangeLabel = t('ranges.next7Days');
+  if (mode === "allMonth") rangeLabel = t('ranges.allMonth');
 
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const handleExportIcs = () => {
     if (!filtered || filtered.length === 0) return;
-    downloadScheduleIcs(filtered, "laser-drops-schedule");
+    trackEvent("export_ics_clicked", {
+      slots: filtered.length,
+      mode,
+      surgeryDate: surgeryDateStr
+    });
+    try {
+      downloadScheduleIcs(filtered, "laser-drops-schedule");
+    } catch (e) {
+      console.error("Failed to export ICS", e);
+      alert("Failed to generate calendar file. Please try again.");
+      trackEvent("export_ics_failed", { error: String(e) });
+    }
   };
 
   const handleExportPdf = async () => {
     if (!schedule || schedule.length === 0 || pdfLoading) return;
     setPdfLoading(true);
+    trackEvent("export_pdf_clicked", {
+      slots: filtered.length,
+      mode,
+      surgeryDate: surgeryDateStr
+    });
     try {
       const fileName = `Drops-Schedule-${surgeryDateStr || todayStr}.pdf`;
-      openSchedulePdf(filtered, fileName);
+      await openSchedulePdf(filtered, fileName);
+    } catch (e) {
+      console.error("Failed to export PDF", e);
+      alert("Failed to generate PDF. Please try again.");
+      trackEvent("export_pdf_failed", { error: String(e) });
     } finally {
       setPdfLoading(false);
     }
@@ -154,18 +177,17 @@ export default function ScheduleView({ schedule }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">
-            Drop Schedule – {rangeLabel}
+            {t('title', { range: rangeLabel })}
           </h3>
           {surgeryDateStr &&
             daysSinceSurgery != null &&
-            daysSinceSurgery >= 0 &&
-            mode !== "allMonth" && (
+            daysSinceSurgery >= 0 && (
               <p className="mt-1 text-sm text-slate-700">
-                Today is{" "}
-                <span className="font-bold">
-                  Post-Op Day {daysSinceSurgery + 1}
-                </span>{" "}
-                ({todayStr}).
+                {t.rich('todayIs', {
+                  day: daysSinceSurgery + 1,
+                  date: todayStr,
+                  bold: (chunks) => <span className="font-bold">{chunks}</span>
+                })}
               </p>
             )}
         </div>
@@ -174,33 +196,42 @@ export default function ScheduleView({ schedule }: Props) {
           <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1 text-sm">
             <button
               type="button"
-              onClick={() => setMode("today")}
+              onClick={() => {
+                setMode("today");
+                trackEvent("filter_mode_changed", { mode: "today" });
+              }}
               className={`rounded-full px-3 py-1 transition ${mode === "today"
                 ? "bg-sky-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-white"
                 }`}
             >
-              Today
+              {t('filters.today')}
             </button>
             <button
               type="button"
-              onClick={() => setMode("7days")}
+              onClick={() => {
+                setMode("7days");
+                trackEvent("filter_mode_changed", { mode: "7days" });
+              }}
               className={`rounded-full px-3 py-1 transition ${mode === "7days"
                 ? "bg-sky-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-white"
                 }`}
             >
-              Next 7 Days
+              {t('filters.next7Days')}
             </button>
             <button
               type="button"
-              onClick={() => setMode("allMonth")}
+              onClick={() => {
+                setMode("allMonth");
+                trackEvent("filter_mode_changed", { mode: "allMonth" });
+              }}
               className={`rounded-full px-3 py-1 transition ${mode === "allMonth"
                 ? "bg-sky-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-white"
                 }`}
             >
-              All Month
+              {t('filters.allMonth')}
             </button>
           </div>
 
@@ -210,7 +241,7 @@ export default function ScheduleView({ schedule }: Props) {
               onClick={handleExportIcs}
               className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-700 hover:bg-sky-100"
             >
-              Add to Calendar
+              {t('export.calendar')}
             </button>
             <button
               type="button"
@@ -221,7 +252,7 @@ export default function ScheduleView({ schedule }: Props) {
                 : "text-slate-700 hover:bg-white"
                 }`}
             >
-              {pdfLoading ? "Exporting..." : "Export to PDF"}
+              {pdfLoading ? t('export.exporting') : t('export.pdf')}
             </button>
           </div>
         </div>
@@ -229,15 +260,15 @@ export default function ScheduleView({ schedule }: Props) {
 
       {/* Wait 5 minutes bubble */}
       <div className="mt-4 mb-5 rounded-xl bg-yellow-50 px-4 py-3 text-base font-bold text-yellow-900 border-2 border-yellow-200 shadow-sm">
-        ⚠️ Wait 5 minutes between drops
+        {t('warning')}
       </div>
 
       {dayGroups.length === 0 ? (
         <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-base text-slate-700">
-          No drops in the selected date range.
+          {t('empty')}
         </div>
       ) : (
-        <div className="mt-3 space-y-3 pr-0 md:pr-1">
+        <div className="mt-3 space-y-3 pe-0 md:pe-1">
           {dayGroups.map((day) => {
             const timeGroups = groupByTime(day.slots);
             const displayDayIndex = day.dayIndex + 1; // Day 1 = Surgery Day
@@ -249,10 +280,10 @@ export default function ScheduleView({ schedule }: Props) {
               >
                 <div className="mb-3 flex items-center justify-between">
                   <div className="text-lg font-bold text-slate-900">
-                    Day {displayDayIndex} • {day.date}
+                    {t('dayHeader', { day: displayDayIndex, date: day.date })}
                   </div>
                   <div className="text-sm font-medium text-slate-700">
-                    {day.slots.length} doses this day
+                    {t('dosesCount', { count: day.slots.length })}
                   </div>
                 </div>
 
@@ -305,7 +336,7 @@ export default function ScheduleView({ schedule }: Props) {
                         </div>
 
                         {combinedNotes && (
-                          <div className="text-sm font-medium text-slate-700 pl-1">
+                          <div className="text-sm font-medium text-slate-700 ps-1">
                             {combinedNotes}
                           </div>
                         )}
@@ -321,3 +352,4 @@ export default function ScheduleView({ schedule }: Props) {
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from 'next-intl';
 import { SurgeryType } from "../types/prescription";
 
 interface SurgeryFormProps {
@@ -30,6 +31,8 @@ export default function SurgeryForm({
     error,
     onNext,
 }: SurgeryFormProps) {
+    const t = useTranslations('Wizard.step1');
+
     return (
         <div
             className="relative space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:space-y-6 sm:p-6"
@@ -40,11 +43,10 @@ export default function SurgeryForm({
                     id="step1-title"
                     className="text-lg font-semibold text-slate-900 sm:text-2xl"
                 >
-                    Surgery Details
+                    {t('title')}
                 </h2>
                 <p className="text-base text-slate-700 sm:text-lg">
-                    Select surgery type, date, and waking hours – then you'll see a
-                    structured protocol summary and finally a detailed drop schedule.
+                    {t('description')}
                 </p>
             </div>
 
@@ -55,7 +57,7 @@ export default function SurgeryForm({
                             htmlFor="surgery-type"
                             className="block text-base font-bold text-slate-900"
                         >
-                            Surgery Type
+                            {t('surgeryType')}
                         </label>
                         <select
                             id="surgery-type"
@@ -73,7 +75,7 @@ export default function SurgeryForm({
                             htmlFor="surgery-date"
                             className="block text-base font-bold text-slate-900"
                         >
-                            Surgery Date
+                            {t('surgeryDate')}
                         </label>
                         <input
                             id="surgery-date"
@@ -91,7 +93,7 @@ export default function SurgeryForm({
                             htmlFor="wake-time"
                             className="block text-base font-bold text-slate-900"
                         >
-                            Wake Up Time
+                            {t('wakeTime')}
                         </label>
                         <input
                             id="wake-time"
@@ -112,7 +114,7 @@ export default function SurgeryForm({
                             htmlFor="sleep-time"
                             className="block text-base font-bold text-slate-900"
                         >
-                            Bedtime
+                            {t('bedtime')}
                         </label>
                         <input
                             id="sleep-time"
@@ -150,10 +152,11 @@ export default function SurgeryForm({
                         onClick={onNext}
                         className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-6 py-4 text-lg font-bold text-white shadow-sm hover:bg-sky-700"
                     >
-                        Next: Review Protocol
+                        {t('nextButton')}
                     </button>
                 </div>
             </div>
         </div>
     );
 }
+

@@ -1,5 +1,13 @@
 import type { LaserPrescriptionInput, DoseSlot, Medication } from "../types/prescription";
 import { getMedicationColor } from "../constants/theme";
+import { logger } from "./logger";
+
+export class ImpossibleScheduleError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ImpossibleScheduleError";
+  }
+}
 
 /**
  * Convert a time string in HH:mm format into the number of minutes
@@ -61,16 +69,17 @@ function isWithinAwakeWindow(
   normalizedSleepMinutes: number,
 ): boolean {
   const minutesInDay = 24 * 60;
-  if (normalizedSleepMinutes <= minutesInDay) {
-    // same-day sleep
-    return candidateMinutes >= wakeMinutes && candidateMinutes <= normalizedSleepMinutes;
+  // Normalize candidate to 0-1439 for comparison if needed, but here we deal with absolute minutes from wake time perspective usually.
+  // Actually, the candidateMinutes passed here are usually 0-1439 (time of day).
+
+  // If sleep is next day (e.g. wake 08:00, sleep 26:00 (02:00 next day))
+  if (normalizedSleepMinutes > minutesInDay) {
+    // Awake window is split across midnight: [wakeMinutes, 1440) AND [0, sleepMinutes % 1440]
+    const sleepMod = normalizedSleepMinutes % minutesInDay;
+    return (candidateMinutes >= wakeMinutes) || (candidateMinutes <= sleepMod);
   } else {
-    // sleep crosses midnight
-    const minutesPastMidnight = normalizedSleepMinutes - minutesInDay;
-    return (
-      (candidateMinutes >= wakeMinutes && candidateMinutes < minutesInDay) ||
-      (candidateMinutes >= 0 && candidateMinutes <= minutesPastMidnight)
-    );
+    // Same day window
+    return candidateMinutes >= wakeMinutes && candidateMinutes <= normalizedSleepMinutes;
   }
 }
 
@@ -115,15 +124,18 @@ function resolveMedicationCollisions(
           const offsets = [step * 15, -step * 15];
           for (const offset of offsets) {
             const newMin = origMinutes + offset;
-            // Check bounds (0 to 24*60)
-            if (newMin < 0 || newMin >= 24 * 60) continue;
-            // Must be 15 min increment (already enforced by offset)
-            // Must be within awake window
-            if (!isWithinAwakeWindow(newMin, wakeMinutes, normalizedSleepMinutes)) continue;
-            // Must be free
-            if (occupied.has(newMin)) continue;
 
-            candidate = newMin;
+            // Normalize to 0-1439 for window check
+            const minutesInDay = 24 * 60;
+            const normalizedNewMin = ((newMin % minutesInDay) + minutesInDay) % minutesInDay;
+
+            // Must be within awake window
+            if (!isWithinAwakeWindow(normalizedNewMin, wakeMinutes, normalizedSleepMinutes)) continue;
+
+            // Must be free (check against occupied set which stores 0-1439 values)
+            if (occupied.has(normalizedNewMin)) continue;
+
+            candidate = normalizedNewMin;
             found = true;
             break;
           }
@@ -131,9 +143,10 @@ function resolveMedicationCollisions(
         }
       }
 
-      // If still not found, we force it (overlap) but log a warning, 
-      // or we could just let it overlap. The 'occupied' set will track it.
-      // For now, we accept the overlap if we can't find space.
+      if (!found) {
+        logger.warn("Could not resolve collision for slot", "SCHEDULE_BUILDER", { slot });
+        // If still not found, we force it (overlap) but log a warning.
+      }
 
       occupied.add(candidate);
       slot.time = minutesToTimeStr(candidate);
@@ -153,10 +166,28 @@ export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSl
   const wakeMinutes = parseTimeToMinutes(wakeTime);
   const rawSleepMinutes = parseTimeToMinutes(sleepTime);
   let normalizedSleepMinutes = rawSleepMinutes;
+
+  // If sleep time is earlier than wake time, assume it's the next day
   if (rawSleepMinutes <= wakeMinutes) normalizedSleepMinutes += 24 * 60;
+
   const awakeWindow = normalizedSleepMinutes - wakeMinutes;
   if (awakeWindow <= 0) {
     throw new Error("Sleep time must be after wake time");
+  }
+
+  // Pre-check for impossible schedules
+  // Calculate max drops per day across all meds
+  let maxDropsPerDay = 0;
+  medications.forEach(med => {
+    med.phases.forEach(phase => {
+      maxDropsPerDay += phase.timesPerDay;
+    });
+  });
+
+  // If we have more drops than 5-minute slots, it's physically impossible
+  // (Heuristic: 5 mins per drop is very tight but possible. Less is dangerous.)
+  if (maxDropsPerDay * 5 > awakeWindow) {
+    throw new ImpossibleScheduleError(`Schedule is too dense: ${maxDropsPerDay} drops in ${awakeWindow} minutes.`);
   }
 
   const slots: DoseSlot[] = [];
@@ -168,19 +199,34 @@ export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSl
       const { dayStart, dayEnd, timesPerDay } = phase;
       if (timesPerDay <= 0 || dayEnd < dayStart) return;
       const daysCount = dayEnd - dayStart + 1;
-      const intervalMinutes = awakeWindow / timesPerDay;
+
+      // Distribute evenly
+      const intervalMinutes = awakeWindow / (timesPerDay + 1); // +1 to avoid start/end exactly? No, usually / timesPerDay or / (timesPerDay + 1) depending on strategy.
+      // Standard strategy: Start at wake + interval, or spread evenly.
+      // Let's stick to previous logic: wake + interval * i, but maybe adjust to center it better?
+      // Previous: wake + interval * doseIndex. 
+      // If timesPerDay=4, window=12h (720m). interval=180. 0, 180, 360, 540.
+      // That puts first drop AT wake time. That's usually fine.
+
+      const effectiveInterval = awakeWindow / timesPerDay;
 
       for (let dayOffset = 0; dayOffset < daysCount; dayOffset++) {
         const absoluteDayIndex = dayStart - 1 + dayOffset;
         for (let doseIndex = 0; doseIndex < timesPerDay; doseIndex++) {
           // Compute raw time and round to nearest half hour
-          const rawRelativeMinutes = wakeMinutes + intervalMinutes * doseIndex;
+          // Add a small buffer to start time so we don't drop EXACTLY at wake up every time?
+          // Actually, patients usually want drops upon waking.
+          const rawRelativeMinutes = wakeMinutes + (effectiveInterval * doseIndex);
+
+          // Rounding
           const roundedMinutes = roundToHalfHour(rawRelativeMinutes);
+
           // Compute date and time accounting for crossing midnight
           const dayCarry = Math.floor(roundedMinutes / (24 * 60));
           const minutesWithinDay = roundedMinutes % (24 * 60);
           const date = addDays(surgeryDate, absoluteDayIndex + dayCarry);
           const time = minutesToTimeStr(minutesWithinDay);
+
           slots.push({
             id: `slot-${slotCounter++}`,
             medicationId: med.id,

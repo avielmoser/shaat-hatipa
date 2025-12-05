@@ -1,7 +1,7 @@
 // app/page.tsx
 
-import HeroSection from "../components/HeroSection";
-import WorkArea from "../components/WorkArea";
+import HeroSection from "../../components/HeroSection";
+import WorkArea from "../../components/WorkArea";
 
 export default function Page() {
   return (

@@ -2,6 +2,7 @@
 "use client";
 
 import type React from "react";
+import { useTranslations } from 'next-intl';
 import type { LaserPrescriptionInput } from "../types/prescription";
 import { getMedicationColor } from "../lib/medicationColors";
 
@@ -14,16 +15,17 @@ interface Props {
  * קומפקטי ונוח יותר במובייל, תוך שמירה על קריאות בדסקטופ.
  */
 export default function PrescriptionView({ prescription }: Props) {
+  const t = useTranslations('Prescription');
   if (!prescription) return null;
   const { surgeryType, surgeryDate, wakeTime, sleepTime, medications } =
     prescription;
 
   const surgeryTypeText =
     surgeryType === "INTERLASIK"
-      ? "Post-INTERLASIK drop protocol."
+      ? t('protocols.INTERLASIK')
       : surgeryType === "PRK"
-        ? "Post-PRK drop protocol."
-        : "Custom protocol.";
+        ? t('protocols.PRK')
+        : t('protocols.custom');
 
   return (
     <div className="space-y-3 sm:space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
@@ -31,7 +33,7 @@ export default function PrescriptionView({ prescription }: Props) {
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5 sm:space-y-1">
           <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-            Post-Op Instructions Summary
+            {t('title')}
           </h3>
           <p className="text-sm sm:text-base text-slate-800">{surgeryTypeText}</p>
         </div>
@@ -43,15 +45,15 @@ export default function PrescriptionView({ prescription }: Props) {
       {/* Basic Details: Date, Waking Hours, Med Count */}
       <div className="grid gap-3 rounded-2xl bg-slate-50/80 p-4 text-base text-slate-800 sm:grid-cols-2 sm:gap-4 sm:p-5 sm:text-lg">
         <div>
-          <span className="font-semibold">Surgery Date: </span>
+          <span className="font-semibold">{t('labels.surgeryDate')} </span>
           {surgeryDate}
         </div>
         <div>
-          <span className="font-semibold">Waking Hours: </span>
+          <span className="font-semibold">{t('labels.wakingHours')} </span>
           {wakeTime}–{sleepTime}
         </div>
         <div>
-          <span className="font-semibold">Number of Medications: </span>
+          <span className="font-semibold">{t('labels.medCount')} </span>
           {medications.length}
         </div>
       </div>
@@ -87,16 +89,16 @@ export default function PrescriptionView({ prescription }: Props) {
                 </span>
 
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800 font-medium sm:text-base">
-                  {m.phases.length} Treatment Phases
+                  {t('phases.treatmentPhases', { count: m.phases.length })}
                 </span>
               </div>
 
-              <ul className="list-inside list-disc space-y-2 pr-3 text-base text-slate-900 sm:text-lg">
+              <ul className="list-inside list-disc space-y-2 pe-3 text-base text-slate-900 sm:text-lg">
                 {m.phases.map((p, idx) => {
                   const range =
                     p.dayStart === p.dayEnd
-                      ? `Day ${p.dayStart}`
-                      : `Days ${p.dayStart}–${p.dayEnd}`;
+                      ? t('phases.day', { day: p.dayStart })
+                      : t('phases.days', { start: p.dayStart, end: p.dayEnd });
 
                   // Sterodex on Day 1 → always "Every hour"
                   const isSurgeryDaySterodex =
@@ -105,10 +107,10 @@ export default function PrescriptionView({ prescription }: Props) {
                     p.dayEnd === 1;
 
                   const freq = isSurgeryDaySterodex
-                    ? "Every hour"
+                    ? t('phases.everyHour')
                     : p.timesPerDay === 1
-                      ? "Once a day"
-                      : `${p.timesPerDay} times a day`;
+                      ? t('phases.onceADay')
+                      : t('phases.timesADay', { count: p.timesPerDay });
 
                   return (
                     <li key={idx}>
@@ -130,3 +132,4 @@ export default function PrescriptionView({ prescription }: Props) {
     </div>
   );
 }
+

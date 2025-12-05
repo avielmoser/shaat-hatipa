@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import createMiddleware from 'next-intl/middleware';
+import { routing } from './i18n/routing';
 
 // Check for environment variables (Rate limiting will be disabled if missing)
 const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
@@ -32,28 +34,22 @@ const ratelimit = redis
     })
     : null;
 
+const intlMiddleware = createMiddleware(routing);
+
 export async function middleware(request: NextRequest) {
-    const response = NextResponse.next();
+    // 1. Rate Limit Logic for /api/generate-schedule
+    let rateLimitResult = null;
 
-    // Add Security Headers
-    response.headers.set("X-DNS-Prefetch-Control", "on");
-    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-    response.headers.set("X-Frame-Options", "SAMEORIGIN");
-    response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "origin-when-cross-origin");
-    response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
-
-    // Rate Limit Logic for /api/generate-schedule
     if (request.nextUrl.pathname === "/api/generate-schedule" && ratelimit) {
         // Extract IP safely
         const ipHeader = request.headers.get("x-forwarded-for");
         const ipIdentifier = ipHeader?.split(",")[0].trim() || "127.0.0.1";
 
         // Rate Limit check
-        const { success, limit, remaining } = await ratelimit.limit(ipIdentifier);
+        rateLimitResult = await ratelimit.limit(ipIdentifier);
 
         // If exceeded
-        if (!success) {
+        if (!rateLimitResult.success) {
             return new Response(
                 JSON.stringify({
                     error: "Rate limit exceeded",
@@ -63,8 +59,8 @@ export async function middleware(request: NextRequest) {
                     status: 429,
                     headers: {
                         "Content-Type": "application/json",
-                        "X-RateLimit-Limit": String(limit),
-                        "X-RateLimit-Remaining": String(remaining),
+                        "X-RateLimit-Limit": String(rateLimitResult.limit),
+                        "X-RateLimit-Remaining": String(rateLimitResult.remaining),
                         // Add security headers to error response as well
                         "X-Frame-Options": "SAMEORIGIN",
                         "X-Content-Type-Options": "nosniff",
@@ -72,10 +68,30 @@ export async function middleware(request: NextRequest) {
                 }
             );
         }
+    }
 
-        // Add rate limit info to success response headers
-        response.headers.set("X-RateLimit-Limit", String(limit));
-        response.headers.set("X-RateLimit-Remaining", String(remaining));
+    // 2. Handle i18n or API
+    // If it's an API route, we don't use intlMiddleware (unless we want localized APIs)
+    // For now, we skip intlMiddleware for /api
+    let response: NextResponse;
+    if (request.nextUrl.pathname.startsWith('/api')) {
+        response = NextResponse.next();
+    } else {
+        response = intlMiddleware(request);
+    }
+
+    // 3. Add Security Headers
+    response.headers.set("X-DNS-Prefetch-Control", "on");
+    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    response.headers.set("X-Frame-Options", "SAMEORIGIN");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+    response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
+
+    // 4. Add rate limit info to success response headers if applicable
+    if (rateLimitResult) {
+        response.headers.set("X-RateLimit-Limit", String(rateLimitResult.limit));
+        response.headers.set("X-RateLimit-Remaining", String(rateLimitResult.remaining));
     }
 
     return response;

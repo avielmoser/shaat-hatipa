@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from 'next-intl';
 import { LaserPrescriptionInput } from "../types/prescription";
 import PrescriptionView from "./PrescriptionView";
+import { trackEvent } from "../lib/analytics";
 
 interface ProtocolReviewProps {
     prescription: LaserPrescriptionInput;
@@ -19,6 +21,7 @@ export default function ProtocolReview({
     onBack,
     onGenerate,
 }: ProtocolReviewProps) {
+    const t = useTranslations('Wizard.step2');
     const [isAgreed, setIsAgreed] = React.useState(false);
 
     return (
@@ -28,14 +31,17 @@ export default function ProtocolReview({
                     id="step2-title"
                     className="text-lg font-semibold text-slate-900 sm:text-2xl"
                 >
-                    Protocol Review
+                    {t('title')}
                 </h2>
                 <button
                     type="button"
-                    onClick={onBack}
+                    onClick={() => {
+                        onBack();
+                        trackEvent("back_to_step_1_clicked");
+                    }}
                     className="text-base text-slate-700 underline-offset-2 hover:text-slate-900 hover:underline"
                 >
-                    Back to Step 1 – Surgery Details
+                    {t('backToStep1')}
                 </button>
             </div>
 
@@ -56,17 +62,21 @@ export default function ProtocolReview({
                             name="disclaimer-agree"
                             type="checkbox"
                             checked={isAgreed}
-                            onChange={(e) => setIsAgreed(e.target.checked)}
+                            onChange={(e) => {
+                                setIsAgreed(e.target.checked);
+                                if (e.target.checked) {
+                                    trackEvent("disclaimer_agreed");
+                                }
+                            }}
                             className="h-5 w-5 rounded border-amber-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
                         />
                     </div>
                     <div className="text-sm leading-6">
                         <label htmlFor="disclaimer-agree" className="font-medium text-amber-900 cursor-pointer select-none">
-                            I agree to the Medical Disclaimer
+                            {t('disclaimerAgree')}
                         </label>
                         <p className="text-amber-800 opacity-90">
-                            This schedule is generated based on general protocols and is not a
-                            substitute for professional medical advice. I agree to follow my surgeon's specific instructions above all else.
+                            {t('disclaimerText')}
                         </p>
                     </div>
                 </div>
@@ -85,14 +95,17 @@ export default function ProtocolReview({
                             disabled={loading || !isAgreed}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-6 py-4 text-lg font-bold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                         >
-                            {loading ? "Generating Schedule..." : "Generate Schedule"}
+                            {loading ? t('generatingButton') : t('generateButton')}
                         </button>
                         <button
                             type="button"
-                            onClick={onBack}
+                            onClick={() => {
+                                onBack();
+                                trackEvent("back_to_step_1_clicked");
+                            }}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-4 text-lg font-bold text-slate-700 hover:bg-slate-50"
                         >
-                            Back to Step 1
+                            {t('backButton')}
                         </button>
                     </div>
                 </div>
@@ -100,3 +113,4 @@ export default function ProtocolReview({
         </div>
     );
 }
+

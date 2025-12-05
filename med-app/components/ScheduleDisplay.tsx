@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from 'next-intl';
 import { DoseSlot } from "../types/prescription";
 import ScheduleView from "./ScheduleView";
+import { trackEvent } from "../lib/analytics";
 
 interface ScheduleDisplayProps {
     schedule: DoseSlot[];
@@ -15,6 +17,8 @@ export default function ScheduleDisplay({
     onBack,
     onHome,
 }: ScheduleDisplayProps) {
+    const t = useTranslations('Wizard.step3');
+
     return (
         <div className="relative space-y-4" aria-labelledby="step3-title">
             <div className="flex items-center justify-between">
@@ -22,7 +26,7 @@ export default function ScheduleDisplay({
                     id="step3-title"
                     className="text-lg font-semibold text-slate-900 sm:text-2xl"
                 >
-                    Drop Schedule
+                    {t('title')}
                 </h2>
             </div>
 
@@ -39,20 +43,24 @@ export default function ScheduleDisplay({
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
-                            onClick={onBack}
+                            onClick={() => {
+                                onBack();
+                                trackEvent("back_to_step_2_clicked");
+                            }}
                             className="h-16 md:h-20 w-full rounded-xl border border-slate-300 bg-white px-3 text-lg font-bold text-slate-700 leading-snug hover:bg-slate-50"
                         >
-                            Back to Step 2
-                            <br />
-                            Protocol Review
+                            <span dangerouslySetInnerHTML={{ __html: t.raw('backToStep2') }} />
                         </button>
 
                         <button
                             type="button"
-                            onClick={onHome}
+                            onClick={() => {
+                                onHome();
+                                trackEvent("back_to_home_clicked");
+                            }}
                             className="h-16 md:h-20 w-full rounded-xl bg-slate-100 px-3 text-lg font-bold text-slate-900 hover:bg-slate-200"
                         >
-                            Back to Home
+                            {t('backToHome')}
                         </button>
                     </div>
                 </div>
@@ -60,3 +68,4 @@ export default function ScheduleDisplay({
         </div>
     );
 }
+

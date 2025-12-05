@@ -1,27 +1,29 @@
 "use client";
 
 import React from "react";
-
-const faqs = [
-  {
-    q: "Does the system save my data?",
-    a: "No. The information is used only for displaying the result and is not saved for personal identification.",
-  },
-  {
-    q: "Does the drop time replace a doctor?",
-    a: "Absolutely not. The tool is designed to help understand prescriptions conveniently, but you should always verify every instruction with your treating physician.",
-  },
-  {
-    q: "Which prescriptions are supported?",
-    a: "Printed prescriptions in Hebrew or English, specifically standard eye drops and pills.",
-  },
-];
+import { useTranslations } from 'next-intl';
 
 export default function FaqSection() {
+  const t = useTranslations('FAQ');
+  const faqs = [
+    {
+      q: t('items.1.q'),
+      a: t('items.1.a'),
+    },
+    {
+      q: t('items.2.q'),
+      a: t('items.2.a'),
+    },
+    {
+      q: t('items.3.q'),
+      a: t('items.3.a'),
+    },
+  ];
+
   return (
     <section className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 space-y-3">
       <h2 className="text-xl font-semibold text-slate-800">
-        Frequently Asked Questions
+        {t('title')}
       </h2>
       <div className="space-y-2">
         {faqs.map((item) => (
@@ -39,3 +41,4 @@ export default function FaqSection() {
     </section>
   );
 }
+

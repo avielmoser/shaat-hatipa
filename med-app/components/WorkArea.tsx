@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useTranslations } from 'next-intl';
 import type {
   LaserPrescriptionInput,
   DoseSlot,
@@ -14,19 +15,15 @@ import ScheduleView from "./ScheduleView";
 import SurgeryForm from "./SurgeryForm";
 import ProtocolReview from "./ProtocolReview";
 import ScheduleDisplay from "./ScheduleDisplay";
+import GlobalErrorBoundary from "./GlobalErrorBoundary";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
 import { getInterlasikMedications, getPrkMedications } from "../constants/protocols";
+import { trackEvent } from "../lib/analytics";
 
 type Step = 1 | 2 | 3;
 
-const stepperItems: { idx: Step; label: string }[] = [
-  { idx: 1, label: "Surgery Details" },
-  { idx: 2, label: "Protocol Review" },
-  { idx: 3, label: "Schedule" },
-];
-
-
 export default function WorkArea() {
+  const t = useTranslations('Wizard');
   const [step, setStep] = useState<Step>(1);
 
   const [surgeryType, setSurgeryType] = useState<SurgeryType>("INTERLASIK");
@@ -60,6 +57,10 @@ export default function WorkArea() {
   };
 
   // ... existing useEffect ...
+  useEffect(() => {
+    trackEvent("wizard_viewed");
+  }, []);
+
   useEffect(() => {
     if (schedule.length > 0 && step === 3 && scheduleRef.current) {
       scheduleRef.current.scrollIntoView({
@@ -104,6 +105,7 @@ export default function WorkArea() {
     if (target === 3) {
       goToStep3();
     }
+    trackEvent("step_changed", { from: step, to: target });
   };
 
   // ===== Button Logic =====
@@ -129,7 +131,7 @@ export default function WorkArea() {
     setInvalidTime(false);
 
     if (isImpossibleAwakeWindow(wakeTime, sleepTime)) {
-      setError("Error – You cannot wake up before you go to sleep");
+      setError(t('step1.errors.impossibleWakeTime'));
       setInvalidTime(true);
       return;
     }
@@ -140,6 +142,7 @@ export default function WorkArea() {
     setSchedule([]);
     setStep(2);
     scrollToRef(step2Ref);
+    trackEvent("step_1_completed", { surgeryType });
   };
 
   const handleGenerateSchedule = async () => {
@@ -155,20 +158,41 @@ export default function WorkArea() {
         body: JSON.stringify(body),
       });
 
+      trackEvent("generate_schedule_clicked", { surgeryType });
+
+      const json = await res.json();
+
       if (!res.ok) {
-        const json = await res.json().catch(() => null);
+        // Handle specific error codes
+        if (res.status === 422 && json.code === "IMPOSSIBLE_SCHEDULE") {
+          throw new Error(`Impossible Schedule: ${json.error}`);
+        }
         throw new Error(json?.error || "Error generating schedule");
       }
 
-      const json = await res.json();
       setPrescription(json.prescription ?? body);
       setSchedule(json.schedule);
       setStep(3);
       scrollToRef(step3Ref);
+
+      // Calculate some stats for analytics
+      const totalDoses = json.schedule.length;
+      const days = new Set(json.schedule.map((s: DoseSlot) => s.date)).size;
+      const meds = new Set(json.schedule.map((s: DoseSlot) => s.medicationId)).size;
+
+      trackEvent("schedule_generated", {
+        slots: totalDoses,
+        days,
+        uniqueMeds: meds,
+        surgeryType: body.surgeryType,
+        wakeTime: body.wakeTime,
+        sleepTime: body.sleepTime
+      });
     } catch (e: any) {
       console.error(e);
       setPrescription(body);
-      setError(e.message || "Something went wrong, please try again.");
+      setError(e.message || t('errors.generic'));
+      trackEvent("schedule_generation_failed", { error: e.message });
     } finally {
       setLoading(false);
     }
@@ -184,124 +208,133 @@ export default function WorkArea() {
   const hasPrescription = !!prescription;
   const hasSchedule = schedule.length > 0;
 
+  const stepperItems: { idx: Step; label: string }[] = [
+    { idx: 1, label: t('steps.1') },
+    { idx: 2, label: t('steps.2') },
+    { idx: 3, label: t('steps.3') },
+  ];
+
   return (
-    <section
-      id="work-area"
-      className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
-      aria-label="Drop schedule builder workspace"
-    >
-      <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
-        {/* Stepper */}
-        <ol
-          className="flex items-center justify-center gap-4 text-base"
-          aria-label="Schedule creation steps"
-        >
-          {stepperItems.map((stepItem) => {
-            const isActive = step === stepItem.idx;
-            const isDone = step > stepItem.idx;
+    <GlobalErrorBoundary>
+      <section
+        id="work-area"
+        className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
+        aria-label="Drop schedule builder workspace"
+      >
+        <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
+          {/* Stepper */}
+          <ol
+            className="flex items-center justify-center gap-4 text-base"
+            aria-label="Schedule creation steps"
+          >
+            {stepperItems.map((stepItem) => {
+              const isActive = step === stepItem.idx;
+              const isDone = step > stepItem.idx;
 
-            const canGoForward =
-              stepItem.idx === 1 ||
-              (stepItem.idx === 2 && hasPrescription) ||
-              (stepItem.idx === 3 && hasSchedule);
+              const canGoForward =
+                stepItem.idx === 1 ||
+                (stepItem.idx === 2 && hasPrescription) ||
+                (stepItem.idx === 3 && hasSchedule);
 
-            return (
-              <li key={stepItem.idx} className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (canGoForward) {
-                      handleStepClick(stepItem.idx);
-                    }
-                  }}
-                  disabled={!canGoForward}
-                  className={`flex items-center gap-2 rounded-full px-2 py-1 transition ${canGoForward
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-60"
-                    }`}
-                  aria-current={isActive ? "step" : undefined}
-                  aria-label={`Step ${stepItem.idx}: ${stepItem.label}`}
-                >
-                  <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold transition ${isDone
-                      ? "bg-emerald-500 border-emerald-500 text-white"
-                      : isActive
-                        ? "bg-sky-600 border-sky-600 text-white"
-                        : "bg-slate-200 border-slate-300 text-slate-600"
+              return (
+                <li key={stepItem.idx} className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (canGoForward) {
+                        handleStepClick(stepItem.idx);
+                      }
+                    }}
+                    disabled={!canGoForward}
+                    className={`flex items-center gap-2 rounded-full px-2 py-1 transition ${canGoForward
+                      ? "cursor-pointer"
+                      : "cursor-not-allowed opacity-60"
                       }`}
-                    aria-hidden="true"
+                    aria-current={isActive ? "step" : undefined}
+                    aria-label={`Step ${stepItem.idx}: ${stepItem.label}`}
                   >
-                    {stepItem.idx}
-                  </span>
-                  <span
-                    className={`text-sm sm:text-base font-bold ${isActive
-                      ? "text-sky-800"
-                      : isDone
-                        ? "text-emerald-700"
-                        : canGoForward
-                          ? "text-slate-700 hover:text-sky-800"
-                          : "text-slate-600"
-                      }`}
-                  >
-                    {stepItem.label}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold transition ${isDone
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : isActive
+                          ? "bg-sky-600 border-sky-600 text-white"
+                          : "bg-slate-200 border-slate-300 text-slate-600"
+                        }`}
+                      aria-hidden="true"
+                    >
+                      {stepItem.idx}
+                    </span>
+                    <span
+                      className={`text-sm sm:text-base font-bold ${isActive
+                        ? "text-sky-800"
+                        : isDone
+                          ? "text-emerald-700"
+                          : canGoForward
+                            ? "text-slate-700 hover:text-sky-800"
+                            : "text-slate-600"
+                        }`}
+                    >
+                      {stepItem.label}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
 
-        {/* ===== Step 1 – Surgery Details ===== */}
-        {step === 1 && (
-          <div ref={step1Ref}>
-            <SurgeryForm
-              surgeryType={surgeryType}
-              setSurgeryType={(val) => {
-                setSurgeryType(val);
-                setSchedule([]);
-              }}
-              surgeryDate={surgeryDate}
-              setSurgeryDate={(val) => {
-                setSurgeryDate(val);
-                setSchedule([]);
-              }}
-              wakeTime={wakeTime}
-              setWakeTime={setWakeTime}
-              sleepTime={sleepTime}
-              setSleepTime={setSleepTime}
-              invalidTime={invalidTime}
-              error={error}
-              onNext={handleContinueToStep2}
-            />
-          </div>
-        )}
-
-        {/* ===== Step 2 – Protocol Review ===== */}
-        {step === 2 && prescription && (
-          <div ref={step2Ref}>
-            <ProtocolReview
-              prescription={prescription}
-              error={error}
-              loading={loading}
-              onBack={goToStep1}
-              onGenerate={handleGenerateSchedule}
-            />
-          </div>
-        )}
-
-        {/* ===== Step 3 – Schedule ===== */}
-        {step === 3 && hasSchedule && (
-          <div ref={step3Ref}>
-            <div ref={scheduleRef}>
-              <ScheduleDisplay
-                schedule={schedule}
-                onBack={goToStep2}
-                onHome={goHome}
+          {/* ===== Step 1 – Surgery Details ===== */}
+          {step === 1 && (
+            <div ref={step1Ref}>
+              <SurgeryForm
+                surgeryType={surgeryType}
+                setSurgeryType={(val) => {
+                  setSurgeryType(val);
+                  setSchedule([]);
+                }}
+                surgeryDate={surgeryDate}
+                setSurgeryDate={(val) => {
+                  setSurgeryDate(val);
+                  setSchedule([]);
+                }}
+                wakeTime={wakeTime}
+                setWakeTime={setWakeTime}
+                sleepTime={sleepTime}
+                setSleepTime={setSleepTime}
+                invalidTime={invalidTime}
+                error={error}
+                onNext={handleContinueToStep2}
               />
             </div>
-          </div>
-        )}
-      </div>
-    </section>
+          )}
+
+          {/* ===== Step 2 – Protocol Review ===== */}
+          {step === 2 && prescription && (
+            <div ref={step2Ref}>
+              <ProtocolReview
+                prescription={prescription}
+                error={error}
+                loading={loading}
+                onBack={goToStep1}
+                onGenerate={handleGenerateSchedule}
+              />
+            </div>
+          )}
+
+          {/* ===== Step 3 – Schedule ===== */}
+          {step === 3 && hasSchedule && (
+            <div ref={step3Ref}>
+              <div ref={scheduleRef}>
+                <ScheduleDisplay
+                  schedule={schedule}
+                  onBack={goToStep2}
+                  onHome={goHome}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </GlobalErrorBoundary>
   );
 }
+

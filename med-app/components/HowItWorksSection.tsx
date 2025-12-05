@@ -1,28 +1,30 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from 'next-intl';
 
 export default function HowItWorksSection() {
+  const t = useTranslations('HowItWorks');
   const steps = [
     {
       number: 1,
-      title: "Upload Prescription or Enter Data",
-      desc: "The system accepts drop types and recommended intervals, based on a fixed medical protocol or your manual input.",
+      title: t('steps.1.title'),
+      desc: t('steps.1.desc'),
     },
     {
       number: 2,
-      title: "Smart Schedule Calculation",
-      desc: "The algorithm calculates exact times based on your waking hours, surgery time, and required treatment intervals.",
+      title: t('steps.2.title'),
+      desc: t('steps.2.desc'),
     },
     {
       number: 3,
-      title: "Quick Manual Approval",
-      desc: "You verify that all times are convenient – you can change and save personal adjustments before receiving the final schedule.",
+      title: t('steps.3.title'),
+      desc: t('steps.3.desc'),
     },
     {
       number: 4,
-      title: "Export and Add to Calendar",
-      desc: "With one click, you can download an .ICS file and add the drops directly to your calendar – or view the weekly schedule in the app.",
+      title: t('steps.4.title'),
+      desc: t('steps.4.desc'),
     },
   ];
 
@@ -30,10 +32,10 @@ export default function HowItWorksSection() {
     <div className="space-y-6 sm:space-y-8">
       <div className="text-center sm:text-start">
         <h2 className="text-lg font-semibold text-sky-600 sm:text-xl">
-          How It Works
+          {t('title')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 sm:text-base">
-          The entire process takes seconds – clear, smart, and fully under your control.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -63,3 +65,4 @@ export default function HowItWorksSection() {
     </div>
   );
 }
+
