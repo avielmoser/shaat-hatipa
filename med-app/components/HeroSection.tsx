@@ -22,9 +22,9 @@ export default function HeroSection() {
 
   return (
     <section
-      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-20 pb-24 sm:px-6 lg:px-8"
+      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-12 pb-16 sm:pt-20 sm:pb-24 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
         <div className="flex-1 flex flex-col items-center rtl:items-start md:items-start text-center rtl:text-start md:text-start">
           {/* Clinic Logo (if exists) */}
@@ -46,28 +46,28 @@ export default function HeroSection() {
             )}
           </div>
 
-          <div className="mb-8 w-full">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-2">
+          <div className="mb-6 sm:mb-8 w-full">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-3 sm:mb-4 max-w-lg mx-auto md:mx-0">
               {t('title')}
             </h1>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-medium leading-snug text-slate-600">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-medium leading-normal text-slate-600 max-w-lg mx-auto md:mx-0 text-balance">
               {t('subtitle')}
             </h2>
           </div>
 
-          <p className="text-lg text-slate-500 mb-12 max-w-2xl font-normal leading-relaxed mx-auto md:mx-0">
+          <p className="text-base sm:text-lg text-slate-500 mb-8 sm:mb-10 max-w-xl font-normal leading-relaxed mx-auto md:mx-0 px-2 sm:px-0">
             <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
           </p>
 
           <ul className={cn(
-            "flex flex-col gap-3 mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
+            "flex flex-col gap-3 mb-8 sm:mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
           )}>
             {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
-              <li key={i} className="flex items-center gap-2 text-slate-700 font-medium">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
-                  <Check size={12} strokeWidth={3} />
+              <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
+                <div className="flex h-6 w-6 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
+                  <Check size={14} strokeWidth={3} className="sm:w-3 sm:h-3" />
                 </div>
-                <span className="text-sm sm:text-base">{feature}</span>
+                <span className="text-sm sm:text-base leading-snug">{feature}</span>
               </li>
             ))}
           </ul>
@@ -78,10 +78,12 @@ export default function HeroSection() {
               onClick={handleScrollToWorkArea}
               className="
     inline-flex items-center justify-center rounded-full
-    px-10 py-5 text-xl font-bold text-white rtl:tracking-normal
-    shadow-xl shadow-sky-200 transition-all transform
+    h-14 sm:h-auto px-8 py-0 sm:px-10 sm:py-5 
+    text-lg sm:text-xl font-bold text-white rtl:tracking-normal
+    shadow-lg shadow-sky-200/80 transition-all transform
     bg-sky-600 hover:bg-sky-700 hover:scale-[1.02] active:scale-[0.98]
     focus:outline-none focus:ring-4 focus:ring-sky-500 focus:ring-offset-2
+    w-full max-w-xs sm:w-auto
   "
               style={
                 clinicId
@@ -101,26 +103,16 @@ export default function HeroSection() {
               {t('startNow')}
             </button>
 
-            <span className="block max-w-xs text-xs font-normal text-slate-400/80 mt-1 text-center rtl:text-start md:text-start">
+            <span className="block max-w-xs text-xs font-normal text-slate-400/80 mt-1 text-center rtl:text-start md:text-start mx-auto md:mx-0">
               {t('medicalAdviceDisclaimer')}
-            </span>
-          </div>
-
-          {/* Highlight Tags */}
-          <div className="mt-2 flex flex-wrap justify-center rtl:justify-start md:justify-start gap-2 text-sm">
-
-            <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-800">
-              {t('tagExport')}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 py-1 font-medium text-slate-800">
-              {t('tagProtocol')}
             </span>
           </div>
         </div>
 
         {/* Example Card – Left side on desktop (now second in DOM) */}
-        <div className="flex-1 flex justify-center md:justify-start">
-          <div className="w-full max-w-sm rounded-3xl border border-sky-50 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
+        {/* Example Card – Left side on desktop (now second in DOM) */}
+        <div className="flex-1 flex justify-center md:justify-start w-full px-2 sm:px-0">
+          <div className="w-full max-w-[340px] sm:max-w-sm rounded-3xl border border-sky-50 bg-white p-5 sm:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.1)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
@@ -128,7 +120,7 @@ export default function HeroSection() {
                 </p>
                 <p className="text-sm font-medium text-slate-700">{t('day1PostOp')}</p>
               </div>
-              <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-800">
+              <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs sm:text-sm font-medium text-sky-800">
                 {t('postOpDay1')}
               </span>
             </div>
@@ -139,7 +131,7 @@ export default function HeroSection() {
                   <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
                   <span className="font-medium text-slate-800">Vigamox</span>
                 </div>
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm font-semibold text-slate-900 text-right w-12 sm:w-auto">
                   08:00
                 </span>
               </div>
@@ -148,7 +140,7 @@ export default function HeroSection() {
                   <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
                   <span className="font-medium text-slate-800">Dicloftil</span>
                 </div>
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm font-semibold text-slate-900 text-right w-12 sm:w-auto">
                   09:00
                 </span>
               </div>
@@ -157,13 +149,13 @@ export default function HeroSection() {
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                   <span className="font-medium text-slate-800">Vitapos</span>
                 </div>
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm font-semibold text-slate-900 text-right w-12 sm:w-auto">
                   09:15
                 </span>
               </div>
             </div>
 
-            <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            <p className="mt-4 text-xs sm:text-sm leading-relaxed text-slate-500 text-center">
               {t('exampleDisclaimer')}
             </p>
           </div>
