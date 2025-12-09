@@ -12,8 +12,11 @@ import { downloadScheduleIcs } from "../lib/ics";
 import { openSchedulePdf } from "../lib/pdf";
 import { trackEvent } from "../lib/analytics";
 
+import type { ClinicBrand } from "../config/clinics";
+
 interface Props {
   schedule: DoseSlot[];
+  clinicConfig?: ClinicBrand;
 }
 
 type DayGroup = {
@@ -109,7 +112,7 @@ function filterByMode(
   return { filtered, todayStr };
 }
 
-export default function ScheduleView({ schedule }: Props) {
+export default function ScheduleView({ schedule, clinicConfig }: Props) {
   const t = useTranslations('Schedule');
   const [mode, setMode] = useState<FilterMode>("today");
 
@@ -144,7 +147,7 @@ export default function ScheduleView({ schedule }: Props) {
       surgeryDate: surgeryDateStr
     });
     try {
-      downloadScheduleIcs(filtered, "laser-drops-schedule");
+      downloadScheduleIcs(filtered, "laser-drops-schedule", clinicConfig?.name);
     } catch (e) {
       console.error("Failed to export ICS", e);
       alert("Failed to generate calendar file. Please try again.");
@@ -162,7 +165,7 @@ export default function ScheduleView({ schedule }: Props) {
     });
     try {
       const fileName = `Drops-Schedule-${surgeryDateStr || todayStr}.pdf`;
-      await openSchedulePdf(filtered, fileName);
+      await openSchedulePdf(filtered, fileName, clinicConfig?.name);
     } catch (e) {
       console.error("Failed to export PDF", e);
       alert("Failed to generate PDF. Please try again.");

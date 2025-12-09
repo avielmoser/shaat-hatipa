@@ -1,7 +1,16 @@
 {
+    "layout": {
+        "trialBanner": "גרסת ניסיון · המידע המוצג אינו מהווה ייעוץ רפואי"
+    },
     "HomePage": {
         "title": "שעת הטיפה",
         "description": "מחולל לוח זמנים לטיפות לאחר ניתוח"
+    },
+    "Clinics": {
+        "ein-tal-hadassah": "עין טל הדסה",
+        "default": "שעת הטיפה",
+        "ein-tal": "עין טל",
+        "demo-clinic": "Demo Clinic"
     },
     "Navbar": {
         "title": "שעת הטיפה",

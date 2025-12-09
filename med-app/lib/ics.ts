@@ -45,8 +45,9 @@ function toICalDateTime(date: string, time: string): string {
  *
  * @param schedule - Array of dose slots to include in the calendar.
  * @param fileName - The desired name for the downloaded file (without extension).
+ * @param clinicName - Optional clinic name for customization.
  */
-export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string): void {
+export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clinicName?: string): void {
   if (!schedule || schedule.length === 0) {
     console.warn("downloadScheduleIcs: Empty schedule provided.");
     return;
@@ -75,7 +76,7 @@ export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string): voi
     const dtEnd = dtStart;
 
     // Combine medication names
-    const summary = slots.map((s) => s.medicationName).join(", ");
+    const medNames = slots.map((s) => s.medicationName).join(", ");
 
     // Combine notes (if any)
     const notes = slots
@@ -83,12 +84,16 @@ export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string): voi
       .filter(Boolean)
       .join("\\n");
 
+    const eventSummary = clinicName
+      ? `${medNames} - ${clinicName}`
+      : medNames;
+
     lines.push(ICS_CONSTANTS.BEGIN_EVENT);
     lines.push(`UID:${date}-${time.replace(":", "")}@shaathtipa`);
     lines.push(`DTSTAMP:${dtStart}`);
     lines.push(`DTSTART:${dtStart}`);
     lines.push(`DTEND:${dtEnd}`);
-    lines.push(`SUMMARY:${summary}`);
+    lines.push(`SUMMARY:${eventSummary}`);
 
     if (notes) {
       lines.push(`DESCRIPTION:${notes}`);
@@ -98,7 +103,7 @@ export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string): voi
     lines.push(ICS_CONSTANTS.BEGIN_ALARM);
     lines.push(ICS_CONSTANTS.ALARM_TRIGGER);
     lines.push(ICS_CONSTANTS.ALARM_ACTION);
-    lines.push(`DESCRIPTION:Drop Reminder: ${summary}`);
+    lines.push(`DESCRIPTION:Drop Reminder: ${medNames}`);
     lines.push(ICS_CONSTANTS.END_ALARM);
 
     lines.push(ICS_CONSTANTS.END_EVENT);

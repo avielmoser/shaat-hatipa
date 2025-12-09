@@ -95,3 +95,12 @@ export function getPrkMedications(): Medication[] {
         },
     ];
 }
+
+/**
+ * Registry of default protocols.
+ * Used when a clinic does not override a specific surgery type.
+ */
+export const DEFAULT_PROTOCOLS = {
+    INTERLASIK: getInterlasikMedications,
+    PRK: (_awakeMinutes: number) => getPrkMedications(),
+};

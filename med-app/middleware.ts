@@ -37,10 +37,11 @@ const ratelimit = redis
 const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-    // 1. Rate Limit Logic for /api/generate-schedule
+    // 1. Rate Limit Logic
     let rateLimitResult = null;
+    const isRateLimitedPath = request.nextUrl.pathname === "/api/generate-schedule" || request.nextUrl.pathname === "/api/analytics";
 
-    if (request.nextUrl.pathname === "/api/generate-schedule" && ratelimit) {
+    if (isRateLimitedPath && ratelimit) {
         // Extract IP safely
         const ipHeader = request.headers.get("x-forwarded-for");
         const ipIdentifier = ipHeader?.split(",")[0].trim() || "127.0.0.1";
@@ -53,7 +54,7 @@ export async function middleware(request: NextRequest) {
             return new Response(
                 JSON.stringify({
                     error: "Rate limit exceeded",
-                    details: "Please wait one minute before generating another schedule."
+                    details: "Please wait one minute before trying again."
                 }),
                 {
                     status: 429,
@@ -81,11 +82,25 @@ export async function middleware(request: NextRequest) {
     }
 
     // 3. Add Security Headers
+    const cspHeader = `
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'self';
+        upgrade-insecure-requests;
+    `.replace(/\s{2,}/g, ' ').trim();
+
+    response.headers.set("Content-Security-Policy", cspHeader);
     response.headers.set("X-DNS-Prefetch-Control", "on");
     response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
     response.headers.set("X-Frame-Options", "SAMEORIGIN");
     response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
 
     // 4. Add rate limit info to success response headers if applicable

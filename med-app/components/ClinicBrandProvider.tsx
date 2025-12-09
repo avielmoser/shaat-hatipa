@@ -2,7 +2,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { CLINICS, DEFAULT_BRAND, type ClinicBrand } from "../lib/clinics";
+import { resolveClinicConfig } from "../lib/protocol-resolver";
+import { DEFAULT_BRAND, type ClinicBrand } from "../config/clinics";
 
 type ClinicBrandContextValue = {
   brand: ClinicBrand;
@@ -25,8 +26,7 @@ export function ClinicBrandProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const brand = useMemo(() => {
-    if (!clinicId) return DEFAULT_BRAND;
-    return CLINICS[clinicId] ?? DEFAULT_BRAND;
+    return resolveClinicConfig(clinicId);
   }, [clinicId]);
 
   // CSS variables למיתוג

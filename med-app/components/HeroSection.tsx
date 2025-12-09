@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 export default function HeroSection() {
   const { brand, clinicId } = useClinicBrand();
   const t = useTranslations('Hero');
+  const tClinics = useTranslations('Clinics');
   const locale = useLocale();
   const isRtl = locale === 'he';
 
@@ -26,28 +27,36 @@ export default function HeroSection() {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
-        <div className="flex-1 flex flex-col items-center rtl:items-start md:items-start text-center rtl:text-start md:text-start">
+        <div className="flex-1 flex flex-col items-center md:items-start text-center rtl:text-start md:text-start">
           {/* Clinic Logo (if exists) */}
           <div className="flex flex-col items-center gap-3">
             {clinicId && (
               <div className="flex flex-col items-center gap-2">
-                <img
-                  src={brand.logoUrl}
-                  alt={brand.name || "Clinic Logo"}
-                  className="max-h-14 w-auto object-contain"
-                  loading="eager"
-                  onError={(e) => {
-                    // Hide logo if it fails to load
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-
+                {brand.logoUrl ? (
+                  <img
+                    src={brand.logoUrl}
+                    alt={tClinics(brand.id)}
+                    className="max-h-14 w-auto object-contain"
+                    loading="eager"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : null}
+                {clinicId !== "default" && (
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                    {isRtl ? `מופעל עבור ${tClinics(brand.id)}` : `Powered for ${tClinics(brand.id)}`}
+                  </span>
+                )}
               </div>
             )}
           </div>
 
           <div className="mb-6 sm:mb-8 w-full">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-3 sm:mb-4 max-w-lg mx-auto md:mx-0">
+            <h1 className={cn(
+              "font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-3 sm:mb-4 max-w-lg mx-auto md:mx-0",
+              isRtl ? "text-2xl sm:text-4xl lg:text-5xl" : "text-3xl sm:text-4xl lg:text-5xl"
+            )}>
               {t('title')}
             </h1>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-medium leading-normal text-slate-600 max-w-lg mx-auto md:mx-0 text-balance">
@@ -60,14 +69,17 @@ export default function HeroSection() {
           </p>
 
           <ul className={cn(
-            "flex flex-col gap-3 mb-8 sm:mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
+            "flex flex-col gap-4 mb-8 sm:mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
           )}>
             {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
-              <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
+              <li key={i} className={cn(
+                "flex items-center gap-3 text-slate-700 font-medium",
+                isRtl ? "flex-row-reverse text-right justify-end w-full" : ""
+              )}>
                 <div className="flex h-6 w-6 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
                   <Check size={14} strokeWidth={3} className="sm:w-3 sm:h-3" />
                 </div>
-                <span className="text-sm sm:text-base leading-snug">{feature}</span>
+                <span className="text-sm sm:text-base leading-snug flex-1">{feature}</span>
               </li>
             ))}
           </ul>

@@ -5,17 +5,20 @@ import { useTranslations } from 'next-intl';
 import { DoseSlot } from "../types/prescription";
 import ScheduleView from "./ScheduleView";
 import { trackEvent } from "../lib/analytics";
+import type { ClinicBrand } from "../config/clinics";
 
 interface ScheduleDisplayProps {
     schedule: DoseSlot[];
     onBack: () => void;
     onHome: () => void;
+    clinicConfig?: ClinicBrand;
 }
 
 export default function ScheduleDisplay({
     schedule,
     onBack,
     onHome,
+    clinicConfig,
 }: ScheduleDisplayProps) {
     const t = useTranslations('Wizard.step3');
 
@@ -31,7 +34,7 @@ export default function ScheduleDisplay({
             </div>
 
             <div>
-                <ScheduleView schedule={schedule} />
+                <ScheduleView schedule={schedule} clinicConfig={clinicConfig} />
             </div>
 
             {/* Spacer */}

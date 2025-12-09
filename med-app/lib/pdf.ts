@@ -47,12 +47,16 @@ function formatDateShort(dateStr: string): string {
 }
 
 // Build the printable HTML document for the schedule.
-function buildPrintableHtml(schedule: DoseSlot[], fileName: string): string {
+function buildPrintableHtml(schedule: DoseSlot[], fileName: string, clinicName?: string): string {
   const dayGroups = groupByDate(schedule);
   const parts: string[] = [];
+  const title = clinicName
+    ? `${clinicName} – Post-surgery schedule`
+    : `ShaatHaTipa – Post-surgery schedule`;
+
   parts.push(
     `<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charSet="utf-8"><title>${escapeHtml(
-      fileName,
+      title,
     )}</title><style>
     body{font-family:Arial,sans-serif;margin:24px;background:#fafafa;color:#0f172a;}
     h1{font-size:20px;margin-bottom:12px;}
@@ -63,7 +67,7 @@ function buildPrintableHtml(schedule: DoseSlot[], fileName: string): string {
     .chip{display:inline-block;margin:2px;padding:2px 6px;border-radius:999px;border:1px solid;line-height:1;}
     </style></head><body>`,
   );
-  parts.push(`<h1>${escapeHtml(fileName)}</h1>`);
+  parts.push(`<h1>${escapeHtml(title)}</h1>`);
   if (dayGroups.length === 0) {
     parts.push(`<p style="text-align:center;color:#64748b;margin-top:40px;">No doses scheduled for this period.</p>`);
   } else {
@@ -103,12 +107,12 @@ function buildPrintableHtml(schedule: DoseSlot[], fileName: string): string {
  * Open a new window and print the schedule as a PDF.
  * @param schedule - Array of dose slots to export
  * @param fileName - The desired filename (without extension)
+ * @param clinicName - Optional clinic name for branding
  */
-export function openSchedulePdf(schedule: DoseSlot[], fileName: string): void {
+export function openSchedulePdf(schedule: DoseSlot[], fileName: string, clinicName?: string): void {
   if (typeof window === "undefined") return;
   // Append .pdf to file name for printing.
-  const title = `${fileName}`;
-  const html = buildPrintableHtml(schedule, title);
+  const html = buildPrintableHtml(schedule, fileName, clinicName);
   const newWindow = window.open("", "_blank");
   if (!newWindow) return;
   newWindow.document.write(html);

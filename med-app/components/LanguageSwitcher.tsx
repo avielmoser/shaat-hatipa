@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "../i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 export default function LanguageSwitcher() {
@@ -9,12 +10,19 @@ export default function LanguageSwitcher() {
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
 
     const switchLanguage = (nextLocale: "en" | "he") => {
         if (locale === nextLocale) return;
+
+        // Preserve all query parameters (like ?clinic=...)
+        const params = new URLSearchParams(searchParams?.toString() || "");
+        const query = params.toString();
+        const newPath = query ? `${pathname}?${query}` : pathname;
+
         startTransition(() => {
-            router.replace(pathname, { locale: nextLocale });
+            router.replace(newPath, { locale: nextLocale });
         });
     };
 

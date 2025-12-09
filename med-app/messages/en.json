@@ -1,7 +1,16 @@
 {
+    "layout": {
+        "trialBanner": "Trial Version · Not medical advice"
+    },
     "HomePage": {
         "title": "ShaatHaTipa",
         "description": "Personal drop schedule generator after surgery"
+    },
+    "Clinics": {
+        "ein-tal-hadassah": "Ein Tal Hadassah",
+        "default": "ShaatHaTipa",
+        "ein-tal": "Ein Tal",
+        "demo-clinic": "Demo Clinic"
     },
     "Navbar": {
         "title": "ShaatHaTipa",

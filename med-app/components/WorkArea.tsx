@@ -7,7 +7,6 @@ import type {
   LaserPrescriptionInput,
   DoseSlot,
   SurgeryType,
-  Medication,
 } from "../types/prescription";
 
 import PrescriptionView from "./PrescriptionView";
@@ -17,12 +16,17 @@ import ProtocolReview from "./ProtocolReview";
 import ScheduleDisplay from "./ScheduleDisplay";
 import GlobalErrorBoundary from "./GlobalErrorBoundary";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
-import { getInterlasikMedications, getPrkMedications } from "../constants/protocols";
+import { resolveProtocol } from "../lib/protocol-resolver";
 import { trackEvent } from "../lib/analytics";
+import type { ClinicBrand } from "../config/clinics";
 
 type Step = 1 | 2 | 3;
 
-export default function WorkArea() {
+interface WorkAreaProps {
+  clinicConfig?: ClinicBrand;
+}
+
+export default function WorkArea({ clinicConfig }: WorkAreaProps) {
   const t = useTranslations('Wizard');
   const [step, setStep] = useState<Step>(1);
 
@@ -112,10 +116,7 @@ export default function WorkArea() {
 
   const buildPrescription = (): LaserPrescriptionInput => {
     const { awakeMinutes } = normalizeAwakeWindow(wakeTime, sleepTime);
-    const medications =
-      surgeryType === "INTERLASIK"
-        ? getInterlasikMedications(awakeMinutes)
-        : getPrkMedications();
+    const medications = resolveProtocol(clinicConfig, surgeryType, awakeMinutes);
 
     return {
       surgeryType,
@@ -186,7 +187,8 @@ export default function WorkArea() {
         uniqueMeds: meds,
         surgeryType: body.surgeryType,
         wakeTime: body.wakeTime,
-        sleepTime: body.sleepTime
+        sleepTime: body.sleepTime,
+        clinic: clinicConfig?.name,
       });
     } catch (e: any) {
       console.error(e);
@@ -328,6 +330,7 @@ export default function WorkArea() {
                   schedule={schedule}
                   onBack={goToStep2}
                   onHome={goHome}
+                  clinicConfig={clinicConfig}
                 />
               </div>
             </div>
@@ -337,4 +340,3 @@ export default function WorkArea() {
     </GlobalErrorBoundary>
   );
 }
-
