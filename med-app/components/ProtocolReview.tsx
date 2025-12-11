@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { LaserPrescriptionInput } from "../types/prescription";
 import PrescriptionView from "./PrescriptionView";
 import { trackEvent } from "../lib/analytics";
+import ShortDisclaimer from "./legal/ShortDisclaimer";
 
 interface ProtocolReviewProps {
     prescription: LaserPrescriptionInput;
@@ -23,6 +24,23 @@ export default function ProtocolReview({
 }: ProtocolReviewProps) {
     const t = useTranslations('Wizard.step2');
     const [isAgreed, setIsAgreed] = React.useState(false);
+    const [showDisclaimerError, setShowDisclaimerError] = React.useState(false);
+
+    const handleGenerateClick = () => {
+        if (!isAgreed) {
+            setShowDisclaimerError(true);
+            return;
+        }
+        onGenerate();
+    };
+
+    const handleAgreeChange = (checked: boolean) => {
+        setIsAgreed(checked);
+        if (checked) {
+            setShowDisclaimerError(false);
+            trackEvent("disclaimer_agreed");
+        }
+    };
 
     return (
         <div className="relative space-y-4" aria-labelledby="step2-title">
@@ -54,33 +72,11 @@ export default function ProtocolReview({
             )}
 
             {/* Disclaimer */}
-            <div className="rounded-lg bg-amber-50 border border-amber-100 p-4 text-sm text-amber-900">
-                <div className="flex items-start gap-3">
-                    <div className="flex h-6 items-center">
-                        <input
-                            id="disclaimer-agree"
-                            name="disclaimer-agree"
-                            type="checkbox"
-                            checked={isAgreed}
-                            onChange={(e) => {
-                                setIsAgreed(e.target.checked);
-                                if (e.target.checked) {
-                                    trackEvent("disclaimer_agreed");
-                                }
-                            }}
-                            className="h-5 w-5 rounded border-amber-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
-                        />
-                    </div>
-                    <div className="text-sm leading-6">
-                        <label htmlFor="disclaimer-agree" className="font-medium text-amber-900 cursor-pointer select-none">
-                            {t('disclaimerAgree')}
-                        </label>
-                        <p className="text-amber-800 opacity-90">
-                            {t('disclaimerText')}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <ShortDisclaimer
+                isAccepted={isAgreed}
+                onAcceptChange={handleAgreeChange}
+                showError={showDisclaimerError}
+            />
 
             {/* Spacer */}
             <div className="h-8 sm:h-10" />
@@ -91,7 +87,7 @@ export default function ProtocolReview({
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <button
                             type="button"
-                            onClick={onGenerate}
+                            onClick={handleGenerateClick}
                             disabled={loading || !isAgreed}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-6 py-4 text-lg font-bold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                         >

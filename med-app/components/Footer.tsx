@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 
 export default function Footer() {
   const t = useTranslations('Footer');
@@ -25,9 +26,12 @@ export default function Footer() {
           >
             {t('backToWizard')}
           </a>
-          <span className="text-[11px] text-slate-400">
+          <Link
+            href="/terms"
+            className="text-[11px] text-slate-400 hover:text-slate-600 hover:underline"
+          >
             {t('links')}
-          </span>
+          </Link>
         </div>
       </div>
     </footer>
