@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* @plugin "tw-animate-css"; */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -163,4 +163,3 @@ body {
 .animation-delay-4000 {
   animation-delay: 4s;
 }
-

@@ -64,6 +64,7 @@ export default function SurgeryForm({
                             value={surgeryType}
                             onChange={(e) => setSurgeryType(e.target.value as SurgeryType)}
                             className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-4 py-3 text-lg text-slate-900 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-500/30"
+                            dir="ltr"
                         >
                             <option value="INTERLASIK">INTERLASIK</option>
                             <option value="PRK">PRK</option>
@@ -83,6 +84,7 @@ export default function SurgeryForm({
                             value={surgeryDate}
                             onChange={(e) => setSurgeryDate(e.target.value)}
                             className="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-lg text-slate-900 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-500/30"
+                            dir="ltr"
                         />
                     </div>
                 </div>
@@ -106,6 +108,7 @@ export default function SurgeryForm({
                                 }`}
                             aria-invalid={invalidTime || undefined}
                             aria-describedby={invalidTime ? "time-error" : undefined}
+                            dir="ltr"
                         />
                     </div>
 
@@ -127,6 +130,7 @@ export default function SurgeryForm({
                                 }`}
                             aria-invalid={invalidTime || undefined}
                             aria-describedby={invalidTime ? "time-error" : undefined}
+                            dir="ltr"
                         />
                     </div>
                 </div>

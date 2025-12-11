@@ -4,18 +4,13 @@ import { Redis } from "@upstash/redis";
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
-// Check for environment variables (Rate limiting will be disabled if missing)
+// --- Configuration ---
+
+// Initialize Upstash Redis & Ratelimit safely
+// We do this outside the handler to reuse connections, but wrapped in try/catch or checks if necessary.
 const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-    // Production warning: This should be configured in Vercel environment variables.
-    console.warn(
-        "UPSTASH Redis credentials missing. Rate limiting is DISABLED."
-    );
-}
-
-// Initialize Upstash Redis and Ratelimit only if credentials exist
 const redis =
     UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN
         ? new Redis({
@@ -24,102 +19,97 @@ const redis =
         })
         : null;
 
-// 20 requests per minute per IP
+// Create a rate limiter: 20 requests per 60s
 const ratelimit = redis
     ? new Ratelimit({
         redis,
         limiter: Ratelimit.fixedWindow(20, "60s"),
         ephemeralCache: new Map(),
-        analytics: true,
+        analytics: true, // Enable analytics for the dashboard
     })
     : null;
 
+// Initialize next-intl middleware
 const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-    // 1. Rate Limit Logic
+    const { pathname } = request.nextUrl;
+
+    // 1. Bypass Logic (Redundant if matcher is perfect, but good for safety)
+    // If the matcher misses something, we exit early for statics/internals.
+    if (
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/static') ||
+        pathname === '/favicon.ico'
+    ) {
+        return NextResponse.next();
+    }
+
+    // 2. Rate Limiting (Only for specific API routes)
+    const isRateLimitedPath = pathname === "/api/generate-schedule" || pathname === "/api/analytics";
     let rateLimitResult = null;
-    const isRateLimitedPath = request.nextUrl.pathname === "/api/generate-schedule" || request.nextUrl.pathname === "/api/analytics";
 
     if (isRateLimitedPath && ratelimit) {
-        // Extract IP safely
-        const ipHeader = request.headers.get("x-forwarded-for");
-        const ipIdentifier = ipHeader?.split(",")[0].trim() || "127.0.0.1";
+        const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
 
-        // Rate Limit check
-        rateLimitResult = await ratelimit.limit(ipIdentifier);
+        try {
+            rateLimitResult = await ratelimit.limit(ip);
 
-        // If exceeded
-        if (!rateLimitResult.success) {
-            return new Response(
-                JSON.stringify({
+            if (!rateLimitResult.success) {
+                return new Response(JSON.stringify({
                     error: "Rate limit exceeded",
-                    details: "Please wait one minute before trying again."
-                }),
-                {
+                    details: "Please try again in a minute."
+                }), {
                     status: 429,
                     headers: {
                         "Content-Type": "application/json",
                         "X-RateLimit-Limit": String(rateLimitResult.limit),
                         "X-RateLimit-Remaining": String(rateLimitResult.remaining),
-                        // Add security headers to error response as well
                         "X-Frame-Options": "SAMEORIGIN",
-                        "X-Content-Type-Options": "nosniff",
-                    },
-                }
-            );
+                        "X-Content-Type-Options": "nosniff"
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Rate limit error:", err);
+            // Fail open: if rate limiter fails, allow request
         }
     }
 
-    // 2. Handle i18n or API
-    // If it's an API route, we don't use intlMiddleware (unless we want localized APIs)
-    // For now, we skip intlMiddleware for /api
-    let response: NextResponse;
-    if (request.nextUrl.pathname.startsWith('/api')) {
+    // 3. Routing Logic
+    // If it's an API route or Admin route, we SKIP next-intl middleware.
+    // We strictly use next-intl ONLY for public-facing localized pages.
+    let response: NextResponse | Response;
+
+    if (pathname.startsWith('/api') || pathname.startsWith('/admin')) {
         response = NextResponse.next();
     } else {
         response = intlMiddleware(request);
     }
 
-    // 3. Add Security Headers
-    const cspHeader = `
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval';
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data: blob:;
-        font-src 'self';
-        object-src 'none';
-        base-uri 'self';
-        form-action 'self';
-        frame-ancestors 'self';
-        upgrade-insecure-requests;
-    `.replace(/\s{2,}/g, ' ').trim();
+    // 4. Security Headers
+    // Apply consistent security headers to the final response
+    if (response instanceof NextResponse || response instanceof Response) {
+        response.headers.set("X-DNS-Prefetch-Control", "on");
+        response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+        response.headers.set("X-Frame-Options", "SAMEORIGIN");
+        response.headers.set("X-Content-Type-Options", "nosniff");
+        response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+        response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
 
-    response.headers.set("Content-Security-Policy", cspHeader);
-    response.headers.set("X-DNS-Prefetch-Control", "on");
-    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-    response.headers.set("X-Frame-Options", "SAMEORIGIN");
-    response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
-
-    // 4. Add rate limit info to success response headers if applicable
-    if (rateLimitResult) {
-        response.headers.set("X-RateLimit-Limit", String(rateLimitResult.limit));
-        response.headers.set("X-RateLimit-Remaining", String(rateLimitResult.remaining));
+        if (rateLimitResult && rateLimitResult.success) {
+            response.headers.set("X-RateLimit-Limit", String(rateLimitResult.limit));
+            response.headers.set("X-RateLimit-Remaining", String(rateLimitResult.remaining));
+        }
     }
 
     return response;
 }
 
 export const config = {
-    matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         */
-        '/((?!_next/static|_next/image|favicon.ico).*)',
-    ],
+    // Matcher:
+    // 1. Negative lookahead for api, _next, static files, favicon
+    // 2. Matches everything else
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
 };
+
