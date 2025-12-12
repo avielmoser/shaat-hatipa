@@ -1,6 +1,6 @@
-import { CLINICS, DEFAULT_BRAND, ClinicConfig } from "../config/clinics";
-import { DEFAULT_PROTOCOLS } from "../constants/protocols";
-import { Medication, SurgeryType } from "../types/prescription";
+import { CLINICS, DEFAULT_BRAND, ClinicConfig } from "../../config/clinics";
+import { DEFAULT_PROTOCOLS } from "../../constants/protocols";
+import { Medication, SurgeryType } from "../../types/prescription";
 
 /**
  * Resolves the clinic configuration by ID.

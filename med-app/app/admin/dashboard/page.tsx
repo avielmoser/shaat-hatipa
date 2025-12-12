@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/server/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -126,8 +126,8 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                         <Link
                             href={toggleUrl}
                             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${showAll
-                                    ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30"
-                                    : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
+                                ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
                                 }`}
                         >
                             {showAll ? "Viewing: ALL Events" : "Viewing: Meaningful Only"}

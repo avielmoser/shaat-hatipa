@@ -1,9 +1,9 @@
 // app/api/generate-schedule/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { buildLaserSchedule, ImpossibleScheduleError } from "../../../lib/schedule-builder";
-import { laserPrescriptionInputSchema } from "../../../lib/schemas";
-import { validateRequest } from "../../../lib/api-utils";
-import { logger } from "../../../lib/logger";
+import { buildLaserSchedule, ImpossibleScheduleError } from "@/lib/domain/schedule-builder";
+import { laserPrescriptionInputSchema } from "@/lib/domain/schemas";
+import { validateRequest } from "@/lib/server/api-utils";
+import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
 

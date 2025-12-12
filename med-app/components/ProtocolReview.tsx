@@ -4,7 +4,7 @@ import React from "react";
 import { useTranslations } from 'next-intl';
 import { LaserPrescriptionInput } from "../types/prescription";
 import PrescriptionView from "./PrescriptionView";
-import { trackEvent } from "../lib/analytics";
+import { trackEvent } from "../lib/client/analytics";
 import ShortDisclaimer from "./legal/ShortDisclaimer";
 
 interface ProtocolReviewProps {

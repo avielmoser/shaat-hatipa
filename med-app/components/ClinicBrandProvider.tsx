@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { resolveClinicConfig } from "../lib/protocol-resolver";
+import { resolveClinicConfig } from "../lib/domain/protocol-resolver";
 import { DEFAULT_BRAND, type ClinicBrand } from "../config/clinics";
 
 type ClinicBrandContextValue = {

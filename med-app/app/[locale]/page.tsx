@@ -2,7 +2,7 @@
 
 import HeroSection from "../../components/HeroSection";
 import WorkArea from "../../components/WorkArea";
-import { resolveClinicConfig } from "../../lib/protocol-resolver";
+import { resolveClinicConfig } from "../../lib/domain/protocol-resolver";
 
 export default async function Page({
   searchParams,

@@ -7,10 +7,10 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from 'next-intl';
 import type { DoseSlot } from "../types/prescription";
-import { getMedicationColor } from "../lib/medicationColors";
-import { downloadScheduleIcs } from "../lib/ics";
-import { openSchedulePdf } from "../lib/pdf";
-import { trackEvent } from "../lib/analytics";
+import { getMedicationColor } from "../lib/theme/medicationColors";
+import { downloadScheduleIcs } from "../lib/utils/ics";
+import { openSchedulePdf } from "../lib/utils/pdf";
+import { trackEvent } from "../lib/client/analytics";
 
 import type { ClinicBrand } from "../config/clinics";
 

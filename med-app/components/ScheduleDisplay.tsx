@@ -4,7 +4,7 @@ import React from "react";
 import { useTranslations } from 'next-intl';
 import { DoseSlot } from "../types/prescription";
 import ScheduleView from "./ScheduleView";
-import { trackEvent } from "../lib/analytics";
+import { trackEvent } from "../lib/client/analytics";
 import type { ClinicBrand } from "../config/clinics";
 
 interface ScheduleDisplayProps {

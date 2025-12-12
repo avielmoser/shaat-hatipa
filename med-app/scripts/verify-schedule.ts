@@ -1,4 +1,4 @@
-import { buildLaserSchedule } from "../lib/schedule-builder";
+import { buildLaserSchedule } from "../lib/domain/schedule-builder";
 import { LaserPrescriptionInput, SurgeryType } from "../types/prescription";
 
 console.log("\n--- Verifying generateSchedule ---");

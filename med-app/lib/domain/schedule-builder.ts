@@ -1,6 +1,6 @@
-import type { LaserPrescriptionInput, DoseSlot, Medication } from "../types/prescription";
-import { getMedicationColor } from "../constants/theme";
-import { logger } from "./logger";
+import type { LaserPrescriptionInput, DoseSlot, Medication } from "../../types/prescription";
+import { getMedicationColor } from "../theme/medicationColors";
+import { logger } from "../utils/logger";
 
 export class ImpossibleScheduleError extends Error {
   constructor(message: string) {
@@ -194,7 +194,7 @@ export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSl
   let slotCounter = 0;
 
   medications.forEach((med: Medication, medIndex) => {
-    const color = getMedicationColor(medIndex);
+    const color = getMedicationColor(med.name, med.id);
     med.phases.forEach((phase) => {
       const { dayStart, dayEnd, timesPerDay } = phase;
       if (timesPerDay <= 0 || dayEnd < dayStart) return;

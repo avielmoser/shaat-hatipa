@@ -1,5 +1,5 @@
 // scripts/test-schedule-logic.ts
-import { buildLaserSchedule, ImpossibleScheduleError } from "../lib/schedule-builder";
+import { buildLaserSchedule, ImpossibleScheduleError } from "../lib/domain/schedule-builder";
 import { LaserPrescriptionInput } from "../types/prescription";
 
 const mockMeds = [

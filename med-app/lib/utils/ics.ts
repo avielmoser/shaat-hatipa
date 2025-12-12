@@ -1,4 +1,4 @@
-import type { DoseSlot } from "../types/prescription";
+import type { DoseSlot } from "../../types/prescription";
 
 const ICS_CONSTANTS = {
   BEGIN_CALENDAR: "BEGIN:VCALENDAR",

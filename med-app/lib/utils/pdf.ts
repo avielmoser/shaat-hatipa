@@ -3,8 +3,8 @@
 // by day and time, builds an HTML document, and opens a new window to
 // print or save as PDF. Also includes helpers for safe HTML and date formatting.
 
-import { getMedicationColor } from "./med-colors";
-import type { DoseSlot } from "../types/prescription";
+import { getMedicationColor } from "../theme/medicationColors";
+import type { DoseSlot } from "../../types/prescription";
 
 // Escape HTML special characters to prevent injection.
 function escapeHtml(str: string): string {

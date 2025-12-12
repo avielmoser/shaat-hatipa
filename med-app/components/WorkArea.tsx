@@ -16,8 +16,8 @@ import ProtocolReview from "./ProtocolReview";
 import ScheduleDisplay from "./ScheduleDisplay";
 import GlobalErrorBoundary from "./GlobalErrorBoundary";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
-import { resolveProtocol } from "../lib/protocol-resolver";
-import { trackEvent } from "../lib/analytics";
+import { resolveProtocol } from "../lib/domain/protocol-resolver";
+import { trackEvent } from "../lib/client/analytics";
 import type { ClinicBrand } from "../config/clinics";
 
 type Step = 1 | 2 | 3;

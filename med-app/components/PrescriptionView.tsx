@@ -4,7 +4,7 @@
 import type React from "react";
 import { useTranslations } from 'next-intl';
 import type { LaserPrescriptionInput } from "../types/prescription";
-import { getMedicationColor } from "../lib/medicationColors";
+import { getMedicationColor } from "../lib/theme/medicationColors";
 
 interface Props {
   prescription: LaserPrescriptionInput | null;

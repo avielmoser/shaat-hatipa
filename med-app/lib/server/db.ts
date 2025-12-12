@@ -1,3 +1,4 @@
+import "server-only";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
@@ -58,8 +59,17 @@ if (process.env.NODE_ENV === "development" && process.env.VERCEL !== "1") {
             // If the user hasn't defined PROD_DB_HOSTS, we warn.
             // If they have, we block.
 
-            if (prodHosts.length > 0 && prodHosts.includes(hostname)) {
-                throw new Error("Match found in PROD_DB_HOSTS");
+            // ADDITIONAL CHECK: If DATABASE_URL_PROD is defined, and local DATABASE_URL matches it (by hostname), BLOCK.
+            const prodUrlRaw = process.env.DATABASE_URL_PROD;
+            let prodHostname = "";
+            if (prodUrlRaw) {
+                try {
+                    prodHostname = new URL(prodUrlRaw).hostname;
+                } catch (e) { /* ignore invalid prod url in checking */ }
+            }
+
+            if ((prodHosts.length > 0 && prodHosts.includes(hostname)) || (prodHostname && hostname === prodHostname)) {
+                throw new Error("Match found in PROD_DB_HOSTS or DATABASE_URL_PROD");
             }
 
             // Also checking against a "known" production identifier if previously hardcoded?

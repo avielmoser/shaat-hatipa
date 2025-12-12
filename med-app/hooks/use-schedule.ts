@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DoseSlot, LaserPrescriptionInput } from '../types/prescription';
-import { buildLaserSchedule } from '../lib/schedule-builder';
+import { buildLaserSchedule } from '../lib/domain/schedule-builder';
 
 export function useSchedule() {
     const [schedule, setSchedule] = useState<DoseSlot[]>([]);

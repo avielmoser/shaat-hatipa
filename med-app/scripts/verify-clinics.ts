@@ -1,5 +1,5 @@
 
-import { resolveClinicConfig, resolveProtocol } from "../lib/protocol-resolver";
+import { resolveClinicConfig, resolveProtocol } from "../lib/domain/protocol-resolver";
 import { getInterlasikMedications } from "../constants/protocols";
 
 function assert(condition: boolean, message: string) {
