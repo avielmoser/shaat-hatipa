@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/server/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getFunnelKPIs } from "@/lib/server/analytics-kpis";
+import { parseRange, getRangeWhereClause, formatRangeLabel } from "@/lib/server/analytics-range";
+import { TimeRangeSelector } from "@/components/admin/TimeRangeSelector";
 
 // Force dynamic rendering so we always get fresh data
 export const dynamic = "force-dynamic";
@@ -48,66 +51,88 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
     const viewMode = (Array.isArray(params.view) ? params.view[0] : params.view) || "meaningful"; // default to meaningful
     const showAll = viewMode === "all";
 
-    // Prisma Where Clause for Filtering
-    const whereCondition: any = {};
+    // Time Range Logic
+    const parsedRange = parseRange(params);
+    const rangeLabel = formatRangeLabel(parsedRange);
+    const dateWhere = getRangeWhereClause(parsedRange);
+
+    // Consolidated Where Clause
+    // 1. Start with range filter
+    // 2. Add 'Meaningful' filter if needed
+    const whereCondition: any = {
+        ...dateWhere
+    };
+
     if (!showAll) {
         // "Meaningful" = page_view OR conversion
-        // Note: This relies on 'eventType' being stored in 'meta'.
-        // Old events without this meta field will be excluded, effectively resetting stats to "clean" data.
         whereCondition.OR = [
             { meta: { path: ["eventType"], equals: "page_view" } },
             { meta: { path: ["eventType"], equals: "conversion" } },
         ];
     }
 
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
     let totalEvents: number = 0;
     let eventsByName: any[] = [];
     let eventsByStep: any[] = [];
     let last50Events: any[] = [];
+    let kpis = { conversionRate: "0.0%", avgTimeToSchedule: "—" };
     let fetchError: any = null;
 
     try {
-        [totalEvents, eventsByName, eventsByStep, last50Events] = await Promise.all([
+        [totalEvents, eventsByName, eventsByStep, last50Events, kpis] = await Promise.all([
+            // 1. Total Events (matches range + view mode)
             prisma.analyticsEvent.count({
                 where: whereCondition,
             }),
+            // 2. Top Events (matches range + view mode)
             prisma.analyticsEvent.groupBy({
                 by: ["eventName"],
-                where: {
-                    ...whereCondition,
-                    createdAt: { gte: sevenDaysAgo }
-                },
+                where: whereCondition,
                 _count: { eventName: true },
                 orderBy: { _count: { eventName: "desc" } },
             }),
+            // 3. Top Steps (matches range + view mode)
             prisma.analyticsEvent.groupBy({
                 by: ["step"],
                 where: {
                     ...whereCondition,
-                    createdAt: { gte: sevenDaysAgo },
                     step: { not: null }
                 },
                 _count: { step: true },
                 orderBy: { _count: { step: "desc" } },
             }),
+            // 4. Log (matches range + view mode)
             prisma.analyticsEvent.findMany({
                 where: whereCondition,
                 take: 50,
                 orderBy: { createdAt: "desc" },
             }),
+            // 5. KPIs (matches range only - specific events handled internally)
+            // KPIs usually ignore "View Mode" (meaningful vs all) because they are specific strict definitions.
+            getFunnelKPIs(prisma, dateWhere),
         ]);
     } catch (error) {
         console.error("[AdminDashboard] Database Fetch Error:", error);
         fetchError = error;
     }
 
-    // Build URL for toggle
-    const toggleUrl = showAll
-        ? `?key=${userKey}&view=meaningful`
-        : `?key=${userKey}&view=all`;
+    // Build URL for toggle (preserve range params)
+    const toggleParams = new URLSearchParams(params as any);
+    toggleParams.set("view", showAll ? "meaningful" : "all");
+    // Ensure key is preserved
+    if (userKey) toggleParams.set("key", userKey);
+    // Range params are already in 'params' so they should persist if we iterate, 
+    // but simpler to just set 'view' on current searchParams.
+    // Actually searchParams might include 'key' multiple times or weird stuff.
+    // Let's reconstruct cleanly.
+    const cleanToggleParams = new URLSearchParams();
+    cleanToggleParams.set("key", userKey);
+    cleanToggleParams.set("view", showAll ? "meaningful" : "all");
+    if (parsedRange.rangeKey) cleanToggleParams.set("range", parsedRange.rangeKey);
+    if (params.from) cleanToggleParams.set("from", params.from as string);
+    if (params.to) cleanToggleParams.set("to", params.to as string);
+
+    const toggleUrl = `?${cleanToggleParams.toString()}`;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12 font-sans selection:bg-indigo-500/30">
@@ -119,22 +144,26 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             Analytics Dashboard
                         </h1>
                         <p className="text-slate-400">
-                            Usage insights for the last 7 days • Live Data
+                            Showing: <span className="text-slate-200 font-medium">{rangeLabel}</span> • Live Data
                         </p>
                     </div>
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-                        <Link
-                            href={toggleUrl}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${showAll
-                                ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30"
-                                : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
-                                }`}
-                        >
-                            {showAll ? "Viewing: ALL Events" : "Viewing: Meaningful Only"}
-                        </Link>
-                        <div className="bg-slate-900 border border-slate-800 rounded-full px-4 py-1.5 text-xs font-mono text-emerald-500 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            SECURE_MODE_ACTIVE
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-4">
+                        <TimeRangeSelector />
+
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href={toggleUrl}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${showAll
+                                    ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30"
+                                    : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
+                                    }`}
+                            >
+                                {showAll ? "View: ALL" : "View: Meaningful"}
+                            </Link>
+                            <div className="bg-slate-900 border border-slate-800 rounded-full px-4 py-1.5 text-xs font-mono text-emerald-500 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                SECURE
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -162,28 +191,39 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                 )}
 
                 {/* Top Metric Cards */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     <MetricCard
-                        title={showAll ? "Total Events (All Time)" : "Meaningful Events (All Time)"}
+                        title={showAll ? "Total Events" : "Meaningful Evts"}
                         value={totalEvents.toLocaleString()}
                         icon={<IconTotal />}
                     />
                     <MetricCard
-                        title="Unique Event Types (7d)"
+                        title={`Unique Events (${parsedRange.rangeKey.toUpperCase()})`}
                         value={eventsByName.length.toString()}
                         icon={<IconTypes />}
                     />
                     <MetricCard
-                        title="Active Steps Tracked (7d)"
+                        title={`Active Steps (${parsedRange.rangeKey.toUpperCase()})`}
                         value={eventsByStep.length.toString()}
                         icon={<IconSteps />}
+                    />
+                    {/* New KPIs */}
+                    <MetricCard
+                        title={`Conversion Rate (${parsedRange.rangeKey.toUpperCase()})`}
+                        value={kpis.conversionRate}
+                        icon={<IconConversion />}
+                    />
+                    <MetricCard
+                        title="Avg Time to Schedule"
+                        value={kpis.avgTimeToSchedule}
+                        icon={<IconTime />}
                     />
                 </section>
 
                 {/* Data Tables Grid */}
                 <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Recent 7d Events Breakdown */}
-                    <CardContainer title="Top Events (Last 7 Days)">
+                    {/* Recent Events Breakdown */}
+                    <CardContainer title={`Top Events (${rangeLabel})`}>
                         <Table
                             headers={["Event Name", "Count"]}
                             rows={eventsByName.map((idx) => [
@@ -194,7 +234,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                     </CardContainer>
 
                     {/* Steps Breakdown */}
-                    <CardContainer title="Step Interactions (Last 7 Days)">
+                    <CardContainer title={`Step Interactions (${rangeLabel})`}>
                         <Table
                             headers={["Step Name", "Count"]}
                             rows={eventsByStep.map((idx) => [
@@ -291,6 +331,16 @@ const IconSteps = () => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
 );
+const IconConversion = () => (
+    <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+const IconTime = () => (
+    <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
 
 function MetricCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
     return (
@@ -299,10 +349,12 @@ function MetricCard({ title, value, icon }: { title: string; value: string; icon
                 <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">{title}</h3>
                 <div className="p-2 bg-slate-800 rounded-lg">{icon}</div>
             </div>
-            <div className="text-4xl font-bold text-white tracking-tight">{value}</div>
+            <div className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{value}</div>
         </div>
     );
 }
+
+
 
 function CardContainer({ title, children }: { title: string; children: React.ReactNode }) {
     return (
