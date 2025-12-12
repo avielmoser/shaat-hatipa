@@ -163,3 +163,113 @@ body {
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Accessibility Modes */
+
+/* Large Text Mode */
+html.a11y-large-text {
+  font-size: 112% !important;
+}
+
+/* High Contrast Mode (Yellow on Black) */
+html.a11y-high-contrast {
+  --background: #000000 !important;
+  --foreground: #ffff00 !important;
+  /* Yellow */
+  --card: #000000 !important;
+  --card-foreground: #ffff00 !important;
+  --popover: #000000 !important;
+  --popover-foreground: #ffff00 !important;
+  --primary: #ffff00 !important;
+  --primary-foreground: #000000 !important;
+  --secondary: #000000 !important;
+  --secondary-foreground: #ffff00 !important;
+  --muted: #000000 !important;
+  --muted-foreground: #00ffff !important;
+  /* Cyan for secondary text */
+  --accent: #000000 !important;
+  --accent-foreground: #ffff00 !important;
+  --destructive: #000000 !important;
+  --border: #ffff00 !important;
+  --input: #000000 !important;
+  --ring: #ffff00 !important;
+
+  /* Force removal of gradients and images in background */
+  background-image: none !important;
+}
+
+/* Force specific element visibility in high contrast */
+html.a11y-high-contrast * {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+  outline-color: #ffff00 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Links and Interactables */
+html.a11y-high-contrast a {
+  color: #00ffff !important;
+  /* Cyan Links */
+  text-decoration: underline !important;
+}
+
+html.a11y-high-contrast button,
+html.a11y-high-contrast [role="button"] {
+  border: 2px solid #ffff00 !important;
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  font-weight: bold !important;
+}
+
+html.a11y-high-contrast button:hover,
+html.a11y-high-contrast [role="button"]:hover {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+}
+
+html.a11y-high-contrast input,
+html.a11y-high-contrast textarea,
+html.a11y-high-contrast select {
+  border: 2px solid #ffff00 !important;
+  color: #ffff00 !important;
+  background-color: #000000 !important;
+}
+
+/* Exceptions for content images and semantic dots, but still forcing high contrast context */
+html.a11y-high-contrast img,
+html.a11y-high-contrast [role="img"] {
+  filter: grayscale(100%) contrast(150%) !important;
+  mix-blend-mode: normal !important;
+  border: none !important;
+  /* Remove border from images for cleaner look */
+  background-color: transparent !important;
+}
+
+html.a11y-high-contrast span:empty {
+  border: 1px solid #ffff00 !important;
+  /* Keep background color from original if inline style, but otherwise force black */
+}
+
+/* Fix for icons */
+html.a11y-high-contrast svg {
+  color: #ffff00 !important;
+  fill: currentColor !important;
+}
+
+/* Reduce Motion Mode */
+html.a11y-reduce-motion *,
+html.a11y-reduce-motion *::before,
+html.a11y-reduce-motion *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Explicitly hide decorative blobs in reduce motion */
+html.a11y-reduce-motion .animate-blob,
+html.a11y-reduce-motion .animate-blob-slow,
+html.a11y-reduce-motion .animate-blob-slower {
+  display: none !important;
+}

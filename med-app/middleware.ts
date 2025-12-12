@@ -108,8 +108,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     // Matcher:
-    // 1. Negative lookahead for api, _next, static files, favicon
+    // 1. Negative lookahead for api, _next, static files, favicon, AND admin
     // 2. Matches everything else
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
+    // This ensures that /admin routes are NEVER even seen by the intl middleware logic that might be bound to this matcher.
+    matcher: ['/((?!api|admin|_next|favicon.ico).*)']
 };
-

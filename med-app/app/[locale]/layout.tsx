@@ -6,6 +6,7 @@ import { routing } from '../../i18n/routing';
 import "../globals.css";
 import { ClinicBrandProvider } from "../../components/ClinicBrandProvider";
 import Navbar from "../../components/Navbar";
+import AccessibilityWidget from "../../components/accessibility/AccessibilityWidget";
 
 export const metadata: Metadata = {
     title: "ShaatHaTipa",
@@ -41,7 +42,8 @@ export default async function LocaleLayout({
                         {children}
                     </ClinicBrandProvider>
                 </NextIntlClientProvider>
+                <AccessibilityWidget />
             </body>
-        </html>
+        </html >
     );
 }

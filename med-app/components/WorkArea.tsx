@@ -62,7 +62,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
 
   // ... existing useEffect ...
   useEffect(() => {
-    trackEvent("wizard_viewed");
+    trackEvent("wizard_viewed", { deduplicate: true });
   }, []);
 
   useEffect(() => {

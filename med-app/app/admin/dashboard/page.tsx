@@ -17,26 +17,32 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
     const secretKey = process.env.ADMIN_DASHBOARD_KEY;
 
     // Support both 'key' and 'ADMIN_DASHBOARD_KEY'
-    // Await searchParams not required in Next 14 but good practice to treat as async-ready data source if moving to 15
     const params = await Promise.resolve(searchParams);
     const rawKey = params.key ?? params.ADMIN_DASHBOARD_KEY;
 
-    // Normalize key
+    // Normalize user key
     const userKey = Array.isArray(rawKey) ? rawKey[0] : (rawKey ?? "");
+    const paramExists = !!userKey;
+
+    // Safe Server-Side Logging for Production Diagnostics
+    // We do NOT log the actual keys, only their existence/match status.
+    console.log(`[AdminDashboard] Auth Check | Env Key Set: ${!!secretKey} | User Key Provided: ${paramExists}`);
 
     if (!secretKey) {
-        console.error("[AdminDashboard] CRITICAL: ADMIN_DASHBOARD_KEY is not set.");
+        console.error("[AdminDashboard] CRITICAL: ADMIN_DASHBOARD_KEY is not set in environment.");
         notFound();
     }
 
-    // Constant-time-like comparison not strictly necessary here but good practice, 
-    // simpler check is fine for this rough admin panel.
     if (userKey !== secretKey) {
-        console.warn("[AdminDashboard] Unauthorized access attempt.");
+        console.warn("[AdminDashboard] Unauthorized access attempt. Key verification failed.");
         notFound();
     }
 
     // 2. Fetch Data
+    // Environment Detection
+    const isLocal = process.env.NODE_ENV === "development";
+    const isProduction = process.env.VERCEL_ENV === "production"; // Vercel sets this automatically
+
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -92,6 +98,21 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                         SECURE_MODE_ACTIVE
                     </div>
                 </header>
+
+                {/* Environment Banners */}
+                {isProduction ? (
+                    <div className="bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 py-3 px-4 rounded-lg text-center font-bold tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.1)] mb-6">
+                        PRODUCTION DATA
+                    </div>
+                ) : isLocal ? (
+                    <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 py-3 px-4 rounded-lg text-center font-bold tracking-widest mb-6">
+                        LOCAL DEV DATA
+                    </div>
+                ) : (
+                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 py-3 px-4 rounded-lg text-center font-bold tracking-widest mb-6">
+                        PREVIEW DATA
+                    </div>
+                )}
 
                 {/* Error Banner */}
                 {fetchError && (

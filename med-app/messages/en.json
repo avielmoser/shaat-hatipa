@@ -121,7 +121,8 @@
         "copyright": "ShaatHaTipa © {year}",
         "disclaimer": "Schedule management tool. The information presented does not replace medical advice.",
         "backToWizard": "Back to Schedule Builder",
-        "links": "Terms of Use · Privacy Policy"
+        "links": "Terms of Use · Privacy Policy",
+        "accessibility": "Accessibility Statement"
     },
     "HowItWorks": {
         "title": "How It Works",
@@ -169,7 +170,15 @@
         "checkboxLabel": "I have read and agree to the medical notice above.",
         "error": "Please accept the medical disclaimer to generate your schedule.",
         "fullTermsLink": "View full Terms of Use",
-        "fullTermsLinkSuffix": " / לצפייה בתנאי השימוש המלאים"
+        "fullTermsLinkSuffix": "",
+        "medical_disclaimer_full": "Medical Disclaimer: This tool provides an automated schedule based on general post-operative protocols. It DOES NOT provide medical advice, diagnosis, or treatment. The content is for informational purposes only. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read on this application. References to specific medications or protocols are for convenience only and do not constitute an endorsement."
+    },
+    "accessibility": {
+        "title": "Accessibility Statement",
+        "statement": "ShaatHaTipa is committed to making its website accessible to all users, including those with disabilities. We are continuously improving the user experience for everyone and applying the relevant accessibility standards.",
+        "standards": "We aim to comply with the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA.",
+        "measures": "We have implemented keyboard navigation, focus indicators, semantic HTML, and ARIA labels to ensure compatibility with screen readers.",
+        "feedback": "If you encounter any accessibility barriers on our site, please contact us for assistance."
     },
     "terms": {
         "title": "LEGAL DISCLAIMER AND TERMS OF USE",

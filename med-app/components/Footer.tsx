@@ -32,6 +32,13 @@ export default function Footer() {
           >
             {t('links')}
           </Link>
+          <span className="hidden text-slate-300 sm:inline-block">|</span>
+          <Link
+            href="/accessibility"
+            className="text-[11px] text-slate-400 hover:text-slate-600 hover:underline"
+          >
+            {t('accessibility')}
+          </Link>
         </div>
       </div>
     </footer>

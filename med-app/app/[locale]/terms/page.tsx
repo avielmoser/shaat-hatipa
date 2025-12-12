@@ -4,6 +4,8 @@ import { Link } from "@/i18n/routing"; // Use localized Link
 import { ArrowLeft } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 
+import FullDisclaimer from "@/components/legal/FullDisclaimer";
+
 export const metadata = {
     title: "Terms of Use | ShaatHaTipa",
     description: "Legal Disclaimer and Terms of Use for ShaatHaTipa application.",
@@ -31,10 +33,15 @@ export default function TermsPage() {
                 </div>
 
                 {/* Localized Section */}
-                <div className="space-y-6 text-slate-900" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl mb-6">
+                <div className="space-y-8 text-slate-900" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                         {t("title")}
                     </h1>
+
+                    {/* Medical Disclaimer Highlight */}
+                    <FullDisclaimer />
+
+                    <div className="h-px bg-slate-200 my-6" />
 
                     {sections.map((num) => (
                         <section key={num}>

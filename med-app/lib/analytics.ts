@@ -15,7 +15,26 @@ type AnalyticsEventData = {
  */
 import { getSessionId } from "@/utils/analyticsSession";
 
-export function trackEvent(eventName: string, data?: AnalyticsEventData) {
+export function trackEvent(eventName: string, data?: AnalyticsEventData & { deduplicate?: boolean }) {
+    // 1. Centralized Guard: completely disable analytics on /admin/**
+    if (typeof window !== "undefined") {
+        if (window.location.pathname.startsWith("/admin")) return;
+    }
+
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+
+    // 2. Deduplication Logic (Session-Based)
+    if (data?.deduplicate && typeof window !== "undefined") {
+        const dedupKey = `analytics_deduplicated:${eventName}:${currentPath}`;
+        if (sessionStorage.getItem(dedupKey)) {
+            if (process.env.NODE_ENV === "development") {
+                console.log(`[Analytics] Skipped duplicate session event: ${eventName} at ${currentPath}`);
+            }
+            return;
+        }
+        sessionStorage.setItem(dedupKey, "true");
+    }
+
     const sessionId = getSessionId();
     try {
         // Fire and forget - don't await
@@ -27,6 +46,7 @@ export function trackEvent(eventName: string, data?: AnalyticsEventData) {
             body: JSON.stringify({
                 eventName,
                 sessionId,
+                path: currentPath,
                 ...data,
             }),
         }).catch((err) => {
