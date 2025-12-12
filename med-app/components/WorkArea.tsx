@@ -62,7 +62,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
 
   // ... existing useEffect ...
   useEffect(() => {
-    trackEvent("wizard_viewed", { deduplicate: true });
+    trackEvent("wizard_viewed", { eventType: "page_view" });
   }, []);
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     if (target === 3) {
       goToStep3();
     }
-    trackEvent("step_changed", { from: step, to: target });
+
   };
 
   // ===== Button Logic =====
@@ -143,7 +143,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     setSchedule([]);
     setStep(2);
     scrollToRef(step2Ref);
-    trackEvent("step_1_completed", { surgeryType });
+
   };
 
   const handleGenerateSchedule = async () => {
@@ -159,7 +159,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
         body: JSON.stringify(body),
       });
 
-      trackEvent("generate_schedule_clicked", { surgeryType });
+      trackEvent("generate_schedule_clicked", { eventType: "action", surgeryType });
 
       const json = await res.json();
 
@@ -182,6 +182,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
       const meds = new Set(json.schedule.map((s: DoseSlot) => s.medicationId)).size;
 
       trackEvent("schedule_generated", {
+        eventType: "conversion",
         slots: totalDoses,
         days,
         uniqueMeds: meds,
@@ -194,7 +195,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
       console.error(e);
       setPrescription(body);
       setError(e.message || t('errors.generic'));
-      trackEvent("schedule_generation_failed", { error: e.message });
+      trackEvent("schedule_generation_failed", { eventType: "action", error: e.message });
     } finally {
       setLoading(false);
     }

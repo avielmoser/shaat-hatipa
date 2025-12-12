@@ -48,7 +48,7 @@ export default function ScheduleDisplay({
                             type="button"
                             onClick={() => {
                                 onBack();
-                                trackEvent("back_to_step_2_clicked");
+
                             }}
                             className="h-16 md:h-20 w-full rounded-xl border border-slate-300 bg-white px-3 text-lg font-bold text-slate-700 leading-snug hover:bg-slate-50"
                         >
@@ -59,7 +59,7 @@ export default function ScheduleDisplay({
                             type="button"
                             onClick={() => {
                                 onHome();
-                                trackEvent("back_to_home_clicked");
+
                             }}
                             className="h-16 md:h-20 w-full rounded-xl bg-slate-100 px-3 text-lg font-bold text-slate-900 hover:bg-slate-200"
                         >

@@ -38,7 +38,7 @@ export default function ProtocolReview({
         setIsAgreed(checked);
         if (checked) {
             setShowDisclaimerError(false);
-            trackEvent("disclaimer_agreed");
+
         }
     };
 
@@ -55,7 +55,7 @@ export default function ProtocolReview({
                     type="button"
                     onClick={() => {
                         onBack();
-                        trackEvent("back_to_step_1_clicked");
+
                     }}
                     className="text-base text-slate-700 underline-offset-2 hover:text-slate-900 hover:underline"
                 >
@@ -97,7 +97,7 @@ export default function ProtocolReview({
                             type="button"
                             onClick={() => {
                                 onBack();
-                                trackEvent("back_to_step_1_clicked");
+
                             }}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-4 text-lg font-bold text-slate-700 hover:bg-slate-50"
                         >

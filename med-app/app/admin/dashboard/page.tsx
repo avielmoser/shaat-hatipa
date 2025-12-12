@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 // Force dynamic rendering so we always get fresh data
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
     const userKey = Array.isArray(rawKey) ? rawKey[0] : (rawKey ?? "");
     const paramExists = !!userKey;
 
-    // Safe Server-Side Logging for Production Diagnostics
+    //Safe Server-Side Logging for Production Diagnostics
     // We do NOT log the actual keys, only their existence/match status.
     console.log(`[AdminDashboard] Auth Check | Env Key Set: ${!!secretKey} | User Key Provided: ${paramExists}`);
 
@@ -43,6 +44,22 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
     const isLocal = process.env.NODE_ENV === "development";
     const isProduction = process.env.VERCEL_ENV === "production"; // Vercel sets this automatically
 
+    // View Mode Logic
+    const viewMode = (Array.isArray(params.view) ? params.view[0] : params.view) || "meaningful"; // default to meaningful
+    const showAll = viewMode === "all";
+
+    // Prisma Where Clause for Filtering
+    const whereCondition: any = {};
+    if (!showAll) {
+        // "Meaningful" = page_view OR conversion
+        // Note: This relies on 'eventType' being stored in 'meta'.
+        // Old events without this meta field will be excluded, effectively resetting stats to "clean" data.
+        whereCondition.OR = [
+            { meta: { path: ["eventType"], equals: "page_view" } },
+            { meta: { path: ["eventType"], equals: "conversion" } },
+        ];
+    }
+
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -54,16 +71,22 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
 
     try {
         [totalEvents, eventsByName, eventsByStep, last50Events] = await Promise.all([
-            prisma.analyticsEvent.count(),
+            prisma.analyticsEvent.count({
+                where: whereCondition,
+            }),
             prisma.analyticsEvent.groupBy({
                 by: ["eventName"],
-                where: { createdAt: { gte: sevenDaysAgo } },
+                where: {
+                    ...whereCondition,
+                    createdAt: { gte: sevenDaysAgo }
+                },
                 _count: { eventName: true },
                 orderBy: { _count: { eventName: "desc" } },
             }),
             prisma.analyticsEvent.groupBy({
                 by: ["step"],
                 where: {
+                    ...whereCondition,
                     createdAt: { gte: sevenDaysAgo },
                     step: { not: null }
                 },
@@ -71,6 +94,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                 orderBy: { _count: { step: "desc" } },
             }),
             prisma.analyticsEvent.findMany({
+                where: whereCondition,
                 take: 50,
                 orderBy: { createdAt: "desc" },
             }),
@@ -79,6 +103,11 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
         console.error("[AdminDashboard] Database Fetch Error:", error);
         fetchError = error;
     }
+
+    // Build URL for toggle
+    const toggleUrl = showAll
+        ? `?key=${userKey}&view=meaningful`
+        : `?key=${userKey}&view=all`;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12 font-sans selection:bg-indigo-500/30">
@@ -93,9 +122,20 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             Usage insights for the last 7 days • Live Data
                         </p>
                     </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-full px-4 py-1.5 text-xs font-mono text-emerald-500 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        SECURE_MODE_ACTIVE
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                        <Link
+                            href={toggleUrl}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${showAll
+                                    ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30"
+                                    : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
+                                }`}
+                        >
+                            {showAll ? "Viewing: ALL Events" : "Viewing: Meaningful Only"}
+                        </Link>
+                        <div className="bg-slate-900 border border-slate-800 rounded-full px-4 py-1.5 text-xs font-mono text-emerald-500 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            SECURE_MODE_ACTIVE
+                        </div>
                     </div>
                 </header>
 
@@ -124,7 +164,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                 {/* Top Metric Cards */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <MetricCard
-                        title="Total Events (All Time)"
+                        title={showAll ? "Total Events (All Time)" : "Meaningful Events (All Time)"}
                         value={totalEvents.toLocaleString()}
                         icon={<IconTotal />}
                     />

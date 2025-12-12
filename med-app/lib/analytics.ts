@@ -1,6 +1,10 @@
 "use client";
 
+import { getSessionId } from "@/utils/analyticsSession";
+import { getTrackingPolicy, AnalyticsEventType } from "./analytics.taxonomy";
+
 type AnalyticsEventData = {
+    eventType?: AnalyticsEventType; // Optional now as we derive it
     step?: string;
     buttonId?: string;
     [key: string]: unknown;
@@ -10,32 +14,48 @@ type AnalyticsEventData = {
  * Tracks an analytics event by sending it to the server.
  * This function is fire-and-forget and will not throw errors to the caller.
  *
- * @param eventName The name of the event (e.g., 'wizard_step_1_completed')
- * @param data Optional additional data (step, buttonId, etc.)
+ * @param eventName The name of the event (e.g., 'wizard_viewed')
+ * @param data Event data
  */
-import { getSessionId } from "@/utils/analyticsSession";
-
-export function trackEvent(eventName: string, data?: AnalyticsEventData & { deduplicate?: boolean }) {
+export function trackEvent(eventName: string, data: AnalyticsEventData) {
     // 1. Centralized Guard: completely disable analytics on /admin/**
     if (typeof window !== "undefined") {
-        if (window.location.pathname.startsWith("/admin")) return;
+        const path = window.location.pathname;
+        if (path.startsWith("/admin")) return;
     }
 
     const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
 
-    // 2. Deduplication Logic (Session-Based)
-    if (data?.deduplicate && typeof window !== "undefined") {
-        const dedupKey = `analytics_deduplicated:${eventName}:${currentPath}`;
-        if (sessionStorage.getItem(dedupKey)) {
-            if (process.env.NODE_ENV === "development") {
-                console.log(`[Analytics] Skipped duplicate session event: ${eventName} at ${currentPath}`);
-            }
-            return;
+    // 2. Strict Taxonomy & Policy Check
+    const policy = getTrackingPolicy(eventName);
+    if (!policy.shouldTrack || !policy.eventType) {
+        if (process.env.NODE_ENV === "development") {
+            console.log(`[Analytics] Blocked 'action' event not in allowlist: ${eventName}`);
         }
-        sessionStorage.setItem(dedupKey, "true");
+        return;
+    }
+
+    const finalEventType = policy.eventType;
+
+    // 3. Smart Sampling & Deduplication
+    if (typeof window !== "undefined") {
+        if (finalEventType === "page_view") {
+            // Deduplicate per session + path
+            // Only 1 write per session per page
+            const dedupKey = `analytics_deduplicated:${eventName}:${currentPath}`;
+            if (sessionStorage.getItem(dedupKey)) {
+                if (process.env.NODE_ENV === "development") {
+                    console.log(`[Analytics] Skipped duplicate page_view: ${eventName} at ${currentPath}`);
+                }
+                return;
+            }
+            sessionStorage.setItem(dedupKey, "true");
+        }
+        // actions & conversions: always allow (subject to allowlist above)
     }
 
     const sessionId = getSessionId();
+
     try {
         // Fire and forget - don't await
         fetch("/api/analytics", {
@@ -45,6 +65,7 @@ export function trackEvent(eventName: string, data?: AnalyticsEventData & { dedu
             },
             body: JSON.stringify({
                 eventName,
+                eventType: finalEventType, // Enforce derived type
                 sessionId,
                 path: currentPath,
                 ...data,

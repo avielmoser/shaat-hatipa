@@ -141,7 +141,9 @@ export default function ScheduleView({ schedule, clinicConfig }: Props) {
 
   const handleExportIcs = () => {
     if (!filtered || filtered.length === 0) return;
-    trackEvent("export_ics_clicked", {
+    trackEvent("export_clicked", {
+      eventType: "conversion",
+      exportType: "ics",
       slots: filtered.length,
       mode,
       surgeryDate: surgeryDateStr
@@ -151,14 +153,16 @@ export default function ScheduleView({ schedule, clinicConfig }: Props) {
     } catch (e) {
       console.error("Failed to export ICS", e);
       alert("Failed to generate calendar file. Please try again.");
-      trackEvent("export_ics_failed", { error: String(e) });
+      trackEvent("export_failed", { eventType: "action", exportType: "ics", error: String(e) });
     }
   };
 
   const handleExportPdf = async () => {
     if (!schedule || schedule.length === 0 || pdfLoading) return;
     setPdfLoading(true);
-    trackEvent("export_pdf_clicked", {
+    trackEvent("export_clicked", {
+      eventType: "conversion",
+      exportType: "pdf",
       slots: filtered.length,
       mode,
       surgeryDate: surgeryDateStr
@@ -169,7 +173,7 @@ export default function ScheduleView({ schedule, clinicConfig }: Props) {
     } catch (e) {
       console.error("Failed to export PDF", e);
       alert("Failed to generate PDF. Please try again.");
-      trackEvent("export_pdf_failed", { error: String(e) });
+      trackEvent("export_failed", { eventType: "action", exportType: "pdf", error: String(e) });
     } finally {
       setPdfLoading(false);
     }
@@ -201,7 +205,7 @@ export default function ScheduleView({ schedule, clinicConfig }: Props) {
               type="button"
               onClick={() => {
                 setMode("today");
-                trackEvent("filter_mode_changed", { mode: "today" });
+
               }}
               className={`rounded-full px-3 py-1 transition ${mode === "today"
                 ? "bg-sky-600 text-white shadow-sm"
@@ -214,7 +218,7 @@ export default function ScheduleView({ schedule, clinicConfig }: Props) {
               type="button"
               onClick={() => {
                 setMode("7days");
-                trackEvent("filter_mode_changed", { mode: "7days" });
+
               }}
               className={`rounded-full px-3 py-1 transition ${mode === "7days"
                 ? "bg-sky-600 text-white shadow-sm"
@@ -227,7 +231,7 @@ export default function ScheduleView({ schedule, clinicConfig }: Props) {
               type="button"
               onClick={() => {
                 setMode("allMonth");
-                trackEvent("filter_mode_changed", { mode: "allMonth" });
+
               }}
               className={`rounded-full px-3 py-1 transition ${mode === "allMonth"
                 ? "bg-sky-600 text-white shadow-sm"
