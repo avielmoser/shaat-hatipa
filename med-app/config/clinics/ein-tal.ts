@@ -13,12 +13,12 @@ export const einTalClinic: ClinicConfig = {
     },
     copy: {
         he: {
-            heroTitle: "ברוכים הבאים לעין טל",
-            heroSubtitle: "המרכז הרפואי לרפואת עיניים ומיקרוכירורגיה. אנו כאן ללוות אתכם בתהליך ההחלמה."
+            heroTitle: "לוח זמנים אישי לאחרי ניתוח",
+            heroSubtitle: "הלוח מותאם לסוג הניתוח, לפרוטוקול של הקליניקה ולשעות הערות שלך — בצורה ברורה ונוחה."
         },
         en: {
-            heroTitle: "Welcome to Ein Tal",
-            heroSubtitle: "Medical Center for Ophthalmology and Microsurgery. We are here to guide you through recovery."
+            heroTitle: "Your post-surgery schedule",
+            heroSubtitle: "Based on your clinic’s protocol and your waking hours — clear and easy to follow."
         }
     },
     supportedSurgeries: ["INTERLASIK", "PRK"],

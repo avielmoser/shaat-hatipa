@@ -13,12 +13,12 @@ export const defaultClinic: ClinicConfig = {
     },
     copy: {
         he: {
-            heroTitle: "טיפות עיניים בקלות",
-            heroSubtitle: "הצטרפו לאלפי מטופלים שמנהלים את הטיפול שלהם בחוכמה ובפשטות."
+            heroTitle: "לוח זמנים אישי לאחרי ניתוח",
+            heroSubtitle: "הלוח מותאם לסוג הניתוח, לפרוטוקול של הקליניקה ולשעות הערות שלך — בצורה ברורה ונוחה."
         },
         en: {
-            heroTitle: "Eye Drops Made Easy",
-            heroSubtitle: "Join thousands of patients managing their treatment smartly and simply."
+            heroTitle: "Your post-surgery schedule",
+            heroSubtitle: "Based on your clinic’s protocol and your waking hours — clear and easy to follow."
         }
     },
     supportedSurgeries: ["INTERLASIK", "PRK"],

@@ -73,12 +73,12 @@ export default function AccessibilityWidget() {
             {/* Floating Trigger Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 left-6 z-50 p-4 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 hover:scale-110 print:hidden"
+                className="fixed bottom-24 left-4 sm:bottom-6 sm:left-6 z-40 p-3 sm:p-4 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 hover:scale-110 print:hidden"
                 aria-label="Accessibility Settings"
                 aria-expanded={isOpen}
                 aria-controls="accessibility-panel"
             >
-                <Settings2 className="w-6 h-6" />
+                <Settings2 className="w-5 h-5 sm:w-6 sm:h-6" />
                 <span className="sr-only">Open Accessibility Menu</span>
             </button>
 
@@ -97,9 +97,9 @@ export default function AccessibilityWidget() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="a11y-title"
-                className={`fixed bottom-24 left-6 z-50 w-80 bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 transform print:hidden border border-slate-100 ${isOpen
-                        ? 'opacity-100 translate-y-0 scale-100'
-                        : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
+                className={`fixed bottom-40 left-4 sm:bottom-24 sm:left-6 z-50 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl p-5 sm:p-6 transition-all duration-300 transform print:hidden border border-slate-100 ${isOpen
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
                     }`}
             >
                 <div className="flex justify-between items-center mb-6">
@@ -120,8 +120,8 @@ export default function AccessibilityWidget() {
                     <button
                         onClick={() => toggleFeature('highContrast')}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${features.highContrast
-                                ? 'border-blue-600 bg-blue-50'
-                                : 'border-slate-100 hover:border-slate-200'
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'border-slate-100 hover:border-slate-200'
                             }`}
                         aria-pressed={features.highContrast}
                     >
@@ -143,8 +143,8 @@ export default function AccessibilityWidget() {
                     <button
                         onClick={() => toggleFeature('largeText')}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${features.largeText
-                                ? 'border-blue-600 bg-blue-50'
-                                : 'border-slate-100 hover:border-slate-200'
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'border-slate-100 hover:border-slate-200'
                             }`}
                         aria-pressed={features.largeText}
                     >
@@ -166,8 +166,8 @@ export default function AccessibilityWidget() {
                     <button
                         onClick={() => toggleFeature('reduceMotion')}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${features.reduceMotion
-                                ? 'border-blue-600 bg-blue-50'
-                                : 'border-slate-100 hover:border-slate-200'
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'border-slate-100 hover:border-slate-200'
                             }`}
                         aria-pressed={features.reduceMotion}
                     >

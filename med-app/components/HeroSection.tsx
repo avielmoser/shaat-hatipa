@@ -48,39 +48,47 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
   const heroTitle = clinicConfig?.copy?.[locale]?.heroTitle || t('title');
   const heroSubtitle = clinicConfig?.copy?.[locale]?.heroSubtitle || t('subtitle');
 
+  // Clinic Label Logic
+  let clinicLabel = "";
+  if (clinicConfig?.id === 'ein-tal') {
+    clinicLabel = isRtl ? "מותאם למטופלי עין טל" : "Tailored for Ein Tal patients";
+  } else {
+    // Generic / Default
+    clinicLabel = isRtl ? "מותאם לפרוטוקול הקליניקה שלך" : "Tailored to your clinic’s protocol";
+  }
+
   return (
     <section
-      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-12 pb-16 sm:pt-20 sm:pb-24 sm:px-6 lg:px-8"
+      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-8 pb-12 sm:pt-20 sm:pb-24 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:gap-12 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
         <div className="flex-1 flex flex-col items-center md:items-start text-center rtl:text-start md:text-start">
           {/* Clinic Logo (if exists) */}
           <div className="flex flex-col items-center gap-3">
-            {clinicConfig && clinicConfig.id !== 'default' && (
-              <div className="flex flex-col items-center gap-2">
-                {clinicConfig.logoUrl ? (
-                  <img
-                    src={clinicConfig.logoUrl}
-                    alt={clinicConfig.name}
-                    className="max-h-14 w-auto object-contain"
-                    loading="eager"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                ) : null}
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                  {isRtl ? `מופעל עבור ${clinicConfig.name}` : `Powered for ${clinicConfig.name}`}
-                </span>
-              </div>
-            )}
+            {/* Always show the label, maybe with logo if available */}
+            <div className="flex flex-col items-center gap-2">
+              {clinicConfig && clinicConfig.logoUrl && clinicConfig.id !== 'default' ? (
+                <img
+                  src={clinicConfig.logoUrl}
+                  alt={clinicConfig.name}
+                  className="max-h-12 sm:max-h-14 w-auto object-contain"
+                  loading="eager"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : null}
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                {clinicLabel}
+              </span>
+            </div>
           </div>
 
-          <div className="mb-6 sm:mb-8 w-full">
+          <div className="mb-4 sm:mb-8 w-full mt-4 sm:mt-6">
             <h1 className={cn(
-              "font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-3 sm:mb-4 max-w-lg mx-auto md:mx-0",
-              isRtl ? "text-2xl sm:text-4xl lg:text-5xl" : "text-3xl sm:text-4xl lg:text-5xl"
+              "font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-2 sm:mb-4 max-w-lg mx-auto md:mx-0",
+              "text-2xl sm:text-4xl lg:text-5xl"
             )}>
               {heroTitle}
             </h1>
@@ -89,19 +97,21 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
             </h2>
           </div>
 
-          <p className="text-base sm:text-lg text-slate-500 mb-8 sm:mb-10 max-w-xl font-normal leading-relaxed mx-auto md:mx-0 px-2 sm:px-0">
+          {/* Description hidden on mobile to save space if needed? Prompt said 'Reduce vertical margins', keep content readable but compact. 
+              I'll keep it but ensure margins are small. */}
+          <p className="text-sm sm:text-lg text-slate-500 mb-6 sm:mb-10 max-w-xl font-normal leading-relaxed mx-auto md:mx-0 px-1 sm:px-0">
             <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
           </p>
 
           <ul className={cn(
-            "flex flex-col gap-4 mb-8 sm:mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
+            "flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
           )}>
             {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
               <li key={i} className={cn(
-                "flex items-center gap-3 text-slate-700 font-medium",
+                "flex items-center gap-2 sm:gap-3 text-slate-700 font-medium",
                 isRtl ? "flex-row-reverse text-right justify-end w-full" : ""
               )}>
-                <div className="flex h-6 w-6 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
+                <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
                   <Check size={14} strokeWidth={3} className="sm:w-3 sm:h-3" />
                 </div>
                 <span className="text-sm sm:text-base leading-snug flex-1">{feature}</span>
@@ -115,7 +125,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
               onClick={handleScrollToWorkArea}
               className="
     inline-flex items-center justify-center rounded-full
-    h-14 sm:h-auto px-8 py-0 sm:px-10 sm:py-5 
+    h-12 sm:h-auto px-8 py-0 sm:px-10 sm:py-5 
     text-lg sm:text-xl font-bold text-white rtl:tracking-normal
     shadow-lg shadow-sky-200/80 transition-all transform
     bg-sky-600 hover:bg-sky-700 hover:scale-[1.02] active:scale-[0.98]
@@ -136,7 +146,6 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
                 (e.currentTarget as HTMLButtonElement).style.filter = "none";
               }}
             >
-
               {t('startNow')}
             </button>
 
@@ -147,52 +156,51 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
         </div>
 
         {/* Example Card – Left side on desktop (now second in DOM) */}
-        {/* Example Card – Left side on desktop (now second in DOM) */}
-        <div className="flex-1 flex justify-center md:justify-start w-full px-2 sm:px-0">
-          <div className="w-full max-w-[340px] sm:max-w-sm rounded-3xl border border-sky-50 bg-white p-5 sm:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.1)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="flex-1 flex justify-center md:justify-start w-full px-2 sm:px-0 mt-8 sm:mt-0">
+          <div className="w-full max-w-[320px] sm:max-w-sm rounded-3xl border border-sky-50 bg-white p-4 sm:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.1)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
+            <div className="mb-3 sm:mb-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-xs sm:text-sm font-semibold text-slate-900">
                   {t('sampleSchedule')}
                 </p>
-                <p className="text-sm font-medium text-slate-700">{t('day1PostOp')}</p>
+                <p className="text-xs sm:text-sm font-medium text-slate-700">{t('day1PostOp')}</p>
               </div>
-              <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs sm:text-sm font-medium text-sky-800">
+              <span className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-sm font-medium text-sky-800">
                 {t('postOpDay1')}
               </span>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
-                  <span className="font-medium text-slate-800">Vigamox</span>
+            <div className="space-y-2 sm:space-y-3 text-sm">
+              <div className="flex items-center justify-between rounded-xl sm:rounded-2xl bg-slate-50 px-3 py-2 sm:px-4 sm:py-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-pink-500" />
+                  <span className="font-medium text-slate-800 text-xs sm:text-base">Vigamox</span>
                 </div>
-                <span className="text-sm font-semibold text-slate-900 text-right w-12 sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-right w-10 sm:w-auto">
                   08:00
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                  <span className="font-medium text-slate-800">Dicloftil</span>
+              <div className="flex items-center justify-between rounded-xl sm:rounded-2xl bg-slate-50 px-3 py-2 sm:px-4 sm:py-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-purple-500" />
+                  <span className="font-medium text-slate-800 text-xs sm:text-base">Dicloftil</span>
                 </div>
-                <span className="text-sm font-semibold text-slate-900 text-right w-12 sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-right w-10 sm:w-auto">
                   09:00
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  <span className="font-medium text-slate-800">Vitapos</span>
+              <div className="flex items-center justify-between rounded-xl sm:rounded-2xl bg-slate-50 px-3 py-2 sm:px-4 sm:py-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-amber-400" />
+                  <span className="font-medium text-slate-800 text-xs sm:text-base">Vitapos</span>
                 </div>
-                <span className="text-sm font-semibold text-slate-900 text-right w-12 sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-right w-10 sm:w-auto">
                   09:15
                 </span>
               </div>
             </div>
 
-            <p className="mt-4 text-xs sm:text-sm leading-relaxed text-slate-500 text-center">
+            <p className="mt-3 sm:mt-4 text-[10px] sm:text-sm leading-relaxed text-slate-500 text-center">
               {t('exampleDisclaimer')}
             </p>
           </div>

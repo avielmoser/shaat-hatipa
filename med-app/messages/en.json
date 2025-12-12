@@ -23,19 +23,19 @@
         "sampleSchedule": "Sample Daily Schedule",
         "day1PostOp": "Day 1 Post-Op",
         "postOpDay1": "Post-Op Day 1",
-        "exampleDisclaimer": "This is just an example. The system will coordinate your drops throughout your waking hours, according to the appropriate medical protocol.",
-        "allDropsInOnePlace": "All your drops in one organized place",
-        "title": "Personal post-surgery schedule",
-        "subtitle": "Guided and personalized by your medical protocol",
+        "exampleDisclaimer": "Example only. Your schedule will be tailored to your protocol.",
+        "allDropsInOnePlace": "Your entire protocol in one place",
+        "title": "Your post-surgery schedule",
+        "subtitle": "Based on your clinic’s protocol and your waking hours — clear and easy to follow.",
         "description": "The system generates a structured medical schedule,<br />personalized to your surgery type and waking hours.",
-        "feature1": "Tailored to your medical protocol",
+        "feature1": "Tailored to your clinic’s protocol",
         "feature2": "Precise timing based on your day",
         "feature3": "One-click export to Calendar & PDF",
-        "startNow": "Start Now",
-        "medicalAdviceDisclaimer": "Schedule management tool. The information presented does not replace medical advice.",
+        "startNow": "Start",
+        "medicalAdviceDisclaimer": "This information is not medical advice.",
         "tagInterlasik": "",
         "tagExport": "Export to Calendar & PDF",
-        "tagProtocol": "Protocol calculated by your personal waking hours"
+        "tagProtocol": "Tailored to your clinic’s protocol"
     },
     "Wizard": {
         "steps": {
