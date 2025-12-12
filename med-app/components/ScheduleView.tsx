@@ -12,11 +12,11 @@ import { downloadScheduleIcs } from "../lib/utils/ics";
 import { openSchedulePdf } from "../lib/utils/pdf";
 import { trackEvent } from "../lib/client/analytics";
 
-import type { ClinicBrand } from "../config/clinics";
+import type { ClinicConfig } from "../config/clinics";
 
-interface Props {
+interface ScheduleViewProps {
   schedule: DoseSlot[];
-  clinicConfig?: ClinicBrand;
+  clinicConfig?: ClinicConfig;
 }
 
 type DayGroup = {
@@ -112,7 +112,7 @@ function filterByMode(
   return { filtered, todayStr };
 }
 
-export default function ScheduleView({ schedule, clinicConfig }: Props) {
+export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewProps) {
   const t = useTranslations('Schedule');
   const [mode, setMode] = useState<FilterMode>("today");
 

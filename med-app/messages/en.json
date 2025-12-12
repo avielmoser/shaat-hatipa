@@ -44,16 +44,33 @@
             "3": "Schedule"
         },
         "step1": {
-            "title": "Surgery Details",
-            "description": "Select surgery type, date, and waking hours – then you'll see a structured protocol summary and finally a detailed drop schedule.",
-            "surgeryType": "Surgery Type",
-            "surgeryDate": "Surgery Date",
-            "wakeTime": "Wake Up Time",
-            "bedtime": "Bedtime",
+            "title": "Treatment Details",
+            "description": "Select your treatment type and normal waking hours to generate a personalized drop schedule.",
+            "surgeryType": "Treatment Type",
+            "surgeryDate": "Treatment Date",
+            "wakeTime": "Start Time",
+            "bedtime": "End Time",
+            "helperText": "The schedule will be tailored to your waking hours",
+            "scheduleSettings": "Schedule Settings",
+            "medicalDisclaimer": "This tool does not replace medical advice. Follow your surgeon's instructions.",
             "nextButton": "Next: Review Protocol",
             "errors": {
-                "impossibleWakeTime": "Error – You cannot wake up before you go to sleep"
-            }
+                "impossibleWakeTime": "Error – Wake time must be before sleep time",
+                "missingProtocol": "Please select a surgery type"
+            },
+            "surgeryTypes": {
+                "INTERLASIK": {
+                    "label": "INTERLASIK",
+                    "description": ""
+                },
+                "PRK": {
+                    "label": "PRK",
+                    "description": ""
+                }
+            },
+            "compatibleWith": "Compatible with {clinic} • {surgery}",
+            "compatibleWithEmpty": "Compatible with {clinic} • Select Surgery",
+            "supports": "Supports: {surgeries}"
         },
         "step2": {
             "title": "Protocol Review",

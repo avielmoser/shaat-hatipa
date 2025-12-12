@@ -16,7 +16,7 @@ export default async function Page({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main>
-        <HeroSection />
+        <HeroSection clinicConfig={clinicConfig} />
         <WorkArea clinicConfig={clinicConfig} />
       </main>
 

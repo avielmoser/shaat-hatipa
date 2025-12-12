@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { resolveClinicConfig } from "../lib/domain/protocol-resolver";
-import { DEFAULT_BRAND, type ClinicBrand } from "../config/clinics";
+import { defaultClinic as DEFAULT_BRAND, type ClinicConfig as ClinicBrand } from "../config/clinics";
 
 type ClinicBrandContextValue = {
   brand: ClinicBrand;
@@ -32,9 +32,9 @@ export function ClinicBrandProvider({ children }: { children: React.ReactNode })
   // CSS variables למיתוג
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--clinic-primary", brand.primary);
-    root.style.setProperty("--clinic-secondary", brand.secondary);
-    root.style.setProperty("--clinic-button", brand.button);
+    root.style.setProperty("--clinic-primary", brand.colors.primary);
+    root.style.setProperty("--clinic-secondary", brand.colors.secondary);
+    root.style.setProperty("--clinic-button", brand.colors.button);
   }, [brand]);
 
   const value = useMemo(() => ({ brand, clinicId }), [brand, clinicId]);

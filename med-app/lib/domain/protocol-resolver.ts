@@ -1,14 +1,13 @@
-import { CLINICS, DEFAULT_BRAND, ClinicConfig } from "../../config/clinics";
+import { getClinicConfig, ClinicConfig, defaultClinic } from "../../config/clinics";
 import { DEFAULT_PROTOCOLS } from "../../constants/protocols";
 import { Medication, SurgeryType } from "../../types/prescription";
 
 /**
  * Resolves the clinic configuration by ID.
- * Falls back to DEFAULT_BRAND if ID is invalid or not found.
+ * Falls back to defaultClinic if ID is invalid or not found.
  */
 export function resolveClinicConfig(clinicId?: string | null): ClinicConfig {
-    if (!clinicId) return DEFAULT_BRAND;
-    return CLINICS[clinicId] ?? DEFAULT_BRAND;
+    return getClinicConfig(clinicId);
 }
 
 /**

@@ -9,8 +9,6 @@ import type {
   SurgeryType,
 } from "../types/prescription";
 
-import PrescriptionView from "./PrescriptionView";
-import ScheduleView from "./ScheduleView";
 import SurgeryForm from "./SurgeryForm";
 import ProtocolReview from "./ProtocolReview";
 import ScheduleDisplay from "./ScheduleDisplay";
@@ -18,19 +16,21 @@ import GlobalErrorBoundary from "./GlobalErrorBoundary";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
 import { resolveProtocol } from "../lib/domain/protocol-resolver";
 import { trackEvent } from "../lib/client/analytics";
-import type { ClinicBrand } from "../config/clinics";
+import type { ClinicConfig } from "../config/clinics";
 
 type Step = 1 | 2 | 3;
 
 interface WorkAreaProps {
-  clinicConfig?: ClinicBrand;
+  clinicConfig?: ClinicConfig | null;
 }
 
 export default function WorkArea({ clinicConfig }: WorkAreaProps) {
   const t = useTranslations('Wizard');
   const [step, setStep] = useState<Step>(1);
 
-  const [surgeryType, setSurgeryType] = useState<SurgeryType>("INTERLASIK");
+  // Initialize with null to force user selection
+  const [surgeryType, setSurgeryType] = useState<SurgeryType | null>(null);
+
   const [surgeryDate, setSurgeryDate] = useState<string>(() => {
     const d = new Date();
     const year = d.getFullYear();
@@ -114,9 +114,13 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
 
   // ===== Button Logic =====
 
-  const buildPrescription = (): LaserPrescriptionInput => {
+  const buildPrescription = (): LaserPrescriptionInput | null => {
+    if (!surgeryType) return null; // Should not happen if validation passes
+
     const { awakeMinutes } = normalizeAwakeWindow(wakeTime, sleepTime);
-    const medications = resolveProtocol(clinicConfig, surgeryType, awakeMinutes);
+    // Cast clinicConfig to undefined if null, to match resolveProtocol signature if needed, 
+    // but protocol-resolver handles undefined.
+    const medications = resolveProtocol((clinicConfig || undefined), surgeryType, awakeMinutes);
 
     return {
       surgeryType,
@@ -131,6 +135,11 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     setError(null);
     setInvalidTime(false);
 
+    if (!surgeryType) {
+      setError(t('step1.errors.generic')); // Or a specific "Please select surgery" error
+      return;
+    }
+
     if (isImpossibleAwakeWindow(wakeTime, sleepTime)) {
       setError(t('step1.errors.impossibleWakeTime'));
       setInvalidTime(true);
@@ -138,6 +147,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     }
 
     const body = buildPrescription();
+    if (!body) return;
 
     setPrescription(body);
     setSchedule([]);
@@ -150,6 +160,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     setError(null);
 
     const body = buildPrescription();
+    if (!body) return;
 
     setLoading(true);
     try {
@@ -191,11 +202,12 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
         sleepTime: body.sleepTime,
         clinic: clinicConfig?.name,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       setPrescription(body);
-      setError(e.message || t('errors.generic'));
-      trackEvent("schedule_generation_failed", { eventType: "action", error: e.message });
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setError(errorMessage || t('errors.generic'));
+      trackEvent("schedule_generation_failed", { eventType: "action", error: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -221,10 +233,10 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     <GlobalErrorBoundary>
       <section
         id="work-area"
-        className="px-4 pb-24 pt-10 sm:px-6 lg:px-8 sm:pt-16"
+        className="px-4 pb-32 pt-6 sm:px-6 lg:px-8 sm:pt-10"
         aria-label="Drop schedule builder workspace"
       >
-        <div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
+        <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
           {/* Stepper */}
           <ol
             className="flex items-center justify-center gap-4 text-base"
@@ -306,6 +318,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
                 invalidTime={invalidTime}
                 error={error}
                 onNext={handleContinueToStep2}
+                clinicConfig={clinicConfig}
               />
             </div>
           )}
@@ -331,7 +344,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
                   schedule={schedule}
                   onBack={goToStep2}
                   onHome={goHome}
-                  clinicConfig={clinicConfig}
+                  clinicConfig={clinicConfig || undefined}
                 />
               </div>
             </div>

@@ -1,18 +1,41 @@
 // components/HeroSection.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useTranslations, useLocale } from 'next-intl';
-import { useClinicBrand } from "./ClinicBrandProvider";
+import type { ClinicConfig } from "../config/clinics";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function HeroSection() {
-  const { brand, clinicId } = useClinicBrand();
+interface HeroSectionProps {
+  clinicConfig?: ClinicConfig | null;
+}
+
+export default function HeroSection({ clinicConfig }: HeroSectionProps) {
   const t = useTranslations('Hero');
+  // We still use these for fallbacks or common strings
   const tClinics = useTranslations('Clinics');
-  const locale = useLocale();
+  const locale = useLocale() as 'he' | 'en';
   const isRtl = locale === 'he';
+
+  const brand = clinicConfig || {
+    id: 'default',
+    name: 'ShaatHaTipa',
+    logoUrl: '/logo.png',
+    // ... minimal fallback if needed, but page.tsx usually passes a full default object
+    copy: null,
+    colors: null
+  };
+
+  // Sync colors if config is present (Client-side override)
+  useEffect(() => {
+    if (clinicConfig?.colors) {
+      const root = document.documentElement;
+      root.style.setProperty("--clinic-primary", clinicConfig.colors.primary);
+      root.style.setProperty("--clinic-secondary", clinicConfig.colors.secondary);
+      root.style.setProperty("--clinic-button", clinicConfig.colors.button);
+    }
+  }, [clinicConfig]);
 
   const handleScrollToWorkArea = () => {
     const section = document.getElementById("work-area");
@@ -20,6 +43,10 @@ export default function HeroSection() {
       section.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Resolve strings: Clinic Specific -> Translation Key Fallback
+  const heroTitle = clinicConfig?.copy?.[locale]?.heroTitle || t('title');
+  const heroSubtitle = clinicConfig?.copy?.[locale]?.heroSubtitle || t('subtitle');
 
   return (
     <section
@@ -30,12 +57,12 @@ export default function HeroSection() {
         <div className="flex-1 flex flex-col items-center md:items-start text-center rtl:text-start md:text-start">
           {/* Clinic Logo (if exists) */}
           <div className="flex flex-col items-center gap-3">
-            {clinicId && (
+            {clinicConfig && clinicConfig.id !== 'default' && (
               <div className="flex flex-col items-center gap-2">
-                {brand.logoUrl ? (
+                {clinicConfig.logoUrl ? (
                   <img
-                    src={brand.logoUrl}
-                    alt={tClinics(brand.id)}
+                    src={clinicConfig.logoUrl}
+                    alt={clinicConfig.name}
                     className="max-h-14 w-auto object-contain"
                     loading="eager"
                     onError={(e) => {
@@ -43,11 +70,9 @@ export default function HeroSection() {
                     }}
                   />
                 ) : null}
-                {clinicId !== "default" && (
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                    {isRtl ? `מופעל עבור ${tClinics(brand.id)}` : `Powered for ${tClinics(brand.id)}`}
-                  </span>
-                )}
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  {isRtl ? `מופעל עבור ${clinicConfig.name}` : `Powered for ${clinicConfig.name}`}
+                </span>
               </div>
             )}
           </div>
@@ -57,10 +82,10 @@ export default function HeroSection() {
               "font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-3 sm:mb-4 max-w-lg mx-auto md:mx-0",
               isRtl ? "text-2xl sm:text-4xl lg:text-5xl" : "text-3xl sm:text-4xl lg:text-5xl"
             )}>
-              {t('title')}
+              {heroTitle}
             </h1>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-medium leading-normal text-slate-600 max-w-lg mx-auto md:mx-0 text-balance">
-              {t('subtitle')}
+              {heroSubtitle}
             </h2>
           </div>
 
@@ -98,16 +123,16 @@ export default function HeroSection() {
     w-full max-w-xs sm:w-auto
   "
               style={
-                clinicId
+                clinicConfig && clinicConfig.id !== 'default'
                   ? { backgroundColor: "var(--clinic-button)" } // Clinic color
                   : undefined // Tailwind default
               }
               onMouseEnter={(e) => {
-                if (!clinicId) return;
+                if (!clinicConfig || clinicConfig.id === 'default') return;
                 (e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.95)";
               }}
               onMouseLeave={(e) => {
-                if (!clinicId) return;
+                if (!clinicConfig || clinicConfig.id === 'default') return;
                 (e.currentTarget as HTMLButtonElement).style.filter = "none";
               }}
             >

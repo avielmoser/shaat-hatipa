@@ -44,15 +44,29 @@
             "3": "לוח זמנים"
         },
         "step1": {
-            "title": "פרטי ניתוח",
-            "description": "בחר סוג ניתוח, תאריך ושעות עירות – לאחר מכן תוצג סקירת פרוטוקול ולבסוף לוח זמנים מפורט.",
-            "surgeryType": "סוג ניתוח",
-            "surgeryDate": "תאריך ניתוח",
-            "wakeTime": "שעת קימה",
-            "bedtime": "שעת שינה",
+            "title": "פרטי הטיפול",
+            "description": "אנא בחר/י את סוג הטיפול ואת שעות העירות הרגילות שלך לבניית לוח זמנים מותאם אישית.",
+            "surgeryType": "סוג הטיפול",
+            "surgeryDate": "תאריך הטיפול",
+            "wakeTime": "שעת התחלה",
+            "bedtime": "שעת סיום",
+            "helperText": "יתוזמן בהתאם לשעות העירות",
+            "scheduleSettings": "הגדרות זמנים",
+            "medicalDisclaimer": "הכלי אינו מחליף ייעוץ רפואי. יש לפעול לפי הנחיות המנתח.",
             "nextButton": "הבא: סקירת פרוטוקול",
             "errors": {
-                "impossibleWakeTime": "שגיאה – לא ניתן להתעורר לפני שהולכים לישון"
+                "impossibleWakeTime": "שגיאה – לא ניתן להתעורר לפני שהולכים לישון",
+                "missingProtocol": "אנא בחר/י סוג ניתוח"
+            },
+            "surgeryTypes": {
+                "INTERLASIK": {
+                    "label": "INTERLASIK",
+                    "description": ""
+                },
+                "PRK": {
+                    "label": "PRK",
+                    "description": ""
+                }
             }
         },
         "step2": {
