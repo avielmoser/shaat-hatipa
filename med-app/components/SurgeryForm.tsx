@@ -59,6 +59,40 @@ export default function SurgeryForm({
         return () => observer.disconnect();
     }, []);
 
+    // Analytics: Track time modifications
+    useEffect(() => {
+        const defaultWake = "08:00";
+        const defaultSleep = "22:00";
+
+        // We use a timeout to avoid firing on initial render if defaults are different (though they shouldn't be)
+        // and to debounce slightly. But simpler: check if current !== default.
+        // We only want to fire ONCE per session per type ideally, but firing multiple times is fine
+        // as the metric is "sessions with time change".
+
+        const isWakeChanged = wakeTime !== defaultWake;
+        const isSleepChanged = sleepTime !== defaultSleep;
+
+        if (isWakeChanged || isSleepChanged) {
+            // Debounce this heavily or just fire?
+            // To prevent spamming while scrolling/typing, we can verify this later.
+            // But for now, let's just fire when it changes. 
+            // Better: fire on blur? The TimeInput doesn't expose onBlur.
+            // Let's use a meaningful timeout (e.g. 2s after change)
+            const timer = setTimeout(() => {
+                import("../lib/client/analytics").then(({ trackEvent }) => {
+                    trackEvent("time_modified", {
+                        eventType: "action",
+                        wakeModified: isWakeChanged,
+                        sleepModified: isSleepChanged,
+                        wakeTime,
+                        sleepTime
+                    });
+                });
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [wakeTime, sleepTime]);
+
     // Use supportedProtocols if available, fallback to legacy supportedSurgeries, then hardcoded default
     const protocols: string[] = clinicConfig?.supportedProtocols?.length
         ? clinicConfig.supportedProtocols

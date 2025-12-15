@@ -66,6 +66,13 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     trackEvent("wizard_viewed", { eventType: "page_view" });
   }, []);
 
+  // Track Step Views
+  useEffect(() => {
+    if (step > 1) {
+      trackEvent("step_viewed", { eventType: "action", step: String(step), stepName: step === 2 ? "protocol_review" : "schedule_view" });
+    }
+  }, [step]);
+
   useEffect(() => {
     if (schedule.length > 0 && step === 3 && scheduleRef.current) {
       scheduleRef.current.scrollIntoView({

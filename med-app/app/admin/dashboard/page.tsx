@@ -1,414 +1,293 @@
-import { prisma } from "@/lib/server/db";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { getFunnelKPIs } from "@/lib/server/analytics-kpis";
-import { parseRange, getRangeWhereClause, formatRangeLabel } from "@/lib/server/analytics-range";
-import { TimeRangeSelector } from "@/components/admin/TimeRangeSelector";
-import { ClinicSelector } from "@/components/admin/ClinicSelector";
-import { CLINICS } from "@/config/clinics";
+"use client";
 
-// Force dynamic rendering so we always get fresh data
-export const dynamic = "force-dynamic";
-// Force Node.js runtime to ensure Prisma Client compatibility and stability
-export const runtime = "nodejs";
+import React, { useState, useEffect } from "react";
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, ComposedChart, Area
+} from 'recharts';
+import { Loader2, Filter, Download, AlertCircle } from "lucide-react";
+import type { DashboardMetrics } from "@/types/analytics";
 
-interface PageProps {
-    searchParams: { [key: string]: string | string[] | undefined };
-}
+export default function AdminDashboard() {
+    const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-/**
- * ADMIN DASHBOARD
- * Protected by strict environment variable check.
- */
-export default async function AdminDashboard({ searchParams }: PageProps) {
-    // 1. Admin Protection
-    const secretKey = process.env.ADMIN_DASHBOARD_KEY;
-    const dbUrl = process.env.DATABASE_URL;
+    // Filters State
+    const [dateRange, setDateRange] = useState("30d"); // 30d, 90d, 1y
+    const [clinic, setClinic] = useState("all");
+    const [protocol, setProtocol] = useState("all");
 
-    // Support both 'key' and 'ADMIN_DASHBOARD_KEY'
-    const params = await Promise.resolve(searchParams);
-    const rawKey = params.key ?? params.ADMIN_DASHBOARD_KEY;
-
-    // Normalize user key
-    const userKey = Array.isArray(rawKey) ? rawKey[0] : (rawKey ?? "");
-    const paramExists = !!userKey;
-
-    //Safe Server-Side Logging for Production Diagnostics
-    // We do NOT log the actual keys, only their existence/match status.
-    console.log(`[AdminDashboard] Auth Check | Env Key Set: ${!!secretKey} | DB Configured: ${!!dbUrl} | User Key Provided: ${paramExists} | Runtime: ${typeof process.env.NEXT_RUNTIME !== 'undefined' ? process.env.NEXT_RUNTIME : 'node'}`);
-
-    if (!secretKey) {
-        console.error("[AdminDashboard] CRITICAL: ADMIN_DASHBOARD_KEY is not set in environment.");
-        notFound();
-    }
-
-    if (userKey !== secretKey) {
-        console.warn("[AdminDashboard] Unauthorized access attempt. Key verification failed.");
-        notFound();
-    }
-
-    // 2. Fetch Data
-    // Environment Detection
-    const isLocal = process.env.NODE_ENV === "development";
-    const isProduction = process.env.VERCEL_ENV === "production"; // Vercel sets this automatically
-
-    // View Mode Logic
-    const viewMode = (Array.isArray(params.view) ? params.view[0] : params.view) || "meaningful"; // default to meaningful
-    const showAll = viewMode === "all";
-
-    // Time Range Logic
-    const parsedRange = parseRange(params);
-    const rangeLabel = formatRangeLabel(parsedRange);
-    const dateWhere = getRangeWhereClause(parsedRange);
-
-    // Consolidated Where Clause
-    // 1. Start with range filter
-    // 2. Add 'Meaningful' filter if needed
-    // 3. Add Clinic filter if present
-    const whereCondition: any = {
-        ...dateWhere
+    // Derived Date Range
+    const getDates = () => {
+        const end = new Date();
+        const start = new Date();
+        if (dateRange === "30d") start.setDate(end.getDate() - 30);
+        if (dateRange === "90d") start.setDate(end.getDate() - 90);
+        if (dateRange === "1y") start.setDate(end.getDate() - 365);
+        return { start, end };
     };
 
-    // Filter Logic: Clinic
-    const rawClinicParam = Array.isArray(params.clinic) ? params.clinic[0] : params.clinic;
-    const clinicFilter = rawClinicParam && CLINICS[rawClinicParam] ? rawClinicParam : null;
-    const activeClinicName = clinicFilter ? CLINICS[clinicFilter].name : "All Clinics";
+    const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { start, end } = getDates();
+            const query = new URLSearchParams({
+                startDate: start.toISOString(),
+                endDate: end.toISOString()
+            });
+            if (clinic !== "all") query.append("clinic", clinic);
+            if (protocol !== "all") query.append("protocol", protocol);
 
-    if (clinicFilter) {
-        whereCondition.clinicSlug = clinicFilter;
-    }
-
-    if (!showAll) {
-        // "Meaningful" = page_view OR conversion
-        // Refactored to use stable 'eventType' column instead of JSON path
-        whereCondition.eventType = { in: ["page_view", "conversion"] };
-    }
-
-    let totalEvents: number = 0;
-    let eventsByName: any[] = [];
-    let eventsByStep: any[] = [];
-    let last50Events: any[] = [];
-    let kpis = { conversionRate: "0.0%", avgTimeToSchedule: "—" };
-    let fetchError: any = null;
-
-    try {
-        [totalEvents, eventsByName, eventsByStep, last50Events, kpis] = await Promise.all([
-            // 1. Total Events
-            prisma.analyticsEvent.count({
-                where: whereCondition,
-            }),
-            // 2. Top Events
-            prisma.analyticsEvent.groupBy({
-                by: ["eventName"],
-                where: whereCondition,
-                _count: { eventName: true },
-                orderBy: { _count: { eventName: "desc" } },
-            }),
-            // 3. Top Steps
-            prisma.analyticsEvent.groupBy({
-                by: ["step"],
-                where: {
-                    ...whereCondition,
-                    step: { not: null }
-                },
-                _count: { step: true },
-                orderBy: { _count: { step: "desc" } },
-            }),
-            // 4. Log
-            prisma.analyticsEvent.findMany({
-                where: whereCondition,
-                take: 50,
-                orderBy: { createdAt: "desc" },
-            }),
-            // 5. KPIs (with clinic filter)
-            getFunnelKPIs(prisma, { ...dateWhere, ...(clinicFilter ? { clinicSlug: clinicFilter } : {}) }),
-        ]);
-    } catch (error: any) {
-        console.error("[AdminDashboard] Database Fetch Error:", error);
-        // Only treat as error if it's a connection/runtime issue, not empty data
-        fetchError = error;
-        // Basic safety to distinguish empty DB vs bad auth/config
-        if (error.name === 'PrismaClientInitializationError') {
-            console.error("[AdminDashboard] Prisma Init Error - Check DATABASE_URL");
+            const res = await fetch(`/api/analytics/dashboard?${query.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch data");
+            const data = await res.json();
+            setMetrics(data);
+        } catch (e) {
+            console.error(e);
+            setError("Could not load analytics data.");
+        } finally {
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dateRange, clinic, protocol]);
+
+    if (loading && !metrics) {
+        return (
+            <div className="flex bg-slate-50 min-h-screen items-center justify-center text-slate-500">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
     }
 
-    // Build URL for toggle (preserve range params)
-    const cleanToggleParams = new URLSearchParams();
-    cleanToggleParams.set("key", userKey);
-    cleanToggleParams.set("view", showAll ? "meaningful" : "all");
-    if (parsedRange.rangeKey) cleanToggleParams.set("range", parsedRange.rangeKey);
-    if (params.from) cleanToggleParams.set("from", params.from as string);
-    if (params.to) cleanToggleParams.set("to", params.to as string);
-    if (clinicFilter) cleanToggleParams.set("clinic", clinicFilter);
-
-    const toggleUrl = `?${cleanToggleParams.toString()}`;
-
-    return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12 font-sans selection:bg-indigo-500/30">
-            <div className="max-w-7xl mx-auto space-y-12">
-                {/* Header */}
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
-                            Analytics Dashboard
-                        </h1>
-                        <p className="text-slate-400">
-                            Showing: <span className="text-slate-200 font-medium">{rangeLabel}</span> • <span className="text-slate-200 font-medium">{activeClinicName}</span> • Live Data
-                        </p>
+    if (error) {
+        return (
+            <div className="flex bg-slate-50 min-h-screen items-center justify-center p-4">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-red-100 max-w-md w-full text-center space-y-4">
+                    <div className="bg-red-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-red-500">
+                        <AlertCircle className="h-6 w-6" />
                     </div>
-                    <div className="flex flex-col md:flex-row items-end md:items-center gap-4">
-                        <ClinicSelector />
-                        <TimeRangeSelector />
-
-                        <div className="flex items-center gap-2">
-                            <Link
-                                href={toggleUrl}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${showAll
-                                    ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30"
-                                    : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
-                                    }`}
-                            >
-                                {showAll ? "View: ALL" : "View: Meaningful"}
-                            </Link>
-                            <div className="bg-slate-900 border border-slate-800 rounded-full px-4 py-1.5 text-xs font-mono text-emerald-500 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                SECURE
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Environment Banners */}
-                {isProduction ? (
-                    <div className="bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 py-3 px-4 rounded-lg text-center font-bold tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.1)] mb-6">
-                        PRODUCTION DATA
-                    </div>
-                ) : isLocal ? (
-                    <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 py-3 px-4 rounded-lg text-center font-bold tracking-widest mb-6">
-                        LOCAL DEV DATA
-                    </div>
-                ) : (
-                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 py-3 px-4 rounded-lg text-center font-bold tracking-widest mb-6">
-                        PREVIEW DATA
-                    </div>
-                )}
-
-                {/* Error Banner - Only show if DATABASE_URL is missing or explicit fetch error NOT related to empty data */}
-                {(!process.env.DATABASE_URL || fetchError) && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm font-mono">
-                        {!process.env.DATABASE_URL
-                            ? "Database configuration missing (DATABASE_URL)."
-                            : "Error fetching analytics data. Check server logs."}
-                    </div>
-                )}
-
-                {/* Top Metric Cards */}
-                <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                    <MetricCard
-                        title={showAll ? "Total Events" : "Meaningful Evts"}
-                        value={totalEvents.toLocaleString()}
-                        icon={<IconTotal />}
-                    />
-                    <MetricCard
-                        title={`Unique Events (${parsedRange.rangeKey.toUpperCase()})`}
-                        value={eventsByName.length.toString()}
-                        icon={<IconTypes />}
-                    />
-                    <MetricCard
-                        title={`Active Steps (${parsedRange.rangeKey.toUpperCase()})`}
-                        value={eventsByStep.length.toString()}
-                        icon={<IconSteps />}
-                    />
-                    {/* New KPIs */}
-                    <MetricCard
-                        title={`Conversion Rate (${parsedRange.rangeKey.toUpperCase()})`}
-                        value={kpis.conversionRate}
-                        icon={<IconConversion />}
-                    />
-                    <MetricCard
-                        title="Avg Time to Schedule"
-                        value={kpis.avgTimeToSchedule}
-                        icon={<IconTime />}
-                    />
-                </section>
-
-                {/* Data Tables Grid */}
-                <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Recent Events Breakdown */}
-                    <CardContainer title={`Top Events (${rangeLabel})`}>
-                        <Table
-                            headers={["Event Name", "Count"]}
-                            rows={eventsByName.map((idx) => [
-                                <span key="name" className="font-medium text-slate-200">{idx.eventName}</span>,
-                                idx._count.eventName.toLocaleString()
-                            ])}
-                        />
-                    </CardContainer>
-
-                    {/* Steps Breakdown */}
-                    <CardContainer title={`Step Interactions (${rangeLabel})`}>
-                        <Table
-                            headers={["Step Name", "Count"]}
-                            rows={eventsByStep.map((idx) => [
-                                <span key="step" className="font-mono text-sm text-indigo-300">{idx.step || "-"}</span>,
-                                idx._count.step.toLocaleString()
-                            ])}
-                        />
-                    </CardContainer>
-                </section>
-
-                {/* Recent Events Log (Full Width) */}
-                <section>
-                    <CardContainer title="Recent Activity Log (Last 50)">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-slate-400">
-                                <thead className="text-xs uppercase bg-slate-900 text-slate-500 font-semibold tracking-wider border-b border-slate-800">
-                                    <tr>
-                                        <th className="px-6 py-4">Time</th>
-                                        <th className="px-6 py-4">Event</th>
-                                        <th className="px-6 py-4">Step / Button</th>
-                                        <th className="px-6 py-4">Session ID</th>
-                                        <th className="px-6 py-4">Meta</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-800">
-                                    {last50Events.map((evt) => (
-                                        <tr key={evt.id} className="hover:bg-slate-900/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-mono text-xs">
-                                                {new Date(evt.createdAt).toLocaleString()}
-                                            </td>
-                                            <td className="px-6 py-4 font-medium text-slate-200">
-                                                {evt.eventName}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-1">
-                                                    {evt.step && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 w-fit">
-                                                            {evt.step}
-                                                        </span>
-                                                    )}
-                                                    {evt.buttonId && (
-                                                        <span className="text-xs text-slate-500 font-mono">
-                                                            #{evt.buttonId}
-                                                        </span>
-                                                    )}
-                                                    {!evt.step && !evt.buttonId && (
-                                                        <span className="text-slate-600">-</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 font-mono text-xs text-slate-500">
-                                                {evt.sessionId ? evt.sessionId.slice(0, 8) + "..." : "-"}
-                                            </td>
-                                            <td className="px-6 py-4 max-w-xs truncate font-mono text-xs text-slate-600 relative group cursor-help">
-                                                {evt.meta ? JSON.stringify(evt.meta) : "-"}
-                                                {/* Tooltip for full JSON */}
-                                                {evt.meta && (
-                                                    <div className="absolute hidden group-hover:block bottom-full right-0 mb-2 p-3 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 w-64 md:w-80 whitespace-pre-wrap break-words text-slate-300">
-                                                        {JSON.stringify(evt.meta, null, 2)}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        {last50Events.length === 0 && (
-                            <div className="text-center py-12 text-slate-500">
-                                No events found in the last 50 records.
-                            </div>
-                        )}
-                    </CardContainer>
-                </section>
+                    <h2 className="text-lg font-bold text-slate-800">Error Loading Dashboard</h2>
+                    <p className="text-sm text-slate-600">{error}</p>
+                    <button
+                        onClick={fetchData}
+                        className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700"
+                    >
+                        Retry
+                    </button>
+                </div>
             </div>
-        </div>
-    );
-}
-
-// --- UI Components ---
-// Icons
-const IconTotal = () => (
-    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-    </svg>
-);
-const IconTypes = () => (
-    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-    </svg>
-);
-const IconSteps = () => (
-    <svg className="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-);
-const IconConversion = () => (
-    <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
-const IconTime = () => (
-    <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
-
-function MetricCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
-    return (
-        <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl shadow-sm backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">{title}</h3>
-                <div className="p-2 bg-slate-800 rounded-lg">{icon}</div>
-            </div>
-            <div className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{value}</div>
-        </div>
-    );
-}
-
-
-
-function CardContainer({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-            <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/60">
-                <h2 className="text-lg font-semibold text-slate-200">{title}</h2>
-            </div>
-            <div>{children}</div>
-        </div>
-    );
-}
-
-function Table({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
-    if (rows.length === 0) {
-        return <div className="p-8 text-center text-slate-500">No data available yet.</div>;
+        );
     }
 
+    if (!metrics) return null;
+
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-                <thead className="bg-slate-900/80 text-slate-500 text-xs uppercase font-semibold border-b border-slate-800">
-                    <tr>
-                        {headers.map((h, i) => (
-                            <th key={i} className="px-6 py-4 first:rounded-tl-lg last:rounded-tr-lg">
-                                {h}
-                            </th>
+        <div className="min-h-screen bg-slate-50/50 p-4 sm:p-8 space-y-8 font-sans">
+            {/* Header & Filters */}
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Analytics Dashboard</h1>
+                    <p className="text-sm text-slate-500">Decision support for ShaatHaTipa</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Date Range */}
+                    <select
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value)}
+                        className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                        <option value="30d">Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="1y">Last Year</option>
+                    </select>
+
+                    {/* Clinic Filter */}
+                    <select
+                        value={clinic}
+                        onChange={(e) => setClinic(e.target.value)}
+                        className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none max-w-[150px]"
+                    >
+                        <option value="all">All Clinics</option>
+                        {metrics.filters.clinics.map(c => (
+                            <option key={c} value={c}>{c}</option>
                         ))}
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/50">
-                    {rows.map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-800/30 transition-colors">
-                            {row.map((cell, j) => (
-                                <td key={j} className="px-6 py-3.5 text-slate-300">
-                                    {cell}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </select>
+
+                    <button
+                        onClick={fetchData}
+                        className="p-2 bg-white border border-slate-200 text-slate-500 rounded-lg hover:bg-slate-50 shadow-sm"
+                        title="Refresh"
+                    >
+                        <Filter className="h-4 w-4" />
+                    </button>
+                </div>
+            </header>
+
+            {/* KPIs Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <KPICard title="Total Visits" value={metrics.kpis.totalVisits.toLocaleString()} subtext="Sessions started" />
+                <KPICard title="Avg Daily Visits" value={metrics.kpis.avgDailyVisits} subtext="Unique sessions/day" />
+                <KPICard title="Time Mod. Rate" value={metrics.kpis.timeModificationRate} subtext="Vs Clinic Default" highlight />
+                <KPICard title="Schedule Rate" value={metrics.kpis.scheduleCreationRate} subtext="Funnel Conversion" highlight />
+                <KPICard title="Calendar Add" value={metrics.kpis.calendarAddRate} subtext="Of Generated" />
+                <KPICard title="PDF Export" value={metrics.kpis.pdfExportRate} subtext="Of Generated" />
+            </div>
+
+            {/* Protocol Review & Funnel Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Protocol Review Time */}
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-slate-100">
+                    <h3 className="font-semibold text-slate-800 mb-4 flex items-center justify-between">
+                        <span>Avg Time on Protocol Review</span>
+                        <span className="text-xs font-normal text-slate-400">Step 2 Engagement</span>
+                    </h3>
+                    <div className="flex items-end gap-2 mb-6">
+                        <span className="text-4xl font-bold text-slate-900">{metrics.kpis.avgProtocolReviewTime.avg}</span>
+                        <span className="text-sm text-slate-500 mb-1">avg</span>
+                        <span className="text-sm text-slate-300 mb-1 mx-1">|</span>
+                        <span className="text-xl font-semibold text-slate-700">{metrics.kpis.avgProtocolReviewTime.median}</span>
+                        <span className="text-sm text-slate-500 mb-1">median</span>
+                    </div>
+                    {/* Simple Bar for buckets */}
+                    <div className="space-y-3">
+                        {Object.entries(metrics.kpis.avgProtocolReviewTime.buckets).map(([label, count]) => {
+                            const total = Object.values(metrics.kpis.avgProtocolReviewTime.buckets).reduce((a, b) => a + b, 0);
+                            const percent = total > 0 ? (count / total) * 100 : 0;
+                            return (
+                                <div key={label} className="flex items-center text-xs gap-3">
+                                    <span className="w-12 text-slate-500 text-right">{label}</span>
+                                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-500 rounded-full"
+                                            style={{ width: `${percent}%` }}
+                                        />
+                                    </div>
+                                    <span className="w-8 text-slate-600">{count}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Funnel */}
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-slate-100 lg:col-span-2">
+                    <h3 className="font-semibold text-slate-800 mb-6">Values Funnel</h3>
+                    <div className="flex flex-col sm:flex-row items-center justify-around gap-8 sm:gap-4 relative">
+                        {/* Connector Line (Desktop) */}
+                        <div className="hidden sm:block absolute top-[2.25rem] left-10 right-10 h-0.5 bg-slate-100 -z-0" />
+
+                        <FunnelStep label="Wizard Started" count={metrics.funnel.started} sub="Step 1" total={metrics.funnel.started} />
+                        <FunnelStep label="Protocol Review" count={metrics.funnel.step2} sub="Step 2" total={metrics.funnel.started} />
+                        <FunnelStep label="Schedule Generated" count={metrics.funnel.generated} sub="Step 3" total={metrics.funnel.started} isLast />
+                    </div>
+                </div>
+            </div>
+
+            {/* Graphs */}
+            <div className="space-y-6">
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-slate-100">
+                    <h3 className="font-semibold text-slate-800 mb-6">Traffic Analysis (Monthly)</h3>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={metrics.graphs.monthly}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis
+                                    dataKey="date"
+                                    tick={{ fontSize: 12, fill: '#64748b' }}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    minTickGap={30}
+                                />
+                                <YAxis
+                                    tick={{ fontSize: 12, fill: '#64748b' }}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                                />
+                                <Bar dataKey="visits" fill="#e2e8f0" barSize={20} radius={[4, 4, 0, 0]} name="Sessions" />
+                                <Line type="monotone" dataKey="movingAvg" stroke="#0ea5e9" strokeWidth={3} dot={false} name="7-Day Avg" />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-slate-100">
+                    <h3 className="font-semibold text-slate-800 mb-6">Yearly Overview (Avg Daily Visits/Month)</h3>
+                    <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={metrics.graphs.yearly}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis
+                                    dataKey="month"
+                                    tick={{ fontSize: 12, fill: '#64748b' }}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis
+                                    tick={{ fontSize: 12, fill: '#64748b' }}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                                />
+                                <Bar dataKey="avgDaily" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Avg Daily Visits" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function KPICard({ title, value, subtext, highlight }: { title: string, value: string | number, subtext: string, highlight?: boolean }) {
+    return (
+        <div className={`
+            p-5 rounded-xl border flex flex-col justify-between h-32
+            ${highlight
+                ? "bg-white border-blue-100 shadow-[0_4px_12px_-2px_rgba(59,130,246,0.08)]"
+                : "bg-white border-slate-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] text-slate-600"
+            }
+        `}>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">{title}</p>
+            <div>
+                <span className={`text-2xl font-bold tracking-tight ${highlight ? "text-blue-600" : "text-slate-900"}`}>
+                    {value}
+                </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">{subtext}</p>
+        </div>
+    );
+}
+
+function FunnelStep({ label, count, sub, total, isLast }: { label: string, count: number, sub: string, total: number, isLast?: boolean }) {
+    const conversion = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0";
+
+    return (
+        <div className="flex flex-col items-center bg-white z-10 w-full sm:w-auto">
+            <div className={`
+                flex items-center justify-center w-16 h-16 rounded-full border-4 mb-3 shadow-sm bg-white
+                ${isLast ? "border-emerald-100 text-emerald-600" : "border-blue-50 text-blue-600"}
+            `}>
+                <span className="font-bold text-lg">{conversion}%</span>
+            </div>
+            <h4 className="font-bold text-slate-900 text-sm">{label}</h4>
+            <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
+            <div className="mt-2 text-xs font-medium px-2 py-0.5 bg-slate-50 text-slate-600 rounded-full border border-slate-100">
+                {count.toLocaleString()} sessions
+            </div>
         </div>
     );
 }
