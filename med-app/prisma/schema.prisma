@@ -17,6 +17,7 @@ model AnalyticsEvent {
   step      String?
   buttonId  String?  @map("button_id")
   sessionId String?  @map("session_id")
+  clinicSlug String? @map("clinic_slug")
   meta      Json?
 
   @@index([eventName])

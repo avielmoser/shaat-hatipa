@@ -11,8 +11,10 @@
 /**
  * Types of supported medical procedures. 
  * Previously "SurgeryType".
+ * Now just an alias for string as we decouple from hardcoded enums.
+ * Kept as a type for documentation clarity.
  */
-export type ProcedureType = "INTERLASIK" | "PRK" | "CUSTOM";
+export type ProcedureType = string;
 
 /**
  * Legacy alias for backward compatibility with existing UI components.
@@ -27,6 +29,11 @@ export interface Phase {
   dayStart: number;
   dayEnd: number;
   timesPerDay: number;
+  /**
+   * Optional fixed interval in hours (e.g., 4, 6, 8).
+   * If present, overrides timesPerDay distribution logic to enforce specific spacing.
+   */
+  intervalHours?: number;
 }
 
 /**
@@ -63,7 +70,9 @@ export type Medication = ProtocolAction;
  * Renamed from LaserPrescriptionInput to be generic.
  */
 export interface ProtocolScheduleInput {
-  surgeryType: ProcedureType; // Kept property name 'surgeryType' for now to minimize ripple, but type is generic.
+  clinicSlug: string; // New field for API resolution context
+  protocolKey: string; // The primary identifier for the protocol
+  surgeryType?: ProcedureType; // Legacy / Fallback
   surgeryDate: string;
   wakeTime: string;
   sleepTime: string;

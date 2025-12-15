@@ -4,6 +4,8 @@ import Link from "next/link";
 import { getFunnelKPIs } from "@/lib/server/analytics-kpis";
 import { parseRange, getRangeWhereClause, formatRangeLabel } from "@/lib/server/analytics-range";
 import { TimeRangeSelector } from "@/components/admin/TimeRangeSelector";
+import { ClinicSelector } from "@/components/admin/ClinicSelector";
+import { CLINICS } from "@/config/clinics";
 
 // Force dynamic rendering so we always get fresh data
 export const dynamic = "force-dynamic";
@@ -59,9 +61,19 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
     // Consolidated Where Clause
     // 1. Start with range filter
     // 2. Add 'Meaningful' filter if needed
+    // 3. Add Clinic filter if present
     const whereCondition: any = {
         ...dateWhere
     };
+
+    // Filter Logic: Clinic
+    const rawClinicParam = Array.isArray(params.clinic) ? params.clinic[0] : params.clinic;
+    const clinicFilter = rawClinicParam && CLINICS[rawClinicParam] ? rawClinicParam : null;
+    const activeClinicName = clinicFilter ? CLINICS[clinicFilter].name : "All Clinics";
+
+    if (clinicFilter) {
+        whereCondition.clinicSlug = clinicFilter;
+    }
 
     if (!showAll) {
         // "Meaningful" = page_view OR conversion
@@ -80,18 +92,18 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
 
     try {
         [totalEvents, eventsByName, eventsByStep, last50Events, kpis] = await Promise.all([
-            // 1. Total Events (matches range + view mode)
+            // 1. Total Events
             prisma.analyticsEvent.count({
                 where: whereCondition,
             }),
-            // 2. Top Events (matches range + view mode)
+            // 2. Top Events
             prisma.analyticsEvent.groupBy({
                 by: ["eventName"],
                 where: whereCondition,
                 _count: { eventName: true },
                 orderBy: { _count: { eventName: "desc" } },
             }),
-            // 3. Top Steps (matches range + view mode)
+            // 3. Top Steps
             prisma.analyticsEvent.groupBy({
                 by: ["step"],
                 where: {
@@ -101,15 +113,14 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                 _count: { step: true },
                 orderBy: { _count: { step: "desc" } },
             }),
-            // 4. Log (matches range + view mode)
+            // 4. Log
             prisma.analyticsEvent.findMany({
                 where: whereCondition,
                 take: 50,
                 orderBy: { createdAt: "desc" },
             }),
-            // 5. KPIs (matches range only - specific events handled internally)
-            // KPIs usually ignore "View Mode" (meaningful vs all) because they are specific strict definitions.
-            getFunnelKPIs(prisma, dateWhere),
+            // 5. KPIs (with clinic filter)
+            getFunnelKPIs(prisma, { ...dateWhere, ...(clinicFilter ? { clinicSlug: clinicFilter } : {}) }),
         ]);
     } catch (error) {
         console.error("[AdminDashboard] Database Fetch Error:", error);
@@ -117,20 +128,13 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
     }
 
     // Build URL for toggle (preserve range params)
-    const toggleParams = new URLSearchParams(params as any);
-    toggleParams.set("view", showAll ? "meaningful" : "all");
-    // Ensure key is preserved
-    if (userKey) toggleParams.set("key", userKey);
-    // Range params are already in 'params' so they should persist if we iterate, 
-    // but simpler to just set 'view' on current searchParams.
-    // Actually searchParams might include 'key' multiple times or weird stuff.
-    // Let's reconstruct cleanly.
     const cleanToggleParams = new URLSearchParams();
     cleanToggleParams.set("key", userKey);
     cleanToggleParams.set("view", showAll ? "meaningful" : "all");
     if (parsedRange.rangeKey) cleanToggleParams.set("range", parsedRange.rangeKey);
     if (params.from) cleanToggleParams.set("from", params.from as string);
     if (params.to) cleanToggleParams.set("to", params.to as string);
+    if (clinicFilter) cleanToggleParams.set("clinic", clinicFilter);
 
     const toggleUrl = `?${cleanToggleParams.toString()}`;
 
@@ -144,10 +148,11 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             Analytics Dashboard
                         </h1>
                         <p className="text-slate-400">
-                            Showing: <span className="text-slate-200 font-medium">{rangeLabel}</span> • Live Data
+                            Showing: <span className="text-slate-200 font-medium">{rangeLabel}</span> • <span className="text-slate-200 font-medium">{activeClinicName}</span> • Live Data
                         </p>
                     </div>
                     <div className="flex flex-col md:flex-row items-end md:items-center gap-4">
+                        <ClinicSelector />
                         <TimeRangeSelector />
 
                         <div className="flex items-center gap-2">

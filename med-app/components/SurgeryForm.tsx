@@ -59,10 +59,10 @@ export default function SurgeryForm({
         return () => observer.disconnect();
     }, []);
 
-    // Default to common surgeries if no clinic config
-    const surgeries: SurgeryType[] = clinicConfig?.supportedSurgeries?.length
-        ? clinicConfig.supportedSurgeries
-        : ["INTERLASIK", "PRK"];
+    // Use supportedProtocols if available, fallback to legacy supportedSurgeries, then hardcoded default
+    const protocols: string[] = clinicConfig?.supportedProtocols?.length
+        ? clinicConfig.supportedProtocols
+        : (clinicConfig?.supportedSurgeries?.length ? clinicConfig.supportedSurgeries : ["INTERLASIK", "PRK"]);
 
     return (
         <div ref={containerRef} className="relative pb-24 sm:pb-0"> {/* Padding bottom for fixed CTA on mobile */}
@@ -86,28 +86,34 @@ export default function SurgeryForm({
                 {/* Main Form Area */}
                 <div className="space-y-6">
 
-                    {/* Surgery Selection - Compact Grid */}
+                    {/* Protocol Selection - Compact Grid */}
                     <div role="group" aria-labelledby="surgery-type-label" className="space-y-2">
                         <label id="surgery-type-label" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
                             {t('surgeryType')}
                         </label>
                         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                            {surgeries.map((type) => {
-                                const isSelected = surgeryType === type;
+                            {protocols.map((key) => {
+                                const isSelected = surgeryType === key;
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const labelKey = `surgeryTypes.${type}.label` as any;
+                                const labelKey = `surgeryTypes.${key}.label` as any;
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const descKey = `surgeryTypes.${type}.description` as any;
+                                const descKey = `surgeryTypes.${key}.description` as any;
 
-                                // Fallback if keys missing
-                                const label = t.has(labelKey) ? t(labelKey) : type;
-                                const description = t.has(descKey) ? t(descKey) : "";
+                                // Try to get config-defined label first (if I added label to ProtocolDefinition)
+                                // But ProtocolDefinition is inside clinicConfig.protocols[key]
+                                const protocolDef = clinicConfig?.protocols?.[key];
+                                const configLabel = isRtl ? protocolDef?.label?.he : protocolDef?.label?.en;
+                                const configDesc = isRtl ? protocolDef?.description?.he : protocolDef?.description?.en;
+
+                                // Fallback to translations if keys missing
+                                const label = configLabel || (t.has(labelKey) ? t(labelKey) : key);
+                                const description = configDesc || (t.has(descKey) ? t(descKey) : "");
 
                                 return (
                                     <button
-                                        key={type}
+                                        key={key}
                                         type="button"
-                                        onClick={() => setSurgeryType(type)}
+                                        onClick={() => setSurgeryType(key)}
                                         className={`
                                             relative flex flex-col sm:flex-row items-center sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
                                             ${isSelected
@@ -122,7 +128,12 @@ export default function SurgeryForm({
                                             flex h-8 w-8 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl transition-colors mb-2 sm:mb-0
                                             ${isSelected ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-500"}
                                         `}>
-                                            {type === 'PRK' ? <Activity className="h-5 w-5 sm:h-6 sm:w-6" /> : <Eye className="h-5 w-5 sm:h-6 sm:w-6" />}
+                                            {/* Icon Logic: Eye for eye procedures, Activity for general/pain */}
+                                            {(key === 'INTERLASIK' || key === 'EYE_PAIN' || key === 'CUSTOM' || key === 'PRK') ? (
+                                                <Eye className="h-5 w-5 sm:h-6 sm:w-6" />
+                                            ) : (
+                                                <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
+                                            )}
                                         </div>
 
                                         {/* Text Content */}

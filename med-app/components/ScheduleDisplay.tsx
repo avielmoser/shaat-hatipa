@@ -2,13 +2,17 @@
 
 import React from "react";
 import { useTranslations } from 'next-intl';
-import { DoseSlot } from "../types/prescription";
+import type {
+    DoseSlot,
+    ProtocolScheduleInput,
+} from "../types/prescription";
 import ScheduleView from "./ScheduleView";
 import { trackEvent } from "../lib/client/analytics";
 import type { ClinicConfig } from "../config/clinics";
 
 interface ScheduleDisplayProps {
     schedule: DoseSlot[];
+    prescription: ProtocolScheduleInput;
     onBack: () => void;
     onHome: () => void;
     clinicConfig?: ClinicConfig;
@@ -16,6 +20,7 @@ interface ScheduleDisplayProps {
 
 export default function ScheduleDisplay({
     schedule,
+    prescription,
     onBack,
     onHome,
     clinicConfig,
@@ -34,7 +39,7 @@ export default function ScheduleDisplay({
             </div>
 
             <div>
-                <ScheduleView schedule={schedule} clinicConfig={clinicConfig} />
+                <ScheduleView schedule={schedule} prescription={prescription} clinicConfig={clinicConfig} />
             </div>
 
             {/* Spacer */}

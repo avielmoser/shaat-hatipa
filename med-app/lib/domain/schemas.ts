@@ -3,7 +3,8 @@ import { z } from "zod";
 export const phaseSchema = z.object({
     dayStart: z.number().int().min(1),
     dayEnd: z.number().int().min(1),
-    timesPerDay: z.number().int().min(1).max(24),
+    timesPerDay: z.number().int().min(0).max(24), // Relaxed to 0 for As-Needed or Interval-based
+    intervalHours: z.number().min(0).optional(),
 }).refine((data) => data.dayEnd >= data.dayStart, {
     message: "dayEnd must be greater than or equal to dayStart",
     path: ["dayEnd"],
@@ -17,17 +18,19 @@ export const protocolActionSchema = z.object({
     name: z.string().min(1),
     notes: z.string().optional(),
     phases: z.array(phaseSchema).min(1),
-    minDurationMinutes: z.number().min(0).optional(), // New field for generic engine
+    minDurationMinutes: z.number().min(0).optional(),
 });
 
 export const medicationSchema = protocolActionSchema;
 
 export const protocolScheduleInputSchema = z.object({
-    surgeryType: z.enum(["INTERLASIK", "PRK", "CUSTOM"]), // Keeping "surgeryType" key for compatibility
+    clinicSlug: z.string().min(1).default('default'), // New required field for resolution
+    protocolKey: z.string().min(1), // New required field
+    surgeryType: z.string().optional(), // Legacy compat
     surgeryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     wakeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
     sleepTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
-    medications: z.array(protocolActionSchema).min(1),
+    medications: z.array(protocolActionSchema).optional(), // Now optional, resolved server-side if missing
 }).refine((data) => data.wakeTime !== data.sleepTime, {
     message: "Wake time and sleep time cannot be the same",
     path: ["sleepTime"],

@@ -3,6 +3,8 @@ import type { ProtocolScheduleInput, ProtocolAction } from '../types/prescriptio
 
 describe('buildProtocolSchedule', () => {
     const baseInput: ProtocolScheduleInput = {
+        clinicSlug: 'default',
+        protocolKey: 'INTERLASIK',
         surgeryType: 'INTERLASIK',
         surgeryDate: '2025-01-01',
         wakeTime: '08:00',
@@ -100,5 +102,53 @@ describe('buildProtocolSchedule', () => {
         for (let i = 0; i < times.length - 1; i++) {
             expect(times[i + 1]).toBeGreaterThanOrEqual(times[i] + 5);
         }
+    });
+
+    it('should schedule interval-based actions (q6h)', () => {
+        const headache: ProtocolAction = {
+            id: 'headache',
+            name: 'Acamol',
+            minDurationMinutes: 0,
+            phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 0, intervalHours: 6 }],
+        };
+
+        // Window 08:00 - 22:00 (14h = 840m)
+        // q6h = 08:00, 14:00, 20:00 (next 26:00 out of window)
+        const result = buildProtocolSchedule({ ...baseInput, medications: [headache] });
+        expect(result.length).toBe(3);
+        const times = result.map(s => s.time).sort();
+        expect(times).toEqual(['08:00', '14:00', '20:00']);
+    });
+
+    it('should handle as-needed actions (timesPerDay: 0, no interval)', () => {
+        const eyePain: ProtocolAction = {
+            id: 'eye-pain',
+            name: 'Drops',
+            minDurationMinutes: 0,
+            phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 0 }],
+        };
+
+        const result = buildProtocolSchedule({ ...baseInput, medications: [eyePain] });
+        expect(result.length).toBe(0);
+    });
+
+    it('should mix interval and distributed actions', () => {
+        const q6h: ProtocolAction = {
+            id: 'q6h',
+            name: 'Fixed',
+            phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 0, intervalHours: 6 }],
+        };
+        const dist: ProtocolAction = {
+            id: 'dist',
+            name: 'Distributed',
+            phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 2 }], // 08:00, 15:00 (approx)
+        };
+
+        const result = buildProtocolSchedule({ ...baseInput, medications: [q6h, dist] });
+        const q6hSlots = result.filter(s => s.medicationId === 'q6h');
+        const distSlots = result.filter(s => s.medicationId === 'dist');
+
+        expect(q6hSlots.length).toBe(3);
+        expect(distSlots.length).toBe(2);
     });
 });

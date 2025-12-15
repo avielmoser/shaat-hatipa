@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations, useLocale } from 'next-intl';
-import type { DoseSlot } from "../types/prescription";
+import type { DoseSlot, ProtocolScheduleInput } from "../types/prescription";
 import { getMedicationColor } from "../lib/theme/medicationColors";
 import { downloadScheduleIcs } from "../lib/utils/ics";
 import { openSchedulePdf } from "../lib/utils/pdf";
@@ -16,6 +16,7 @@ import type { ClinicConfig } from "../config/clinics";
 
 interface ScheduleViewProps {
   schedule: DoseSlot[];
+  prescription?: ProtocolScheduleInput;
   clinicConfig?: ClinicConfig;
 }
 
@@ -112,7 +113,7 @@ function filterByMode(
   return { filtered, todayStr };
 }
 
-export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewProps) {
+export default function ScheduleView({ schedule, prescription, clinicConfig }: ScheduleViewProps) {
   const t = useTranslations('Schedule');
   const locale = useLocale();
   const [mode, setMode] = useState<FilterMode>("today");
@@ -163,7 +164,8 @@ export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewPro
   };
 
   const handleExportPdf = async () => {
-    if (!schedule || schedule.length === 0 || pdfLoading) return;
+    const hasItems = (schedule && schedule.length > 0) || (prescription && prescription.medications.length > 0);
+    if (!hasItems || pdfLoading) return;
     setPdfLoading(true);
     trackEvent("export_clicked", {
       eventType: "conversion",
@@ -174,7 +176,8 @@ export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewPro
     });
     try {
       const fileName = `Drops-Schedule-${surgeryDateStr || todayStr}.pdf`;
-      await openSchedulePdf(filtered, fileName, clinicConfig, currentLocale, actionLabel);
+      // If schedule is empty, we might still want to print instructions if prescription exists
+      await openSchedulePdf(filtered, fileName, clinicConfig, currentLocale, actionLabel, prescription?.medications);
     } catch (e) {
       console.error("Failed to export PDF", e);
       alert("Failed to generate PDF. Please try again.");
@@ -251,7 +254,11 @@ export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewPro
             <button
               type="button"
               onClick={handleExportIcs}
-              className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-700 hover:bg-sky-100"
+              disabled={!filtered || filtered.length === 0}
+              title={(!filtered || filtered.length === 0) ? "No timed events to export" : ""}
+              className={`inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium ${(!filtered || filtered.length === 0)
+                ? "cursor-not-allowed text-slate-400 bg-slate-50 border-slate-200"
+                : "text-sky-700 hover:bg-sky-100"}`}
             >
               {t('export.calendar')}
             </button>
@@ -277,7 +284,21 @@ export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewPro
 
       {dayGroups.length === 0 ? (
         <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-base text-slate-700">
-          {t('empty')}
+          {prescription && prescription.medications.length > 0 ? (
+            <div className="space-y-4">
+              <p className="font-semibold">{t('empty')}</p>
+              <div className="space-y-2">
+                {prescription.medications.map(med => (
+                  <div key={med.id} className="p-3 bg-white rounded-lg border border-slate-200">
+                    <div className="font-bold text-slate-900">{med.name}</div>
+                    {med.notes && <div className="text-sm text-slate-600">{med.notes}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            t('empty')
+          )}
         </div>
       ) : (
         <div className="mt-3 space-y-3 pe-0 md:pe-1">

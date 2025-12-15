@@ -4,7 +4,7 @@
 // print or save as PDF. Also includes helpers for safe HTML and date formatting.
 
 import { getMedicationColor } from "../theme/medicationColors";
-import type { DoseSlot } from "../../types/prescription";
+import type { DoseSlot, ProtocolAction } from "../../types/prescription";
 import type { ClinicConfig } from "../../config/clinics";
 
 const LABELS = {
@@ -65,7 +65,8 @@ function buildPrintableHtml(
   fileName: string,
   clinic?: ClinicConfig | null,
   locale: "en" | "he" = "en",
-  customActionLabel?: string
+  customActionLabel?: string,
+  manualActions?: ProtocolAction[]
 ): string {
   const dayGroups = groupByDate(schedule);
   const parts: string[] = [];
@@ -165,7 +166,23 @@ function buildPrintableHtml(
   parts.push(`</div>`); // End header
 
   if (dayGroups.length === 0) {
-    parts.push(`<p style="text-align:center;color:#64748b;margin-top:40px;">${escapeHtml(t.noDoses)}</p>`);
+    if (manualActions && manualActions.length > 0) {
+      parts.push(`<h2>${isRtl ? "הנחיות לטיפול" : "Treatment Instructions"}</h2>`);
+      parts.push(`<table><thead><tr>
+            <th style="width: 30%">${escapeHtml(customActionLabel || (isRtl ? "טיפול" : "Treatment"))}</th>
+            <th style="width: 70%">${escapeHtml(t.notes)}</th>
+        </tr></thead><tbody>`);
+
+      manualActions.forEach(action => {
+        parts.push(`<tr>
+                <td><strong>${escapeHtml(action.name)}</strong></td>
+                <td>${escapeHtml(action.notes || "")}</td>
+            </tr>`);
+      });
+      parts.push("</tbody></table>");
+    } else {
+      parts.push(`<p style="text-align:center;color:#64748b;margin-top:40px;">${escapeHtml(t.noDoses)}</p>`);
+    }
   } else {
     dayGroups.forEach((day) => {
       const timeGroups = groupByTime(day.slots);
@@ -228,14 +245,15 @@ export function openSchedulePdf(
   fileName: string,
   clinic: ClinicConfig | null | undefined,
   locale: string = 'en',
-  actionLabel?: string
+  actionLabel?: string,
+  manualActions?: ProtocolAction[]
 ): void {
   if (typeof window === "undefined") return;
 
   // Normalize locale to supported types
   const safeLocale = (locale === 'he' || locale === 'en') ? locale : 'en';
 
-  const html = buildPrintableHtml(schedule, fileName, clinic, safeLocale, actionLabel);
+  const html = buildPrintableHtml(schedule, fileName, clinic, safeLocale, actionLabel, manualActions);
   const newWindow = window.open("", "_blank");
   if (!newWindow) {
     alert("Please allow popups to download the PDF.");

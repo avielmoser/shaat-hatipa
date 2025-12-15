@@ -10,7 +10,8 @@
         "ein-tal-hadassah": "Ein Tal Hadassah",
         "default": "ShaatHaTipa",
         "ein-tal": "Ein Tal",
-        "demo-clinic": "Demo Clinic"
+        "demo-clinic": "Demo Clinic",
+        "moser-clinic": "Moser Clinic"
     },
     "Navbar": {
         "title": "ShaatHaTipa",
@@ -66,6 +67,18 @@
                 "PRK": {
                     "label": "PRK",
                     "description": ""
+                },
+                "HEADACHE": {
+                    "label": "Headache",
+                    "description": "Protocol for headache relief"
+                },
+                "SORE_THROAT": {
+                    "label": "Sore Throat",
+                    "description": "Treatment for sore throat"
+                },
+                "EYE_PAIN": {
+                    "label": "Eye Pain",
+                    "description": "Relief for dry eyes and pain"
                 }
             },
             "compatibleWith": "Compatible with {clinic} • {surgery}",

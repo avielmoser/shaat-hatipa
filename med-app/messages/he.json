@@ -10,7 +10,8 @@
         "ein-tal-hadassah": "עין טל הדסה",
         "default": "שעת הטיפה",
         "ein-tal": "עין טל",
-        "demo-clinic": "Demo Clinic"
+        "demo-clinic": "Demo Clinic",
+        "moser-clinic": "Moser Clinic"
     },
     "Navbar": {
         "title": "שעת הטיפה",
@@ -66,6 +67,18 @@
                 "PRK": {
                     "label": "PRK",
                     "description": ""
+                },
+                "HEADACHE": {
+                    "label": "כאב ראש",
+                    "description": "פרוטוקול לטיפול בכאבי ראש"
+                },
+                "SORE_THROAT": {
+                    "label": "כאב גרון",
+                    "description": "טיפול משולב בכאב גרון וחום"
+                },
+                "EYE_PAIN": {
+                    "label": "כאב עיניים",
+                    "description": "טיפול ביובש וכאב עיניים"
                 }
             }
         },

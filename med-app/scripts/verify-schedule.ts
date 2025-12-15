@@ -3,6 +3,8 @@ import { LaserPrescriptionInput, SurgeryType } from "../types/prescription";
 
 console.log("\n--- Verifying generateSchedule ---");
 const input: LaserPrescriptionInput = {
+    clinicSlug: "default",
+    protocolKey: "INTERLASIK",
     surgeryType: "INTERLASIK" as SurgeryType,
     surgeryDate: "2025-01-01",
     wakeTime: "08:00",

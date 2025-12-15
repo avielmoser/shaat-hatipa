@@ -313,16 +313,50 @@ export function buildProtocolSchedule(prescription: ProtocolScheduleInput): Dose
     // Distribution assumes points.
 
     med.phases.forEach((phase) => {
-      const { dayStart, dayEnd, timesPerDay } = phase;
-      if (timesPerDay <= 0 || dayEnd < dayStart) return;
+      const { dayStart, dayEnd, timesPerDay, intervalHours } = phase; // Added intervalHours
+      if (dayEnd < dayStart) return;
       const daysCount = dayEnd - dayStart + 1;
 
-      // Distribute evenly
-      const effectiveInterval = awakeWindow / timesPerDay;
+      // Distribution Strategy
+      let effectiveInterval = 0;
+      let iterations = timesPerDay;
+
+      // If intervalHours is specified, we calculate iterations based on wake window
+      if (intervalHours && intervalHours > 0) {
+        // qXh logic: Start at Wake, then Wake + X, Wake + 2X...
+        // We need to fit them into awakeWindow.
+        // Actually, usually q6h means: 8:00, 14:00, 20:00.
+        // So effective interval is intervalHours * 60.
+        effectiveInterval = intervalHours * 60;
+
+        // Calculate how many fit
+        // First dose at 0 (wake time), last dose must be <= awakeWindow.
+        // 0, I, 2I ... kI <= Window
+        // k <= Window / I
+        // Count = k + 1 (because of the 0th dose)
+        const possibleDoses = Math.floor(awakeWindow / effectiveInterval) + 1;
+
+        // If timesPerDay is provided (e.g. 4), we normally clamp?
+        // But usually for qXh we just run until sleep.
+        // Let's use the smaller of calculated feasible vs timesPerDay (if timesPerDay > 0).
+        // If timesPerDay is 0 (unlimited/as-needed), we might treat it differently,
+        // but here we are scheduling fixed actions.
+        if (timesPerDay > 0) {
+          iterations = Math.min(possibleDoses, timesPerDay);
+        } else {
+          iterations = possibleDoses;
+        }
+      } else if (timesPerDay > 0) {
+        // Standard distribution (divide window evenly)
+        effectiveInterval = awakeWindow / timesPerDay;
+      } else {
+        // timesPerDay is 0 and no interval? Skip (As Needed).
+        return;
+      }
 
       for (let dayOffset = 0; dayOffset < daysCount; dayOffset++) {
         const absoluteDayIndex = dayStart - 1 + dayOffset;
-        for (let doseIndex = 0; doseIndex < timesPerDay; doseIndex++) {
+        for (let doseIndex = 0; doseIndex < iterations; doseIndex++) {
           // Compute raw time
           const rawRelativeMinutes = wakeMinutes + (effectiveInterval * doseIndex);
 

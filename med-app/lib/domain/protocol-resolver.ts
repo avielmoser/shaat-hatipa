@@ -1,4 +1,4 @@
-import { getClinicConfig, ClinicConfig, defaultClinic } from "../../config/clinics";
+import { getClinicConfig, ClinicConfig, defaultClinic, ProtocolDefinition } from "../../config/clinics";
 import { DEFAULT_PROTOCOLS } from "../../constants/protocols";
 import { ProtocolAction, ProcedureType } from "../../types/prescription";
 
@@ -21,41 +21,31 @@ export function resolveClinicConfig(clinicId?: string | null): ClinicConfig {
  */
 export function resolveProtocol(
     clinicConfig: ClinicConfig | undefined,
-    surgeryType: ProcedureType,
-    awakeMinutes: number
-): ProtocolAction[] {
-    let actions: ProtocolAction[] = [];
-
-    // 1. Try clinic override
-    if (clinicConfig?.protocols) {
-        const override = clinicConfig.protocols[surgeryType];
-        if (override) {
-            actions = override(awakeMinutes);
-        }
+    protocolKey: string
+): ProtocolDefinition {
+    if (!clinicConfig) {
+        throw new Error("Clinic configuration is missing");
     }
 
-    // 2. Fallback to default
-    if (actions.length === 0) {
-        // Cast to avoid implicit any if keys mismatch slightly, but ProcedureType should match
-        // We use 'as any' for safety if mapping is partial, but ideally types match.
-        const defaultFn = DEFAULT_PROTOCOLS[surgeryType as keyof typeof DEFAULT_PROTOCOLS];
-        if (defaultFn) {
-            actions = defaultFn(awakeMinutes);
-        }
+    const protocol = clinicConfig.protocols[protocolKey];
+
+    // Strict lookup: No fallback to defaults blindly.
+    if (!protocol) {
+        // We log detailed error but return readable message
+        console.warn(`Protocol '${protocolKey}' not found in clinic '${clinicConfig.slug}'. Available: ${Object.keys(clinicConfig.protocols).join(", ")}`);
+        throw new Error(`Protocol not found: ${protocolKey}`);
     }
 
-    if (actions.length === 0) {
-        console.warn(`No protocol found for ${surgeryType}, returning empty.`);
-        return [];
-    }
+    // Inject default duration if needed
+    const defaultDuration = clinicConfig.defaultActionDuration ?? 0;
 
-    // 4. Inject default duration
-    // This allows the config to control the default (e.g. 5 mins for Laser)
-    // while the engine remains agnostic (defaults to 0 if not set here).
-    const defaultDuration = clinicConfig?.defaultActionDuration ?? 0;
-
-    return actions.map(action => ({
+    const actions = protocol.actions.map(action => ({
         ...action,
         minDurationMinutes: action.minDurationMinutes ?? defaultDuration
     }));
+
+    return {
+        ...protocol,
+        actions
+    };
 }

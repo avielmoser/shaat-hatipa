@@ -1,10 +1,29 @@
-import { Medication, ProcedureType, SurgeryType } from "../../types/prescription";
+import { Medication, ProcedureType } from "../../types/prescription";
+
+export type ProtocolKey = string;
+export type ProtocolKind = 'SCHEDULED' | 'AS_NEEDED';
 
 /**
  * Protocol Definition:
- * A function that takes awakeMinutes and returns a list of medications.
+ * Data-only definition of a medical protocol.
  */
-export type ProtocolDefinition = (awakeMinutes: number) => Medication[];
+export interface ProtocolDefinition {
+    id: ProtocolKey;
+    kind: ProtocolKind;
+    actions: Medication[];
+    /**
+     * Optional metadata for UI rendering (e.g. cards)
+     * If missing, UI might try to fallback to translation keys, but explicit is better for new protocols.
+     */
+    label?: {
+        he: string;
+        en: string;
+    };
+    description?: {
+        he: string;
+        en: string;
+    };
+}
 
 export interface ClinicConfig {
     id: string;
@@ -34,13 +53,17 @@ export interface ClinicConfig {
         };
     };
 
-    // Functional
-    supportedSurgeries: ProcedureType[]; // Using generic type
+    /**
+     * List of protocol keys to show in the UI, and in what order.
+     * Replaces `supportedSurgeries`.
+     */
+    supportedProtocols: ProtocolKey[];
+
+    // Legacy support (optional) - to be removed or mapped
+    supportedSurgeries?: ProcedureType[];
 
     // Logic Overrides
-    protocols?: {
-        [key in ProcedureType]?: ProtocolDefinition;
-    };
+    protocols: Record<ProtocolKey, ProtocolDefinition>;
 
     /**
      * Default duration per action in minutes.

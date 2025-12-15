@@ -3,10 +3,13 @@
 import { getSessionId } from "@/utils/analyticsSession";
 import { getTrackingPolicy, AnalyticsEventType } from "./analytics.taxonomy";
 
+import { getClinicConfig } from "@/config/clinics";
+
 type AnalyticsEventData = {
     eventType?: AnalyticsEventType; // Optional now as we derive it
     step?: string;
     buttonId?: string;
+    clinicSlug?: string;
     [key: string]: unknown;
 };
 
@@ -68,6 +71,7 @@ export function trackEvent(eventName: string, data: AnalyticsEventData) {
                 eventType: finalEventType, // Enforce derived type
                 sessionId,
                 path: currentPath,
+                clinicSlug: data.clinicSlug || getClinicConfig().slug, // Auto-inject clinic context
                 ...data,
             }),
         }).catch((err) => {

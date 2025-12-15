@@ -46,6 +46,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
   const [prescription, setPrescription] =
     useState<LaserPrescriptionInput | null>(null);
   const [schedule, setSchedule] = useState<DoseSlot[]>([]);
+  const [scheduleGenerated, setScheduleGenerated] = useState(false);
 
   // ... existing refs ...
   const step1Ref = useRef<HTMLDivElement | null>(null);
@@ -117,13 +118,32 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
   const buildPrescription = (): LaserPrescriptionInput | null => {
     if (!surgeryType) return null; // Should not happen if validation passes
 
-    const { awakeMinutes } = normalizeAwakeWindow(wakeTime, sleepTime);
-    // Cast clinicConfig to undefined if null, to match resolveProtocol signature if needed, 
-    // but protocol-resolver handles undefined.
-    const medications = resolveProtocol((clinicConfig || undefined), surgeryType, awakeMinutes);
+    // Resolve protocol strictly
+    // surgeryType state variable actually holds the protocolKey now
+    const protocolKey = surgeryType;
+
+    // We expect clinicConfig to be present (page loader handles default)
+    // If null, we can't resolve strictly.
+    if (!clinicConfig) {
+      console.error("Clinic config missing in WorkArea");
+      return null;
+    }
+
+    let medications: any[] = [];
+    try {
+      const protocolDef = resolveProtocol(clinicConfig, protocolKey);
+      medications = protocolDef.actions;
+    } catch (e) {
+      console.error("Failed to resolve protocol", e);
+      // Fallback or empty?
+      // If resolution fails, we can't proceed.
+      return null;
+    }
 
     return {
-      surgeryType,
+      clinicSlug: clinicConfig.slug,
+      protocolKey,
+      surgeryType, // Legacy
       surgeryDate,
       wakeTime,
       sleepTime,
@@ -184,6 +204,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
 
       setPrescription(json.prescription ?? body);
       setSchedule(json.schedule);
+      setScheduleGenerated(true);
       setStep(3);
       scrollToRef(step3Ref);
 
@@ -221,7 +242,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
   };
 
   const hasPrescription = !!prescription;
-  const hasSchedule = schedule.length > 0;
+  const hasSchedule = scheduleGenerated;
 
   const stepperItems: { idx: Step; label: string }[] = [
     { idx: 1, label: t('steps.1') },
@@ -337,11 +358,12 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
           )}
 
           {/* ===== Step 3 – Schedule ===== */}
-          {step === 3 && hasSchedule && (
+          {step === 3 && hasSchedule && prescription && (
             <div ref={step3Ref}>
               <div ref={scheduleRef}>
                 <ScheduleDisplay
                   schedule={schedule}
+                  prescription={prescription}
                   onBack={goToStep2}
                   onHome={goHome}
                   clinicConfig={clinicConfig || undefined}

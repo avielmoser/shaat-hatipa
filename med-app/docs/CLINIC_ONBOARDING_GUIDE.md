@@ -78,24 +78,43 @@ export const dentalCareClinic: ClinicConfig = {
     },
 
     // Protocols & Logic
-    supportedProcedures: ["CUSTOM"], // ProcedureType
+    supportedProtocols: ["CUSTOM", "RETENTION"], // ProtocolKey[] - Defines supported treatments
+
     defaultActionDuration: 10, // Default minutes per action if not specified on TreatmentAction
     
     protocols: {
-        CUSTOM: [
-            {
-                id: "aligner-change",
-                name: "Change Aligner",
-                frequencyPerDay: 1, // Simplified onboarding structure
-                minDurationMinutes: 15
-            }
-        ]
+        "CUSTOM": {
+            id: "CUSTOM",
+            kind: "SCHEDULED",
+            label: { en: "Custom Aligner", he: "מיישרים מותאם אישית" },
+            description: { en: "Standard aligner protocol", he: "פרוטוקול רגיל" },
+            actions: [
+                {
+                    id: "aligner-change",
+                    name: "Change Aligner",
+                    phases: [{ dayStart: 1, dayEnd: 14, timesPerDay: 1 }],
+                    minDurationMinutes: 15
+                }
+            ]
+        },
+        "RETENTION": {
+            id: "RETENTION", 
+            kind: "AS_NEEDED",
+            label: { en: "Retention", he: "שמירה" },
+            actions: [
+                {
+                    id: "retainer-wear",
+                    name: "Wear Retainer",
+                    phases: [{ dayStart: 1, dayEnd: 365, timesPerDay: 0, intervalHours: 12 }]
+                }
+            ]
+        }
     }
 };
 ```
 
-> Note: Branding and localization fields have no impact on scheduling logic.
-> Only TreatmentActions and protocol definitions affect time calculation.
+> **Important:** Protocols are now strictly **Data**. Functions are not allowed in `ClinicConfig` (to support Server/Client boundary safety). Protocol keys should be uppercase strings (e.g., "HEADACHE", "INTERLASIK").
+> `supportedSurgeries` is deprecated in favor of `supportedProtocols`.
 
 ---
 
@@ -177,7 +196,7 @@ Before submitting a PR, you MUST manually verify the clinic.
 
 *   **⛔ Hardcoding Labels:** Do NOT write "Drops" or "Eye" in components. Use the configured `actionLabel` or generic strings.
 *   **⛔ Engine Edits:** Do NOT add `if (clinic === 'dental')` statements inside `schedule-builder.ts`.
-*   **⛔ Medical Logic in Components:** Do NOT put dosage rules in the UI. All dosage rules belong in the `protocols` function in the config.
+*   **⛔ Medical Logic in Components:** Do NOT put dosage rules in the UI. All dosage rules belong in the `protocols` object in the config.
 *   **⛔ Bypassing Validation:** Do NOT cast types to `any` to force invalid protocol structures.
 
 ---

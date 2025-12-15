@@ -1,10 +1,12 @@
 import { ClinicConfig } from "./types";
 import { defaultClinic } from "./default";
 import { einTalClinic } from "./ein-tal";
+import { moserClinic } from "./moser-clinic";
 
-const CLINICS: Record<string, ClinicConfig> = {
+export const CLINICS: Record<string, ClinicConfig> = {
     [defaultClinic.slug]: defaultClinic,
     [einTalClinic.slug]: einTalClinic,
+    [moserClinic.slug]: moserClinic,
     // Add more clinics here
 };
 

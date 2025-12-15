@@ -36,6 +36,8 @@ function runTest(name: string, input: LaserPrescriptionInput, shouldFail: boolea
 
 // Test 1: Standard Flow
 runTest("Standard Flow", {
+    clinicSlug: "default",
+    protocolKey: "INTERLASIK",
     surgeryType: "INTERLASIK",
     surgeryDate: "2025-01-01",
     wakeTime: "08:00",
@@ -45,6 +47,8 @@ runTest("Standard Flow", {
 
 // Test 2: Wake > Sleep (Next Day)
 runTest("Wake > Sleep (Next Day)", {
+    clinicSlug: "default",
+    protocolKey: "INTERLASIK",
     surgeryType: "INTERLASIK",
     surgeryDate: "2025-01-01",
     wakeTime: "08:00",
@@ -54,6 +58,8 @@ runTest("Wake > Sleep (Next Day)", {
 
 // Test 3: Tight Schedule
 runTest("Tight Schedule (Late surgery)", {
+    clinicSlug: "default",
+    protocolKey: "INTERLASIK",
     surgeryType: "INTERLASIK",
     surgeryDate: "2025-01-01",
     wakeTime: "08:00",
@@ -69,6 +75,8 @@ runTest("Tight Schedule (Late surgery)", {
 
 // Test 4: Impossible Schedule
 runTest("Impossible Schedule", {
+    clinicSlug: "default",
+    protocolKey: "INTERLASIK",
     surgeryType: "INTERLASIK",
     surgeryDate: "2025-01-01",
     wakeTime: "08:00",
@@ -77,13 +85,16 @@ runTest("Impossible Schedule", {
         {
             id: "impossible",
             name: "Impossible",
-            phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 20 }] // 20 drops in 60 mins = 3 mins/drop
+            phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 20 }], // 20 drops in 60 mins = 3 mins/drop
+            minDurationMinutes: 5 // Force impossible check (100 mins required > 60 mins available)
         }
     ]
 }, true);
 
 // Test 5: Collisions
 runTest("Collisions", {
+    clinicSlug: "default",
+    protocolKey: "INTERLASIK",
     surgeryType: "INTERLASIK",
     surgeryDate: "2025-01-01",
     wakeTime: "08:00",

@@ -20,6 +20,7 @@ const analyticsSchema = z.object({
         z.string().max(50),
         z.union([z.string().max(500), z.number(), z.boolean(), z.null()])
     ).optional(),
+    clinicSlug: z.string().max(50).optional(),
     path: z.string(),
 });
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { eventName, eventType, step, buttonId, sessionId, meta, path } = result.data;
+        const { eventName, eventType, step, buttonId, sessionId, meta, path, clinicSlug } = result.data;
 
         // Server-Side Safety: Block events from admin routes based on payload path
         if (path.startsWith("/admin")) {
@@ -86,8 +87,9 @@ export async function POST(req: NextRequest) {
                 step: step ?? null,
                 buttonId: buttonId ?? null,
                 sessionId: sessionId ? String(sessionId) : null,
+                clinicSlug: clinicSlug ?? null,
                 meta: dbMeta,
-            },
+            } as any,
         });
 
         return NextResponse.json({ success: true });
