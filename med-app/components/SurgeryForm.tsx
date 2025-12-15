@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from 'next-intl';
 import { Calendar, Check, Eye, Activity } from "lucide-react";
 import { SurgeryType } from "../types/prescription";
@@ -40,26 +40,45 @@ export default function SurgeryForm({
     const locale = useLocale();
     const isRtl = locale === 'he';
 
+    // Scroll Observer for Floating Button
+    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setShowFloatingBtn(entry.isIntersecting);
+            },
+            { threshold: 0.1 } // Show when 10% of form is visible
+        );
+
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
     // Default to common surgeries if no clinic config
     const surgeries: SurgeryType[] = clinicConfig?.supportedSurgeries?.length
         ? clinicConfig.supportedSurgeries
         : ["INTERLASIK", "PRK"];
 
     return (
-        <div className="relative pb-24 sm:pb-0"> {/* Padding bottom for fixed CTA on mobile */}
+        <div ref={containerRef} className="relative pb-24 sm:pb-0"> {/* Padding bottom for fixed CTA on mobile */}
             <div
                 className="space-y-6 sm:space-y-8"
                 aria-labelledby="step1-title"
             >
                 {/* Header */}
-                <div className="space-y-2 text-center sm:text-start">
+                <div className="space-y-2 text-start">
                     <h2
                         id="step1-title"
                         className="text-xl sm:text-3xl font-bold tracking-tight text-slate-900"
                     >
                         {t('title')}
                     </h2>
-                    <p className="max-w-xl text-sm sm:text-base text-slate-500 mx-auto sm:mx-0">
+                    <p className="max-w-xl text-sm sm:text-base text-slate-500 sm:mx-0">
                         {t('description')}
                     </p>
                 </div>
@@ -107,8 +126,8 @@ export default function SurgeryForm({
                                         </div>
 
                                         {/* Text Content */}
-                                        <div className="flex-1 text-center sm:text-start">
-                                            <div className="flex items-center justify-center sm:justify-start">
+                                        <div className="flex-1 text-start">
+                                            <div className="flex items-center justify-start">
                                                 <span className={`text-sm sm:text-xl font-bold ${isSelected ? "text-sky-900" : "text-slate-900"}`}>
                                                     {label}
                                                 </span>
@@ -147,19 +166,22 @@ export default function SurgeryForm({
                                 <label htmlFor="surgery-date" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
                                     {t('surgeryDate')}
                                 </label>
-                                <div className="relative">
-                                    <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-4">
-                                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
+                                <div className="flex flex-col gap-2">
+                                    {/* Icon moved outside input for better mobile RTL support */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                            <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
+                                        </div>
+                                        <div className="relative flex-1">
+                                            <input
+                                                id="surgery-date"
+                                                type="date"
+                                                value={surgeryDate}
+                                                onChange={(e) => setSurgeryDate(e.target.value)}
+                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base sm:text-lg text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/20"
+                                            />
+                                        </div>
                                     </div>
-                                    <input
-                                        id="surgery-date"
-                                        type="date"
-                                        value={surgeryDate}
-                                        onChange={(e) => setSurgeryDate(e.target.value)}
-                                        className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 sm:py-3 ps-12 sm:ps-14 text-sm sm:text-lg text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/20"
-                                    // Padding inline start logic in CSS classes (ps-12/14) handles RTL/LTR usually, but keeping inline style if needed for specificity or older browser support, though utility classes should work.
-                                    // Removing explicit style overrides to rely on Tailwind's logical properties `ps-`.
-                                    />
                                 </div>
                             </div>
 
@@ -187,15 +209,21 @@ export default function SurgeryForm({
                                     onChange={setSleepTime}
                                     dir={isRtl ? 'rtl' : 'ltr'}
                                     error={invalidTime && error ? error : undefined}
-                                    helperText={!error ? t('helperText') : undefined}
                                 />
                             </div>
+
+                            {/* Dedicated Helper Text Section - calm, bottom, professional placement */}
+                            <p className="text-sm text-slate-500 text-start leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
+                                {t('helperText')}
+                            </p>
                         </div>
                     </div>
 
                     {/* Fixed Bottom CTA for Mobile / Sticky for Desktop */}
-                    {/* Using fixed on mobile to ensure it's always visible above folds and keypads */}
-                    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+                    <div className={`
+                        fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none transition-transform duration-300 ease-in-out
+                        ${showFloatingBtn ? 'translate-y-0' : 'translate-y-full sm:translate-y-0'}
+                    `}>
                         <div className="mx-auto w-full max-w-md sm:max-w-md sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
                             <button
                                 type="button"

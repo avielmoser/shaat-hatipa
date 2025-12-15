@@ -63,7 +63,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
-        <div className="flex-1 flex flex-col items-center md:items-start text-center rtl:text-start md:text-start">
+        <div className="flex-1 flex flex-col items-start text-start">
           {/* Clinic Logo (if exists) */}
           <div className="flex flex-col items-center gap-3">
             {/* Always show the label, maybe with logo if available */}
@@ -149,7 +149,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
               {t('startNow')}
             </button>
 
-            <span className="block max-w-xs text-xs font-normal text-slate-400/80 mt-1 text-center rtl:text-start md:text-start mx-auto md:mx-0">
+            <span className="block max-w-xs text-xs font-normal text-slate-400/80 mt-1 text-start mx-auto md:mx-0">
               {t('medicalAdviceDisclaimer')}
             </span>
           </div>
@@ -200,7 +200,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
               </div>
             </div>
 
-            <p className="mt-3 sm:mt-4 text-[10px] sm:text-sm leading-relaxed text-slate-500 text-center">
+            <p className="mt-3 sm:mt-4 text-[10px] sm:text-sm leading-relaxed text-slate-500 text-start">
               {t('exampleDisclaimer')}
             </p>
           </div>
