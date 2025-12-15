@@ -1,7 +1,7 @@
 // app/api/generate-schedule/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { buildLaserSchedule, ImpossibleScheduleError } from "@/lib/domain/schedule-builder";
-import { laserPrescriptionInputSchema } from "@/lib/domain/schemas";
+import { buildProtocolSchedule, ImpossibleScheduleError } from "@/lib/domain/schedule-builder";
+import { protocolScheduleInputSchema } from "@/lib/domain/schemas";
 import { validateRequest } from "@/lib/server/api-utils";
 import { logger } from "@/lib/utils/logger";
 
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const validation = await validateRequest(
       req,
-      laserPrescriptionInputSchema
+      protocolScheduleInputSchema
     );
 
     if (!validation.success) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const input = validation.data;
 
     // Use the unified scheduling logic
-    const schedule = buildLaserSchedule(input);
+    const schedule = buildProtocolSchedule(input);
 
     logger.info("Schedule generated successfully", "API", { surgeryType: input.surgeryType });
 

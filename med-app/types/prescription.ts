@@ -8,11 +8,20 @@
 /**
  * Types of supported surgeries.  Additional types may be added in the future.
  */
-export type SurgeryType = "INTERLASIK" | "PRK" | "CUSTOM";
+/**
+ * Types of supported medical procedures. 
+ * Previously "SurgeryType".
+ */
+export type ProcedureType = "INTERLASIK" | "PRK" | "CUSTOM";
 
 /**
- * A single phase within a medication protocol.  Phases are defined by
- * inclusive day ranges and the number of doses per day during that range.
+ * Legacy alias for backward compatibility with existing UI components.
+ */
+export type SurgeryType = ProcedureType;
+
+/**
+ * A single phase within a protocol action (medication/exercise).
+ * Phases are defined by inclusive day ranges and frequency.
  */
 export interface Phase {
   dayStart: number;
@@ -21,36 +30,53 @@ export interface Phase {
 }
 
 /**
- * Represents a medication and its associated protocol.  A medication
- * contains an identifier, a human‑readable name, optional notes, and
- * one or more phases defining dosage frequency over time.
+ * Represents a medical action (medication, exercise, check).
+ * Contains an identifier, readable name, optional notes, and
+ * dosage phases.
  */
-export interface Medication {
+/**
+ * Represents a medical action (medication, exercise, check).
+ * Contains an identifier, readable name, optional notes, and
+ * dosage phases.
+ * Renamed from Medication to ProtocolAction to be domain-agnostic.
+ */
+export interface ProtocolAction {
   id: string;
   name: string;
   notes?: string;
   phases: Phase[];
+  /**
+   * Minimum time in minutes this action takes or requires spacing.
+   * Used for capacity planning and collision resolution.
+   * Default for existing laser protocols is 5.
+   */
+  minDurationMinutes?: number;
 }
 
 /**
- * The input required to generate a laser surgery prescription.  It
- * includes the surgery type, date, wake and sleep times, and the
- * list of medications to schedule.  Additional optional fields (e.g.
- * clinic or user ID) can be added later without breaking existing code.
+ * Alias for backward compatibility.
  */
-export interface LaserPrescriptionInput {
-  surgeryType: SurgeryType;
+export type Medication = ProtocolAction;
+
+/**
+ * The input required to generate a medical schedule.
+ * Renamed from LaserPrescriptionInput to be generic.
+ */
+export interface ProtocolScheduleInput {
+  surgeryType: ProcedureType; // Kept property name 'surgeryType' for now to minimize ripple, but type is generic.
   surgeryDate: string;
   wakeTime: string;
   sleepTime: string;
-  medications: Medication[];
+  medications: ProtocolAction[];
 }
 
 /**
- * A single scheduled dose of a medication at a specific date and time.
- * Schedules are returned as arrays of these objects.  The `time` field
- * is a HH:mm string rounded to 15‑minute increments; `date` is an ISO
- * date string (yyyy‑mm‑dd) corresponding to the day of the dose.
+ * Alias for backward compatibility.
+ */
+export type LaserPrescriptionInput = ProtocolScheduleInput;
+
+/**
+ * A single scheduled action slot.
  */
 export interface DoseSlot {
   id: string;

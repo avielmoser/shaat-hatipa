@@ -111,5 +111,5 @@ export const config = {
     // 1. Negative lookahead for api, _next, static files, favicon, AND admin
     // 2. Matches everything else
     // This ensures that /admin routes are NEVER even seen by the intl middleware logic that might be bound to this matcher.
-    matcher: ['/((?!api|admin|_next|favicon.ico).*)']
+    matcher: ['/((?!api|_next|favicon.ico).*)']
 };

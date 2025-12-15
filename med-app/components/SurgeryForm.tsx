@@ -2,9 +2,10 @@
 
 import React from "react";
 import { useTranslations, useLocale } from 'next-intl';
-import { Calendar, Sun, Moon, Check, Eye, Activity } from "lucide-react";
+import { Calendar, Check, Eye, Activity } from "lucide-react";
 import { SurgeryType } from "../types/prescription";
 import type { ClinicConfig } from "../config/clinics";
+import TimeInput from "./ui/TimeInput";
 
 interface SurgeryFormProps {
     surgeryType: SurgeryType | null;
@@ -167,67 +168,27 @@ export default function SurgeryForm({
 
                             {/* Time Inputs */}
                             <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                                <div className="space-y-1.5">
-                                    <label htmlFor="wake-time" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
-                                        {t('wakeTime')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className={`pointer-events-none absolute inset-y-0 flex items-center px-4 ${isRtl ? 'right-0' : 'left-0'}`}>
-                                            <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
-                                        </div>
-                                        <input
-                                            id="wake-time"
-                                            type="time"
-                                            value={wakeTime}
-                                            onChange={(e) => setWakeTime(e.target.value)}
-                                            className={`
-                                                block w-full rounded-xl border bg-slate-50 py-2.5 sm:py-3 text-sm sm:text-lg text-slate-900 shadow-sm transition-all focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/20 text-center
-                                                ${isRtl ? 'pr-12 pl-4' : 'pl-12 pr-4'}
-                                                ${invalidTime ? "border-red-300 focus:border-red-500 focus:ring-red-200" : "border-slate-200 focus:border-sky-500"}
-                                            `}
-                                            dir="ltr"
-                                            aria-invalid={invalidTime}
-                                        />
-                                    </div>
-                                </div>
+                                <TimeInput
+                                    id="wake-time"
+                                    label={t('wakeTime')}
+                                    value={wakeTime}
+                                    onChange={setWakeTime}
+                                    dir={isRtl ? 'rtl' : 'ltr'}
+                                // If invalidTime is true, we want to show the error state.
+                                // Since we only have 'error' string prop, we pass a space if we want red border but no text on this one,
+                                // OR we rely on the second input to carry the error message.
+                                // Let's keep it clean: no error on first, error message on second.
+                                />
 
-                                <div className="space-y-1.5">
-                                    <label htmlFor="sleep-time" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
-                                        {t('bedtime')}
-                                    </label>
-                                    <div className="relative">
-                                        <div className={`pointer-events-none absolute inset-y-0 flex items-center px-4 ${isRtl ? 'right-0' : 'left-0'}`}>
-                                            <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400" />
-                                        </div>
-                                        <input
-                                            id="sleep-time"
-                                            type="time"
-                                            value={sleepTime}
-                                            onChange={(e) => setSleepTime(e.target.value)}
-                                            className={`
-                                                block w-full rounded-xl border bg-slate-50 py-2.5 sm:py-3 text-sm sm:text-lg text-slate-900 shadow-sm transition-all focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/20 text-center
-                                                ${isRtl ? 'pr-12 pl-4' : 'pl-12 pr-4'}
-                                                ${invalidTime ? "border-red-300 focus:border-red-500 focus:ring-red-200" : "border-slate-200 focus:border-sky-500"}
-                                            `}
-                                            dir="ltr"
-                                            aria-invalid={invalidTime}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Helper / Error Text */}
-                            <div className="flex items-start gap-2 pt-1">
-                                {error ? (
-                                    <p className="text-xs sm:text-sm font-bold text-red-600" role="alert">
-                                        {error}
-                                    </p>
-                                ) : (
-                                    <p className="text-xs sm:text-sm text-slate-500">
-                                        <span className="me-2 text-sky-500">ℹ</span>
-                                        {t('helperText')}
-                                    </p>
-                                )}
+                                <TimeInput
+                                    id="sleep-time"
+                                    label={t('bedtime')}
+                                    value={sleepTime}
+                                    onChange={setSleepTime}
+                                    dir={isRtl ? 'rtl' : 'ltr'}
+                                    error={invalidTime && error ? error : undefined}
+                                    helperText={!error ? t('helperText') : undefined}
+                                />
                             </div>
                         </div>
                     </div>

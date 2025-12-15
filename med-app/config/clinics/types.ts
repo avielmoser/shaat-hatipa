@@ -1,4 +1,4 @@
-import { Medication, SurgeryType } from "../../types/prescription";
+import { Medication, ProcedureType, SurgeryType } from "../../types/prescription";
 
 /**
  * Protocol Definition:
@@ -25,18 +25,27 @@ export interface ClinicConfig {
         he: {
             heroTitle: string;
             heroSubtitle: string;
+            actionLabel?: string; // e.g. "טיפות" (Defaults to generic if missing)
         };
         en: {
             heroTitle: string;
             heroSubtitle: string;
+            actionLabel?: string; // e.g. "Drops"
         };
     };
 
     // Functional
-    supportedSurgeries: SurgeryType[];
+    supportedSurgeries: ProcedureType[]; // Using generic type
 
     // Logic Overrides
     protocols?: {
-        [key in SurgeryType]?: ProtocolDefinition;
+        [key in ProcedureType]?: ProtocolDefinition;
     };
+
+    /**
+     * Default duration per action in minutes.
+     * Used if the action itself doesn't specify minDurationMinutes.
+     * Legacy laser protocols use 5.
+     */
+    defaultActionDuration?: number;
 }

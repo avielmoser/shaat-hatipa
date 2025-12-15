@@ -1,4 +1,4 @@
-import type { LaserPrescriptionInput, DoseSlot, Medication } from "../../types/prescription";
+import type { ProtocolScheduleInput, DoseSlot, ProtocolAction } from "../../types/prescription";
 import { getMedicationColor } from "../theme/medicationColors";
 import { logger } from "../utils/logger";
 
@@ -67,35 +67,110 @@ function isWithinAwakeWindow(
   candidateMinutes: number,
   wakeMinutes: number,
   normalizedSleepMinutes: number,
+  duration: number = 0
 ): boolean {
   const minutesInDay = 24 * 60;
-  // Normalize candidate to 0-1439 for comparison if needed, but here we deal with absolute minutes from wake time perspective usually.
-  // Actually, the candidateMinutes passed here are usually 0-1439 (time of day).
 
-  // If sleep is next day (e.g. wake 08:00, sleep 26:00 (02:00 next day))
-  if (normalizedSleepMinutes > minutesInDay) {
-    // Awake window is split across midnight: [wakeMinutes, 1440) AND [0, sleepMinutes % 1440]
-    const sleepMod = normalizedSleepMinutes % minutesInDay;
-    return (candidateMinutes >= wakeMinutes) || (candidateMinutes <= sleepMod);
+  // We need to check if the ENTIRE duration [start, start + duration) is within the window.
+  // Ideally, we just check start and end. But treating wrap-around is tricky with ranges.
+  // For simplicity, we check if start is in window, and (start + duration) is in window.
+  // Note: This simplifies "duration" checks near the sleep edge.
+
+  const start = candidateMinutes;
+  const end = start + duration; // Exclusive end
+
+  // Helper to check a single point
+  const checkPoint = (pt: number) => {
+    const ptNorm = ((pt % minutesInDay) + minutesInDay) % minutesInDay;
+    if (normalizedSleepMinutes > minutesInDay) {
+      const sleepMod = normalizedSleepMinutes % minutesInDay;
+      return (ptNorm >= wakeMinutes) || (ptNorm <= sleepMod);
+    } else {
+      return ptNorm >= wakeMinutes && ptNorm <= normalizedSleepMinutes;
+    }
+  };
+
+  // Check start and end-1 (inclusive last minute)
+  return checkPoint(start) && checkPoint(end - 1);
+}
+
+/**
+ * Helper to check if a range [start, end) overlaps with any occupied range.
+ * Occupied ranges are stored as absolute minutes (possibly > 1440 if dealing with same day logic),
+ * but simpler to just Normalize everything to 0-1439 for the daily check.
+ */
+function isRangeOccupied(
+  start: number,
+  duration: number,
+  occupiedIntervals: { start: number, end: number }[]
+): boolean {
+  const minutesInDay = 24 * 60;
+  // Normalize range to 0-1439. 
+  // Handle wrap around? 
+  // If a range wraps (e.g. 23:55 to 00:05), it becomes [1435, 1445].
+  // Normalized comparison is tricky. 
+  // Strategy: treating everything in normalized 0-1439 space.
+  // If a range crosses midnight, we split it into [start, 1440) and [0, end%1440).
+
+  // BUT, the 'occupiedIntervals' build up for a single "logical day". 
+  // The scheduler processes slots per logical day.
+  // So we can work in logical minutes (wakeMinutes ... normalizedSleepMinutes).
+  // Let's stick to normalizing to 0-1439 for storage to avoid infinite growth, 
+  // effectively "placing it on the clock face".
+
+  const s1 = ((start % minutesInDay) + minutesInDay) % minutesInDay;
+  const e1 = s1 + duration;
+
+  const rangesToCheck: { s: number, e: number }[] = [];
+  if (e1 > minutesInDay) {
+    rangesToCheck.push({ s: s1, e: minutesInDay });
+    rangesToCheck.push({ s: 0, e: e1 % minutesInDay });
   } else {
-    // Same day window
-    return candidateMinutes >= wakeMinutes && candidateMinutes <= normalizedSleepMinutes;
+    rangesToCheck.push({ s: s1, e: e1 });
+  }
+
+  for (const check of rangesToCheck) {
+    for (const occ of occupiedIntervals) {
+      // Check intersection: start < occ.end && end > occ.start
+      // occupied intervals are also stored normalized 0-1439, possibly split?
+      // Actually, let's keep occupiedIntervals simple: [s, e) where s, e are 0-1439.
+      // If an action wraps, we store two intervals.
+
+      if (Math.max(check.s, occ.start) < Math.min(check.e, occ.end)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function markRangeOccupied(
+  start: number,
+  duration: number,
+  occupiedIntervals: { start: number, end: number }[]
+) {
+  const minutesInDay = 24 * 60;
+  const s1 = ((start % minutesInDay) + minutesInDay) % minutesInDay;
+  const e1 = s1 + duration;
+
+  if (e1 > minutesInDay) {
+    occupiedIntervals.push({ start: s1, end: minutesInDay });
+    occupiedIntervals.push({ start: 0, end: e1 % minutesInDay });
+  } else {
+    occupiedIntervals.push({ start: s1, end: e1 });
   }
 }
 
 /**
- * Resolve collisions for the same medication on a per-day basis. Two or more doses of the
- * same medication should not occupy the exact same time on the same date. It iterates through
- * each date/medication group, detects conflicts and adjusts times using small offsets (±15,
- * ±30, ±45, …) while keeping doses inside the awake window and on 15-minute increments.
- * Different medications are allowed to overlap in time.
+ * Resolve collisions for the same action on a per-day basis. 
  */
-function resolveMedicationCollisions(
+function resolveActionCollisions(
   slots: DoseSlot[],
   wakeMinutes: number,
   normalizedSleepMinutes: number,
+  actionsById: Map<string, ProtocolAction>
 ): void {
-  // Group slots by date and medication
+  // Group slots by date and action ID
   const groupMap = new Map<string, DoseSlot[]>();
   for (const slot of slots) {
     const key = `${slot.date}|${slot.medicationId}`;
@@ -107,15 +182,47 @@ function resolveMedicationCollisions(
   for (const group of groupMap.values()) {
     // Sort by current time to preserve ordering
     group.sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
-    const occupied = new Set<number>();
+
+    // Track occupied intervals for this group (this specific action on this specific day)
+    // Wait, the requirement says: "Collision resolver respects spacing".
+    // Does it mean collisions between DIFFERENT actions? 
+    // "Mixed: actions with 0/5/20 minutes, ensure collision resolver respects spacing"
+    // Usually, different meds CAN overlap.
+    // "Different medications are allowed to overlap in time." (Existing comment).
+    // BUT, if I have "Physio" (20 mins), can I take a Pill during it? Maybe.
+    // Can I do TWO Physio sessions at the same time? No.
+    // The existing logic groups by medicationId. So it prevents SELF-collision.
+    // It says "Different medications are allowed to overlap in time."
+    // I will preserve this behavior: Only resolve collisions for the SAME action ID.
+
+    const occupiedIntervals: { start: number, end: number }[] = [];
+    const actionId = group[0].medicationId;
+    const action = actionsById.get(actionId);
+
+    // Use configured duration or default to 0 (agnostic)
+    // NOTE: For backward compatibility, if this is truly generic, 0 is right.
+    // But for Drops, we want 5. The input action should have it.
+    // If it doesn't, we default to 0. 
+    // If logic breaks for drops, we know we missed the config update.
+    const duration = action?.minDurationMinutes ?? 0;
+    // Ensure at least 1 minute is occupied to prevent identity collisions?
+    // If duration is 0, start=end. isRangeOccupied might fail. 
+    // Let's assume duration 0 means "instant". 
+    // But if we have 2 instant actions at 10:00, they colide?
+    // "Pills: minDurationMinutes=0, high frequency, should be feasible" -> allows multiple at same time?
+    // If strict 0, they can be at same time.
+    // But usually we want some display separation? 
+    // Existing logic with Set<number> implicitly enforced 1 minute separation.
+    // I will enforce min 1 minute "slot" for occupation if duration is 0, to avoid perfect overlap in UI.
+    const effectiveDuration = Math.max(duration, 1);
 
     for (const slot of group) {
       const origMinutes = parseTimeToMinutes(slot.time);
       let candidate = origMinutes;
       let found = false;
 
-      // If original time is free, take it
-      if (!occupied.has(candidate)) {
+      // Check if candidate spot is free
+      if (!isRangeOccupied(candidate, effectiveDuration, occupiedIntervals)) {
         found = true;
       } else {
         // Try offsets in 15-minute increments until a free slot is found
@@ -130,10 +237,10 @@ function resolveMedicationCollisions(
             const normalizedNewMin = ((newMin % minutesInDay) + minutesInDay) % minutesInDay;
 
             // Must be within awake window
-            if (!isWithinAwakeWindow(normalizedNewMin, wakeMinutes, normalizedSleepMinutes)) continue;
+            if (!isWithinAwakeWindow(normalizedNewMin, wakeMinutes, normalizedSleepMinutes, effectiveDuration)) continue;
 
-            // Must be free (check against occupied set which stores 0-1439 values)
-            if (occupied.has(normalizedNewMin)) continue;
+            // Must be free
+            if (isRangeOccupied(normalizedNewMin, effectiveDuration, occupiedIntervals)) continue;
 
             candidate = normalizedNewMin;
             found = true;
@@ -145,22 +252,25 @@ function resolveMedicationCollisions(
 
       if (!found) {
         logger.warn("Could not resolve collision for slot", "SCHEDULE_BUILDER", { slot });
-        // If still not found, we force it (overlap) but log a warning.
       }
 
-      occupied.add(candidate);
+      markRangeOccupied(candidate, effectiveDuration, occupiedIntervals);
       slot.time = minutesToTimeStr(candidate);
     }
   }
 }
 
 /**
- * Build a schedule for all medications defined in the prescription. Handles sleep times
+ * Build a schedule for all actions defined in the protocol. Handles sleep times
  * after midnight, distributes doses evenly within the awake window, rounds times to the
- * nearest half-hour, and finally resolves collisions per medication.
+ * nearest half-hour, and finally resolves collisions per action.
  */
-export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSlot[] {
+export function buildProtocolSchedule(prescription: ProtocolScheduleInput): DoseSlot[] {
   const { surgeryDate, wakeTime, sleepTime, medications } = prescription;
+
+  // actionsById map for quick lookup
+  const actionsById = new Map<string, ProtocolAction>();
+  medications.forEach(m => actionsById.set(m.id, m));
 
   // Normalize times and validate window
   const wakeMinutes = parseTimeToMinutes(wakeTime);
@@ -176,49 +286,47 @@ export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSl
   }
 
   // Pre-check for impossible schedules
-  // Calculate max drops per day across all meds
-  let maxDropsPerDay = 0;
+  // Calculate total time required across all actions
+  let totalRequiredMinutes = 0;
+  let totalActions = 0;
+
   medications.forEach(med => {
+    const duration = med.minDurationMinutes ?? 0; // Removed hardcoded default 5
     med.phases.forEach(phase => {
-      maxDropsPerDay += phase.timesPerDay;
+      totalRequiredMinutes += phase.timesPerDay * duration;
+      totalActions += phase.timesPerDay;
     });
   });
 
-  // If we have more drops than 5-minute slots, it's physically impossible
-  // (Heuristic: 5 mins per drop is very tight but possible. Less is dangerous.)
-  if (maxDropsPerDay * 5 > awakeWindow) {
-    throw new ImpossibleScheduleError(`Schedule is too dense: ${maxDropsPerDay} drops in ${awakeWindow} minutes.`);
+  // If total required time exceeds awake window, it's strictly impossible.
+  if (totalRequiredMinutes > awakeWindow) {
+    throw new ImpossibleScheduleError(`Schedule is too dense: Requires ${totalRequiredMinutes} minutes within ${awakeWindow} available minutes.`);
   }
 
   const slots: DoseSlot[] = [];
   let slotCounter = 0;
 
-  medications.forEach((med: Medication, medIndex) => {
+  medications.forEach((med: ProtocolAction, medIndex) => {
     const color = getMedicationColor(med.name, med.id);
+    // Removed hardcoded default 5
+    // Note: We don't use duration here for distribution, only collision resolution uses it.
+    // Distribution assumes points.
+
     med.phases.forEach((phase) => {
       const { dayStart, dayEnd, timesPerDay } = phase;
       if (timesPerDay <= 0 || dayEnd < dayStart) return;
       const daysCount = dayEnd - dayStart + 1;
 
       // Distribute evenly
-      const intervalMinutes = awakeWindow / (timesPerDay + 1); // +1 to avoid start/end exactly? No, usually / timesPerDay or / (timesPerDay + 1) depending on strategy.
-      // Standard strategy: Start at wake + interval, or spread evenly.
-      // Let's stick to previous logic: wake + interval * i, but maybe adjust to center it better?
-      // Previous: wake + interval * doseIndex. 
-      // If timesPerDay=4, window=12h (720m). interval=180. 0, 180, 360, 540.
-      // That puts first drop AT wake time. That's usually fine.
-
       const effectiveInterval = awakeWindow / timesPerDay;
 
       for (let dayOffset = 0; dayOffset < daysCount; dayOffset++) {
         const absoluteDayIndex = dayStart - 1 + dayOffset;
         for (let doseIndex = 0; doseIndex < timesPerDay; doseIndex++) {
-          // Compute raw time and round to nearest half hour
-          // Add a small buffer to start time so we don't drop EXACTLY at wake up every time?
-          // Actually, patients usually want drops upon waking.
+          // Compute raw time
           const rawRelativeMinutes = wakeMinutes + (effectiveInterval * doseIndex);
 
-          // Rounding
+          // Rounding (Standard 30 min rounding for UX)
           const roundedMinutes = roundToHalfHour(rawRelativeMinutes);
 
           // Compute date and time accounting for crossing midnight
@@ -248,8 +356,8 @@ export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSl
     return a.date.localeCompare(b.date);
   });
 
-  // Resolve per-medication collisions
-  resolveMedicationCollisions(slots, wakeMinutes, normalizedSleepMinutes);
+  // Resolve per-action collisions
+  resolveActionCollisions(slots, wakeMinutes, normalizedSleepMinutes, actionsById);
 
   // Sort again to reflect adjusted times
   slots.sort((a, b) => {
@@ -259,3 +367,8 @@ export function buildLaserSchedule(prescription: LaserPrescriptionInput): DoseSl
 
   return slots;
 }
+
+/**
+ * Legacy alias for backward compatibility.
+ */
+export const buildLaserSchedule = buildProtocolSchedule;

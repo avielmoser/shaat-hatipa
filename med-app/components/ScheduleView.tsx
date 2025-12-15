@@ -5,7 +5,7 @@
 // "המתן 5 דקות בין טיפות". משתמש במפת הצבעים החדשה כדי לצבוע את התרופות.
 
 import { useMemo, useState } from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { DoseSlot } from "../types/prescription";
 import { getMedicationColor } from "../lib/theme/medicationColors";
 import { downloadScheduleIcs } from "../lib/utils/ics";
@@ -114,7 +114,12 @@ function filterByMode(
 
 export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewProps) {
   const t = useTranslations('Schedule');
+  const locale = useLocale();
   const [mode, setMode] = useState<FilterMode>("today");
+
+  // Resolve action label safely
+  const currentLocale = (locale === 'he' || locale === 'en') ? locale : 'en';
+  const actionLabel = clinicConfig?.copy?.[currentLocale]?.actionLabel || (currentLocale === 'he' ? 'טיפות' : 'Drops');
 
   const { filtered, todayStr } = useMemo(
     () => filterByMode(schedule ?? [], mode),
@@ -149,7 +154,7 @@ export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewPro
       surgeryDate: surgeryDateStr
     });
     try {
-      downloadScheduleIcs(filtered, "laser-drops-schedule", clinicConfig?.name);
+      downloadScheduleIcs(filtered, "laser-drops-schedule", clinicConfig?.name, actionLabel);
     } catch (e) {
       console.error("Failed to export ICS", e);
       alert("Failed to generate calendar file. Please try again.");
@@ -169,7 +174,7 @@ export default function ScheduleView({ schedule, clinicConfig }: ScheduleViewPro
     });
     try {
       const fileName = `Drops-Schedule-${surgeryDateStr || todayStr}.pdf`;
-      await openSchedulePdf(filtered, fileName, clinicConfig?.name);
+      await openSchedulePdf(filtered, fileName, clinicConfig, currentLocale, actionLabel);
     } catch (e) {
       console.error("Failed to export PDF", e);
       alert("Failed to generate PDF. Please try again.");

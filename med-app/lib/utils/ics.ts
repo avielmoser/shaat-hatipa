@@ -14,28 +14,28 @@ const ICS_CONSTANTS = {
 } as const;
 
 /**
- * Converts a date and time string into an iCalendar compliant date-time string.
- * Format: YYYYMMDDTHHmmSSZ (UTC)
+ * Converts a date and time string into an iCalendar compliant floating date-time string.
+ * Format: YYYYMMDDTHHmmSS (Floating Time - no Z, no timezone specific)
+ *
+ * This ensures that if the user sees 08:00 in the app, the calendar event is 08:00
+ * in their current local time, wherever they are.
  *
  * @param date - Date string in "YYYY-MM-DD" format.
  * @param time - Time string in "HH:mm" format.
  * @returns The formatted iCalendar date-time string.
  */
-function toICalDateTime(date: string, time: string): string {
+export function toICalDateTime(date: string, time: string): string {
   const [year, month, day] = date.split("-").map((v) => parseInt(v, 10));
   const [hour, minute] = time.split(":").map((v) => parseInt(v, 10));
 
-  // Create date object (month is 0-indexed)
-  const local = new Date(year, month - 1, day, hour, minute);
-
   const pad = (n: number) => n.toString().padStart(2, "0");
 
-  const yyyy = local.getUTCFullYear().toString().padStart(4, "0");
-  const mm = pad(local.getUTCMonth() + 1);
-  const dd = pad(local.getUTCDate());
-  const hh = pad(local.getUTCHours());
-  const min = pad(local.getUTCMinutes());
-  const sec = pad(local.getUTCSeconds());
+  const yyyy = year.toString().padStart(4, "0");
+  const mm = pad(month);
+  const dd = pad(day);
+  const hh = pad(hour);
+  const min = pad(minute);
+  const sec = "00";
 
   return `${yyyy}${mm}${dd}T${hh}${min}${sec}`;
 }
@@ -46,8 +46,10 @@ function toICalDateTime(date: string, time: string): string {
  * @param schedule - Array of dose slots to include in the calendar.
  * @param fileName - The desired name for the downloaded file (without extension).
  * @param clinicName - Optional clinic name for customization.
+ * @param clinicName - Optional clinic name for customization.
+ * @param actionLabel - Label for the action (e.g. "Drop", "Pill").
  */
-export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clinicName?: string): void {
+export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clinicName?: string, actionLabel: string = "Action"): void {
   if (!schedule || schedule.length === 0) {
     console.warn("downloadScheduleIcs: Empty schedule provided.");
     return;
@@ -103,7 +105,7 @@ export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clin
     lines.push(ICS_CONSTANTS.BEGIN_ALARM);
     lines.push(ICS_CONSTANTS.ALARM_TRIGGER);
     lines.push(ICS_CONSTANTS.ALARM_ACTION);
-    lines.push(`DESCRIPTION:Drop Reminder: ${medNames}`);
+    lines.push(`DESCRIPTION:${actionLabel} Reminder: ${medNames}`);
     lines.push(ICS_CONSTANTS.END_ALARM);
 
     lines.push(ICS_CONSTANTS.END_EVENT);

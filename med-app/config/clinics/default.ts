@@ -13,13 +13,16 @@ export const defaultClinic: ClinicConfig = {
     },
     copy: {
         he: {
-            heroTitle: "לוח זמנים אישי לאחרי ניתוח",
-            heroSubtitle: "הלוח מותאם לסוג הניתוח, לפרוטוקול של הקליניקה ולשעות הערות שלך — בצורה ברורה ונוחה."
+            heroTitle: "הוראות החלמה אישיות",
+            heroSubtitle: "הזינו את פרטי הניתוח וקבלו לו\"ז טיפות מותאם אישית",
+            actionLabel: "טיפות",
         },
         en: {
-            heroTitle: "Your post-surgery schedule",
-            heroSubtitle: "Based on your clinic’s protocol and your waking hours — clear and easy to follow."
-        }
+            heroTitle: "Recovery Schedule",
+            heroSubtitle: "Enter surgery details to get your personalized drop schedule",
+            actionLabel: "Drops",
+        },
     },
     supportedSurgeries: ["INTERLASIK", "PRK"],
+    defaultActionDuration: 5,
 };
