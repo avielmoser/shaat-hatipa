@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
                 buttonId: buttonId ?? null,
                 sessionId: sessionId ? String(sessionId) : null,
                 clinicSlug: clinicSlug ?? null,
+                eventType, // Direct column write
                 meta: dbMeta,
             } as any,
         });

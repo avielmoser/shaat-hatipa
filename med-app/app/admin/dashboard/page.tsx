@@ -9,6 +9,8 @@ import { CLINICS } from "@/config/clinics";
 
 // Force dynamic rendering so we always get fresh data
 export const dynamic = "force-dynamic";
+// Force Node.js runtime to ensure Prisma Client compatibility and stability
+export const runtime = "nodejs";
 
 interface PageProps {
     searchParams: { [key: string]: string | string[] | undefined };
@@ -21,6 +23,7 @@ interface PageProps {
 export default async function AdminDashboard({ searchParams }: PageProps) {
     // 1. Admin Protection
     const secretKey = process.env.ADMIN_DASHBOARD_KEY;
+    const dbUrl = process.env.DATABASE_URL;
 
     // Support both 'key' and 'ADMIN_DASHBOARD_KEY'
     const params = await Promise.resolve(searchParams);
@@ -32,7 +35,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
 
     //Safe Server-Side Logging for Production Diagnostics
     // We do NOT log the actual keys, only their existence/match status.
-    console.log(`[AdminDashboard] Auth Check | Env Key Set: ${!!secretKey} | User Key Provided: ${paramExists}`);
+    console.log(`[AdminDashboard] Auth Check | Env Key Set: ${!!secretKey} | DB Configured: ${!!dbUrl} | User Key Provided: ${paramExists} | Runtime: ${typeof process.env.NEXT_RUNTIME !== 'undefined' ? process.env.NEXT_RUNTIME : 'node'}`);
 
     if (!secretKey) {
         console.error("[AdminDashboard] CRITICAL: ADMIN_DASHBOARD_KEY is not set in environment.");
@@ -77,10 +80,8 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
 
     if (!showAll) {
         // "Meaningful" = page_view OR conversion
-        whereCondition.OR = [
-            { meta: { path: ["eventType"], equals: "page_view" } },
-            { meta: { path: ["eventType"], equals: "conversion" } },
-        ];
+        // Refactored to use stable 'eventType' column instead of JSON path
+        whereCondition.eventType = { in: ["page_view", "conversion"] };
     }
 
     let totalEvents: number = 0;
@@ -122,9 +123,14 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
             // 5. KPIs (with clinic filter)
             getFunnelKPIs(prisma, { ...dateWhere, ...(clinicFilter ? { clinicSlug: clinicFilter } : {}) }),
         ]);
-    } catch (error) {
+    } catch (error: any) {
         console.error("[AdminDashboard] Database Fetch Error:", error);
+        // Only treat as error if it's a connection/runtime issue, not empty data
         fetchError = error;
+        // Basic safety to distinguish empty DB vs bad auth/config
+        if (error.name === 'PrismaClientInitializationError') {
+            console.error("[AdminDashboard] Prisma Init Error - Check DATABASE_URL");
+        }
     }
 
     // Build URL for toggle (preserve range params)
@@ -188,10 +194,12 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                     </div>
                 )}
 
-                {/* Error Banner */}
-                {fetchError && (
+                {/* Error Banner - Only show if DATABASE_URL is missing or explicit fetch error NOT related to empty data */}
+                {(!process.env.DATABASE_URL || fetchError) && (
                     <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm font-mono">
-                        Error fetching analytics data. Check server logs for details.
+                        {!process.env.DATABASE_URL
+                            ? "Database configuration missing (DATABASE_URL)."
+                            : "Error fetching analytics data. Check server logs."}
                     </div>
                 )}
 

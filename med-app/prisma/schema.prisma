@@ -18,8 +18,10 @@ model AnalyticsEvent {
   buttonId  String?  @map("button_id")
   sessionId String?  @map("session_id")
   clinicSlug String? @map("clinic_slug")
+  eventType String?  @map("event_type")
   meta      Json?
 
   @@index([eventName])
+  @@index([eventType])
   @@map("analytics_events")
 }
