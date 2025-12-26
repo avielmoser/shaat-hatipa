@@ -7,6 +7,7 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from 'next-intl';
 import { ActionInstruction, DoseSlot, ProtocolScheduleInput, ProtocolAction } from "../types/prescription";
+import { resolveLocalizedString } from "../lib/utils/i18n";
 import { getMedicationColor } from "../lib/theme/medicationColors";
 import { getSlotInstructions, buildInstructionIndex, toSuperscript, ProcessedInstruction } from "../lib/utils/instructions";
 import { downloadScheduleIcs } from "../lib/utils/ics";
@@ -315,8 +316,8 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
               <div className="space-y-2">
                 {prescription.medications.map((med: ProtocolAction) => (
                   <div key={med.id} className="p-3 bg-white rounded-lg border border-slate-200">
-                    <div className="font-bold text-slate-900">{med.name}</div>
-                    {med.notes && <div className="text-sm text-slate-600">{med.notes}</div>}
+                    <div className="font-bold text-slate-900">{resolveLocalizedString(med.name, currentLocale)}</div>
+                    {med.notes && <div className="text-sm text-slate-600">{resolveLocalizedString(med.notes, currentLocale)}</div>}
                   </div>
                 ))}
               </div>
@@ -363,7 +364,7 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                             <div className="flex flex-wrap items-center gap-2">
                               {tg.slots.map((slot) => {
                                 const color = slot.medicationColor || getMedicationColor(
-                                  slot.medicationName,
+                                  resolveLocalizedString(slot.medicationName, currentLocale),
                                   slot.medicationId
                                 );
 
@@ -379,7 +380,7 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                                       borderColor: color ?? "rgba(15,23,42,0.16)",
                                     }}
                                   >
-                                    {slot.medicationName}
+                                    {resolveLocalizedString(slot.medicationName, currentLocale)}
                                     {applicableInstNumbers.length > 0 && (
                                       <sup className="text-[10px] ms-0.5 mb-1.5 font-bold tracking-tighter">
                                         {applicableInstNumbers.map(toSuperscript).join("")}

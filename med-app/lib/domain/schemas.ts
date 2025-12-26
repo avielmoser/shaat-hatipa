@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const localizedStringSchema = z.union([
+    z.string(),
+    z.object({
+        he: z.string(),
+        en: z.string(),
+    }),
+]);
+
 export const phaseSchema = z.object({
     dayStart: z.number().int().min(1),
     dayEnd: z.number().int().min(1),
@@ -27,8 +35,8 @@ export const actionInstructionSchema = z.union([
 
 export const protocolActionSchema = z.object({
     id: z.string().min(1),
-    name: z.string().min(1),
-    notes: z.string().optional(),
+    name: localizedStringSchema,
+    notes: localizedStringSchema.optional(),
     phases: z.array(phaseSchema).min(1),
     minDurationMinutes: z.number().min(0).optional(),
     color: z.string().optional(),

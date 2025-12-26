@@ -1,4 +1,5 @@
 import type { DoseSlot } from "../../types/prescription";
+import { resolveLocalizedString } from "./i18n";
 
 const ICS_CONSTANTS = {
   BEGIN_CALENDAR: "BEGIN:VCALENDAR",
@@ -49,7 +50,7 @@ export function toICalDateTime(date: string, time: string): string {
  * @param clinicName - Optional clinic name for customization.
  * @param actionLabel - Label for the action (e.g. "Drop", "Pill").
  */
-export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clinicName?: string, actionLabel: string = "Action"): void {
+export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clinicName?: string, actionLabel: string = "Action", locale: string = "he"): void {
   if (!schedule || schedule.length === 0) {
     console.warn("downloadScheduleIcs: Empty schedule provided.");
     return;
@@ -78,11 +79,11 @@ export function downloadScheduleIcs(schedule: DoseSlot[], fileName: string, clin
     const dtEnd = dtStart;
 
     // Combine medication names
-    const medNames = slots.map((s) => s.medicationName).join(", ");
+    const medNames = slots.map((s) => resolveLocalizedString(s.medicationName, locale)).join(", ");
 
     // Combine notes (if any)
     const notes = slots
-      .map((s) => (s.notes ? `${s.medicationName}: ${s.notes}` : null))
+      .map((s) => (s.notes ? `${resolveLocalizedString(s.medicationName, locale)}: ${resolveLocalizedString(s.notes, locale)}` : null))
       .filter(Boolean)
       .join("\\n");
 

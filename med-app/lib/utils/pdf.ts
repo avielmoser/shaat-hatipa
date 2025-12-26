@@ -5,6 +5,7 @@
 
 import { getMedicationColor } from "../theme/medicationColors";
 import type { DoseSlot, ProtocolAction } from "../../types/prescription";
+import { resolveLocalizedString } from "./i18n";
 import type { ClinicConfig } from "../../config/clinics";
 
 const LABELS = {
@@ -175,8 +176,8 @@ function buildPrintableHtml(
 
       manualActions.forEach(action => {
         parts.push(`<tr>
-                <td><strong>${escapeHtml(action.name)}</strong></td>
-                <td>${escapeHtml(action.notes || "")}</td>
+                <td><strong>${escapeHtml(resolveLocalizedString(action.name, safeLocale))}</strong></td>
+                <td>${escapeHtml(resolveLocalizedString(action.notes, safeLocale) || "")}</td>
             </tr>`);
       });
       parts.push("</tbody></table>");
@@ -198,17 +199,17 @@ function buildPrintableHtml(
           .map((s) => {
             // Use medicationColor from slot (assigned by schedule builder)
             // Fallback to getMedicationColor for backward compatibility
-            const color = s.medicationColor || getMedicationColor(s.medicationName, s.medicationId) || "#0f172a";
+            const color = s.medicationColor || getMedicationColor(resolveLocalizedString(s.medicationName, safeLocale), s.medicationId) || "#0f172a";
             // Use lighter background for print legibility
             return `<span class="chip" style="color:${color};border-color:${color}40;background-color:#ffffff;">${escapeHtml(
-              s.medicationName,
+              resolveLocalizedString(s.medicationName, safeLocale),
             )}</span>`;
           })
           .join(" ");
 
         const notesSet = new Set(
           tg.slots
-            .map((s) => s.notes?.trim())
+            .map((s) => resolveLocalizedString(s.notes, safeLocale).trim())
             .filter((n): n is string => !!n),
         );
         const notes = notesSet.size > 0 ? Array.from(notesSet).map(escapeHtml).join(" • ") : "";

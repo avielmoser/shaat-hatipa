@@ -54,6 +54,13 @@ export type ActionInstruction =
   | { type: "note"; messageKey: string; params?: Record<string, string | number>; appliesToActionIds?: string[] };
 
 /**
+ * Support for bilingual content (Hebrew/English).
+ * If a string is provided, it is treated as a single-language value.
+ * If an object { he, en } is provided, the correct value is picked based on locale.
+ */
+export type LocalizedString = string | { he: string; en: string };
+
+/**
  * Represents a medical action (medication, exercise, check).
  * Contains an identifier, readable name, optional notes, and
  * dosage phases.
@@ -61,8 +68,8 @@ export type ActionInstruction =
  */
 export interface ProtocolAction {
   id: string;
-  name: string;
-  notes?: string;
+  name: LocalizedString;
+  notes?: LocalizedString;
   phases: Phase[];
   /**
    * Minimum time in minutes this action takes or requires spacing.
@@ -114,12 +121,12 @@ export type LaserPrescriptionInput = ProtocolScheduleInput;
 export interface DoseSlot {
   id: string;
   medicationId: string;
-  medicationName: string;
+  medicationName: LocalizedString;
   medicationColor: string;
   date: string;
   time: string;
   dayIndex: number;
-  notes?: string;
+  notes?: LocalizedString;
   instructions?: ActionInstruction[];
   /**
    * List of actions in this slot.

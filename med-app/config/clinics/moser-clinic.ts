@@ -7,7 +7,7 @@ const headacheProtocol: ProtocolDefinition = {
     actions: [
         {
             id: "acamol-headache",
-            name: "אקמול ×2",
+            name: { he: "אקמול ×2", en: "Acamol ×2" },
             minDurationMinutes: 0,
             phases: [
                 {
@@ -17,13 +17,13 @@ const headacheProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 },
             ],
-            notes: "לקחת 2 כדורים כל 6 שעות",
+            notes: { he: "לקחת 2 כדורים כל 6 שעות", en: "Take 2 pills every 6 hours" },
             instructions: [{ type: "avoid_food" }],
             route: "oral"
         },
         {
             id: "ibuprofen-headache",
-            name: "איבופן ×1",
+            name: { he: "איבופן ×1", en: "Ibuprofen ×1" },
             minDurationMinutes: 0,
             phases: [
                 {
@@ -33,7 +33,7 @@ const headacheProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 },
             ],
-            notes: "לקחת כדור אחד כל 6 שעות",
+            notes: { he: "לקחת כדור אחד כל 6 שעות", en: "Take one pill every 6 hours" },
             route: "oral"
         }
     ],
@@ -53,7 +53,7 @@ const soreThroatProtocol: ProtocolDefinition = {
     actions: [
         {
             id: "ibuprofen-throat",
-            name: "איבופן ×1",
+            name: { he: "איבופן ×1", en: "Ibuprofen ×1" },
             minDurationMinutes: 0,
             phases: [
                 {
@@ -63,12 +63,12 @@ const soreThroatProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 }
             ],
-            notes: "נגד דלקת וכאב",
+            notes: { he: "נגד דלקת וכאב", en: "Anti-inflammatory and pain relief" },
             route: "oral"
         },
         {
             id: "acamol-throat",
-            name: "אקמול ×2",
+            name: { he: "אקמול ×2", en: "Acamol ×2" },
             minDurationMinutes: 0,
             phases: [
                 {
@@ -78,12 +78,12 @@ const soreThroatProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 }
             ],
-            notes: "להורדת חום וכאב",
+            notes: { he: "להורדת חום וכאב", en: "Fever and pain relief" },
             route: "oral"
         },
         {
             id: "strepsils",
-            name: "סטרפסילס",
+            name: { he: "סטרפסילס", en: "Strepsils" },
             minDurationMinutes: 0,
             phases: [
                 {
@@ -93,7 +93,7 @@ const soreThroatProtocol: ProtocolDefinition = {
                     intervalHours: 4,
                 }
             ],
-            notes: "למציצה כל 4 שעות",
+            notes: { he: "למציצה כל 4 שעות", en: "Suck one every 4 hours" },
             route: "oral"
         }
     ],
@@ -113,7 +113,7 @@ const eyePainProtocol: ProtocolDefinition = {
     actions: [
         {
             id: "lubricating-drops",
-            name: "טיפות סיכה",
+            name: { he: "טיפות סיכה", en: "Lubricating drops" },
             minDurationMinutes: 0,
             phases: [
                 {
@@ -122,7 +122,10 @@ const eyePainProtocol: ProtocolDefinition = {
                     timesPerDay: 0, // As needed
                 }
             ],
-            notes: "להשתמש לפי הצורך, ללא הגבלה. מומלץ כל שעתיים-שלוש אם יש יובש.",
+            notes: {
+                he: "להשתמש לפי הצורך, ללא הגבלה. מומלץ כל שעתיים-שלוש אם יש יובש.",
+                en: "Use as needed, no limit. Recommended every 2-3 hours if dry."
+            },
             instructions: [
                 { type: "note", messageKey: "schedule.slotNote_generic", params: { text: "May cause drowsiness" } }
             ],

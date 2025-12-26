@@ -2,8 +2,9 @@
 "use client";
 
 import type React from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { LaserPrescriptionInput } from "../types/prescription";
+import { resolveLocalizedString } from "../lib/utils/i18n";
 import { getMedicationColor } from "../lib/theme/medicationColors";
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
  */
 export default function PrescriptionView({ prescription }: Props) {
   const t = useTranslations('Prescription');
+  const locale = useLocale();
   if (!prescription) return null;
   const { surgeryType, surgeryDate, wakeTime, sleepTime, medications } =
     prescription;
@@ -58,11 +60,11 @@ export default function PrescriptionView({ prescription }: Props) {
         </div>
       </div>
 
-      {/* Medication List + Phases */}
       <div className="max-h-80 space-y-3 overflow-y-auto sm:max-h-96 sm:space-y-4 md:max-h-[28rem]">
         {medications.map((m) => {
+          const resolvedName = resolveLocalizedString(m.name, locale);
           // Use action.color if available (assigned by protocol resolver), otherwise fallback
-          const color = m.color || getMedicationColor(m.name, m.id);
+          const color = m.color || getMedicationColor(resolvedName, m.id);
           const chipStyle = {
             backgroundColor: `${color}22`,
             color: color,
@@ -85,7 +87,7 @@ export default function PrescriptionView({ prescription }: Props) {
                     style={{ backgroundColor: color }}
                   />
                   <span className="truncate max-w-[9rem] sm:max-w-none">
-                    {m.name}
+                    {resolvedName}
                   </span>
                 </span>
 
@@ -103,7 +105,7 @@ export default function PrescriptionView({ prescription }: Props) {
 
                   // Sterodex on Day 1 → always "Every hour"
                   const isSurgeryDaySterodex =
-                    m.name.toLowerCase() === "sterodex" &&
+                    resolveLocalizedString(m.name, 'en').toLowerCase() === "sterodex" &&
                     p.dayStart === 1 &&
                     p.dayEnd === 1;
 
@@ -122,7 +124,7 @@ export default function PrescriptionView({ prescription }: Props) {
 
                 {m.notes && (
                   <li className="text-base font-bold text-slate-900 sm:text-lg">
-                    {m.notes}
+                    {resolveLocalizedString(m.notes, locale)}
                   </li>
                 )}
               </ul>
