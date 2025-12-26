@@ -58,6 +58,12 @@ export interface ProtocolAction {
    * Default for existing laser protocols is 5.
    */
   minDurationMinutes?: number;
+  /**
+   * Hex color code for UI display (e.g., "#0ea5e9").
+   * Assigned deterministically by the color resolver to ensure consistency
+   * across schedule cards, chips, PDF export, and legends.
+   */
+  color?: string;
 }
 
 /**

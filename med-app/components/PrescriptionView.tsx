@@ -61,7 +61,8 @@ export default function PrescriptionView({ prescription }: Props) {
       {/* Medication List + Phases */}
       <div className="max-h-80 space-y-3 overflow-y-auto sm:max-h-96 sm:space-y-4 md:max-h-[28rem]">
         {medications.map((m) => {
-          const color = getMedicationColor(m.name, m.id);
+          // Use action.color if available (assigned by protocol resolver), otherwise fallback
+          const color = m.color || getMedicationColor(m.name, m.id);
           const chipStyle = {
             backgroundColor: `${color}22`,
             color: color,

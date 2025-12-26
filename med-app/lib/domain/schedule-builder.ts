@@ -1,5 +1,6 @@
 import type { ProtocolScheduleInput, DoseSlot, ProtocolAction } from "../../types/prescription";
-import { getMedicationColor } from "../theme/medicationColors";
+import { getActionColor } from "./action-colors";
+import { resolveClinicConfig } from "./protocol-resolver";
 import { logger } from "../utils/logger";
 
 export class ImpossibleScheduleError extends Error {
@@ -306,8 +307,12 @@ export function buildProtocolSchedule(prescription: ProtocolScheduleInput): Dose
   const slots: DoseSlot[] = [];
   let slotCounter = 0;
 
+  // Resolve clinic config for color assignment (if medications don't have colors)
+  const clinicConfig = resolveClinicConfig(prescription.clinicSlug);
+
   medications.forEach((med: ProtocolAction, medIndex) => {
-    const color = getMedicationColor(med.name, med.id);
+    // Use action.color if available (assigned by protocol resolver), otherwise resolve it
+    const color = med.color || getActionColor(med, clinicConfig);
     // Removed hardcoded default 5
     // Note: We don't use duration here for distribution, only collision resolution uses it.
     // Distribution assumes points.

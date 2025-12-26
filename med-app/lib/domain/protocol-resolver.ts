@@ -1,6 +1,7 @@
 import { getClinicConfig, ClinicConfig, defaultClinic, ProtocolDefinition } from "../../config/clinics";
 import { DEFAULT_PROTOCOLS } from "../../constants/protocols";
 import { ProtocolAction, ProcedureType } from "../../types/prescription";
+import { assignActionColors } from "./action-colors";
 
 /**
  * Resolves the clinic configuration by ID.
@@ -39,10 +40,13 @@ export function resolveProtocol(
     // Inject default duration if needed
     const defaultDuration = clinicConfig.defaultActionDuration ?? 0;
 
-    const actions = protocol.actions.map(action => ({
+    let actions = protocol.actions.map(action => ({
         ...action,
         minDurationMinutes: action.minDurationMinutes ?? defaultDuration
     }));
+
+    // Assign colors to all actions (deterministic, consistent across all clinics)
+    actions = assignActionColors(actions, clinicConfig);
 
     return {
         ...protocol,

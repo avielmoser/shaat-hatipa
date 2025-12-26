@@ -196,7 +196,9 @@ function buildPrintableHtml(
       timeGroups.forEach((tg) => {
         const medsHtml = tg.slots
           .map((s) => {
-            const color = getMedicationColor(s.medicationName, s.id) ?? "#0f172a";
+            // Use medicationColor from slot (assigned by schedule builder)
+            // Fallback to getMedicationColor for backward compatibility
+            const color = s.medicationColor || getMedicationColor(s.medicationName, s.medicationId) || "#0f172a";
             // Use lighter background for print legibility
             return `<span class="chip" style="color:${color};border-color:${color}40;background-color:#ffffff;">${escapeHtml(
               s.medicationName,

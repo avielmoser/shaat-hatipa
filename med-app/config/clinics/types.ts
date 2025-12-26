@@ -71,4 +71,11 @@ export interface ClinicConfig {
      * Legacy laser protocols use 5.
      */
     defaultActionDuration?: number;
+
+    /**
+     * Optional map of action IDs to hex color codes.
+     * If provided, these colors take precedence over hash-based assignment.
+     * Useful for brand-consistent colors across clinics.
+     */
+    actionColorMap?: Record<string, string>;
 }

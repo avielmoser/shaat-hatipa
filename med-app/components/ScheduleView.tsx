@@ -345,9 +345,11 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
 
                             <div className="flex flex-wrap items-center gap-2">
                               {tg.slots.map((slot) => {
-                                const color = getMedicationColor(
+                                // Use medicationColor from slot (assigned by schedule builder)
+                                // Fallback to getMedicationColor for backward compatibility
+                                const color = slot.medicationColor || getMedicationColor(
                                   slot.medicationName,
-                                  slot.id
+                                  slot.medicationId
                                 );
                                 return (
                                   <span

@@ -159,4 +159,14 @@ export const moserClinic: ClinicConfig = {
         "EYE_PAIN": eyePainProtocol,
     },
     defaultActionDuration: 0,
+    // Optional: Brand-consistent colors for Moser Clinic actions
+    // If not provided, hash-based deterministic colors will be used
+    actionColorMap: {
+        "acamol-headache": "#ef4444",      // red-500 - Acamol
+        "acamol-throat": "#ef4444",        // red-500 - Acamol
+        "ibuprofen-headache": "#3b82f6",   // blue-500 - Ibuprofen
+        "ibuprofen-throat": "#3b82f6",     // blue-500 - Ibuprofen
+        "strepsils": "#f59e0b",            // amber-500 - Strepsils
+        "lubricating-drops": "#06b6d4",    // cyan-500 - Lubricating drops
+    },
 };
