@@ -2,8 +2,9 @@
 // Canonical color assignment for treatment/protocol actions across all clinics.
 // Ensures deterministic, consistent colors across schedule cards, chips, PDF export, and legends.
 
-import { ProtocolAction } from "../../types/prescription";
+import { ProtocolAction, LocalizedString } from "../../types/prescription";
 import { ClinicConfig } from "../../config/clinics/types";
+import { resolveLocalizedString } from "../utils/i18n";
 
 /**
  * Fixed palette of accessible colors (8-12 colors with good contrast).
@@ -69,7 +70,7 @@ function normalizeString(value: string): string {
  * @returns A hex color string (e.g., "#0ea5e9")
  */
 export function getActionColor(
-  action: { id: string; name?: string; color?: string },
+  action: { id: string; name?: LocalizedString; color?: string },
   clinic?: ClinicConfig
 ): string {
   // Priority 1: Explicit color on action
@@ -88,9 +89,10 @@ export function getActionColor(
     return LEGACY_MEDICATION_COLORS[actionIdLower];
   }
 
-  // Also check normalized name matching for legacy support
+  // также проверьте сопоставление нормализованного имени для поддержки устаревших версий
   if (action.name) {
-    const normalizedName = normalizeString(action.name);
+    const resolvedName = resolveLocalizedString(action.name, 'en');
+    const normalizedName = normalizeString(resolvedName);
     for (const [key, color] of Object.entries(LEGACY_MEDICATION_COLORS)) {
       const normalizedKey = normalizeString(key);
       if (normalizedName.includes(normalizedKey)) {
@@ -100,7 +102,7 @@ export function getActionColor(
   }
 
   // Priority 4: Deterministic hash-based assignment
-  const hashInput = action.id || action.name || "unknown";
+  const hashInput = action.id || (action.name ? resolveLocalizedString(action.name, 'en') : "unknown");
   const hash = hashString(hashInput);
   const paletteIndex = hash % COLOR_PALETTE.length;
   return COLOR_PALETTE[paletteIndex];

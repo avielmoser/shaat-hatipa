@@ -1,8 +1,9 @@
 // components/ScheduleDisplaySection.tsx
 "use client";
 
-import React from "react";
+import { useLocale } from "next-intl";
 import type { DoseSlot } from "../types/prescription";
+import { resolveLocalizedString } from "../lib/utils/i18n";
 import { Card, CardContent } from "./ui/card";
 
 interface ScheduleDisplaySectionProps {
@@ -12,6 +13,8 @@ interface ScheduleDisplaySectionProps {
 export default function ScheduleDisplaySection({
   schedule,
 }: ScheduleDisplaySectionProps) {
+  const locale = useLocale();
+
   if (!schedule || schedule.length === 0) {
     return null;
   }
@@ -33,7 +36,7 @@ export default function ScheduleDisplaySection({
                 <span className="font-medium">
                   {slot.date} • {slot.time}
                 </span>
-                <span>{slot.medicationName}</span>
+                <span>{resolveLocalizedString(slot.medicationName, locale)}</span>
               </div>
             ))}
           </div>
