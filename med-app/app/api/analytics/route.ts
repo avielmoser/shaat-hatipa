@@ -31,6 +31,13 @@ export async function POST(req: NextRequest) {
         // Validate input
         const result = analyticsSchema.safeParse(body);
 
+        if (process.env.ANALYTICS_DEBUG === "1") {
+            console.log("[Analytics Debug] Received payload:", JSON.stringify(body, null, 2));
+            if (!result.success) {
+                console.warn("[Analytics Debug] Validation failed:", result.error.format());
+            }
+        }
+
         if (!result.success) {
             return NextResponse.json(
                 { error: "Invalid analytics data" },
@@ -92,6 +99,10 @@ export async function POST(req: NextRequest) {
                 meta: dbMeta,
             } as any,
         });
+
+        if (process.env.ANALYTICS_DEBUG === "1") {
+            console.log(`[Analytics Debug] Successfully wrote event '${eventName}' to DB`);
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {

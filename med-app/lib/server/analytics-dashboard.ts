@@ -97,6 +97,7 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
             "wizard_viewed",
             "time_modified",
             "step_viewed",
+            "generate_schedule_clicked",
             "schedule_generated",
             "export_clicked"
         ];
@@ -163,7 +164,9 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
                 if (stepVal === "3") s.step3Viewed.push(e.createdAt);
             }
 
-            if (e.eventName === "schedule_generated") s.scheduleGenerated = true;
+            if (e.eventName === "schedule_generated" || e.eventName === "generate_schedule_clicked") {
+                s.scheduleGenerated = true;
+            }
 
             if (e.eventName === "export_clicked") {
                 // Check meta for type

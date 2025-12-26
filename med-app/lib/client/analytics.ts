@@ -32,8 +32,8 @@ export function trackEvent(eventName: string, data: AnalyticsEventData) {
     // 2. Strict Taxonomy & Policy Check
     const policy = getTrackingPolicy(eventName);
     if (!policy.shouldTrack || !policy.eventType) {
-        if (process.env.NODE_ENV === "development") {
-            console.log(`[Analytics] Blocked 'action' event not in allowlist: ${eventName}`);
+        if (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
+            console.log(`[Analytics Debug] Blocked event not in allowlist: ${eventName}`);
         }
         return;
     }
@@ -74,9 +74,13 @@ export function trackEvent(eventName: string, data: AnalyticsEventData) {
                 clinicSlug: data.clinicSlug || getClinicConfig().slug, // Auto-inject clinic context
                 ...data,
             }),
+        }).then(res => {
+            if (process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
+                console.log(`[Analytics Debug] Event '${eventName}' status: ${res.status}`);
+            }
         }).catch((err) => {
             // Silent failure in production, log in dev if needed
-            if (process.env.NODE_ENV === "development") {
+            if (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
                 console.error("Analytics tracking failed:", err);
             }
         });

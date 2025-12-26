@@ -10,6 +10,8 @@ export const EVENT_TAXONOMY: Record<string, AnalyticsEventType> = {
     generate_schedule_clicked: "action",
     schedule_generation_failed: "action",
     export_failed: "action",
+    time_modified: "action",
+    step_viewed: "action",
 
     // Conversions (Always Tracked)
     schedule_generated: "conversion",
