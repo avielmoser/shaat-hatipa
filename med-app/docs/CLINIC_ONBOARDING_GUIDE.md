@@ -109,7 +109,16 @@ export const dentalCareClinic: ClinicConfig = {
                 }
             ]
         }
-    }
+    protocols: {
+        // ...
+    },
+
+    /**
+     * Default instructions for every schedule slot.
+     */
+    defaultSlotInstructions: [
+        { type: "wait_between_actions", minutes: 5 }
+    ]
 };
 ```
 
@@ -135,7 +144,38 @@ In the codebase, TreatmentAction is implemented as ProtocolAction for backward c
 *   **`minDurationMinutes`** *(number)*: The mandatory time block this action consumes. 
     *   **CRITICAL:** If omitted, the engine uses the clinic's `defaultActionDuration`.
     *   Use this to define spacing (e.g., "Wait 5 minutes").
-*   **`notes`** *(string)*: Instructions shown to the patient.
+*   **`notes`** *(string)*: Simple text notes shown to the patient for this action.
+*   **`instructions`** *(ActionInstruction[])*: Structured instructions for this action.
+    *   Supported types:
+        *   `{ type: "wait_between_actions", minutes: number, appliesToActionIds?: string[] }`
+        *   `{ type: "avoid_food", appliesToActionIds?: string[] }`
+        *   `{ type: "separate_medications", appliesToActionIds?: string[] }`
+        *   `{ type: "note", messageKey: string, params?: object, appliesToActionIds?: string[] }`
+
+### 5.1 Using Numbered Instruction Indicators
+
+The system automatically assigns numbers (¹ ² ³) to instructions and displays them on the corresponding medication chips.
+
+*   **`appliesToActionIds`**: Use this to target specific medications. 
+    *   If omitted or provided as an empty array `[]`, the instruction applies to **all** medications in the slot (e.g., clinic-level defaults).
+    *   If provided with IDs, only the medications with matching IDs will display the indicator.
+
+#### Example (Hebrew Context):
+```json
+{
+  "type": "avoid_food",
+  "appliesToActionIds": ["ibuprofen-tab"] 
+}
+// Chip: [אדוויל]¹ (where 1 is "הימנע מאוכל")
+```
+
+#### Example (All Medications):
+```json
+{
+  "type": "separate_medications"
+}
+// Both chips get the indicator in a multi-medication slot.
+```
 
 ---
 

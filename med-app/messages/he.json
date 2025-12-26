@@ -118,10 +118,14 @@
             "pdf": "ייצוא ל-PDF",
             "exporting": "מייצא..."
         },
-        "warning": "⚠️ יש להמתין 5 דקות בין טיפות",
         "empty": "אין טיפות בטווח התאריכים שנבחר.",
         "dayHeader": "יום {day} • {date}",
-        "dosesCount": "{count} מנות ביום זה"
+        "dosesCount": "{count} מנות ביום זה",
+        "slotNote_waitBetween": "בנטילה יחד — יש להמתין {minutes} דקות בין הטיפולים.",
+        "slotNote_waitBetweenEyeDrops": "בין טיפות עיניים יש להמתין {minutes} דקות.",
+        "slotNote_avoidFood": "לא לשלב עם אוכל.",
+        "slotNote_separateMeds": "לא לקחת יחד — יש להפריד בין התרופות לפי ההנחיות.",
+        "slotNote_generic": "{text}"
     },
     "Prescription": {
         "title": "סיכום הוראות לאחר ניתוח",

@@ -41,6 +41,18 @@ export interface Phase {
  * Contains an identifier, readable name, optional notes, and
  * dosage phases.
  */
+export type ActionInstruction =
+  /**
+   * Applies based on appliesToActionIds:
+   * - If undefined or empty array []: applies to ALL actions in the slot.
+   * - If it contains IDs: applies ONLY to those actions.
+   */
+  | { type: "wait_between_actions"; minutes: number; appliesToActionIds?: string[]; messageKey?: string; params?: Record<string, string | number> }
+  | { type: "avoid_food"; appliesToActionIds?: string[] }
+  | { type: "separate_medications"; appliesToActionIds?: string[] }
+  // Future-proof generic text instruction (localized via translation keys)
+  | { type: "note"; messageKey: string; params?: Record<string, string | number>; appliesToActionIds?: string[] };
+
 /**
  * Represents a medical action (medication, exercise, check).
  * Contains an identifier, readable name, optional notes, and
@@ -64,6 +76,12 @@ export interface ProtocolAction {
    * across schedule cards, chips, PDF export, and legends.
    */
   color?: string;
+  /**
+   * The delivery route of the action. Used for spacing policies.
+   * missing/undefined => treat as "other"
+   */
+  route?: "eye_drop" | "oral" | "other";
+  instructions?: ActionInstruction[];
 }
 
 /**
@@ -102,4 +120,10 @@ export interface DoseSlot {
   time: string;
   dayIndex: number;
   notes?: string;
+  instructions?: ActionInstruction[];
+  /**
+   * List of actions in this slot.
+   * Usually contains one action, but supports multi-action slots.
+   */
+  actions: ProtocolAction[];
 }

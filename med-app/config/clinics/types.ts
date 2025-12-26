@@ -1,4 +1,4 @@
-import { Medication, ProcedureType } from "../../types/prescription";
+import { ActionInstruction, Medication, ProcedureType } from "../../types/prescription";
 
 export type ProtocolKey = string;
 export type ProtocolKind = 'SCHEDULED' | 'AS_NEEDED';
@@ -78,4 +78,19 @@ export interface ClinicConfig {
      * Useful for brand-consistent colors across clinics.
      */
     actionColorMap?: Record<string, string>;
+
+    /**
+     * Default instructions for every schedule slot.
+     * DEPRECATED: Use slotRules.spacing for generated spacing notes.
+     */
+    defaultSlotInstructions?: ActionInstruction[];
+    /**
+     * Rules applied to dose slots during rendering.
+     */
+    slotRules?: {
+        spacing?: {
+            minutes: number;
+            routes: Array<"eye_drop" | "oral" | "other">;
+        };
+    };
 }

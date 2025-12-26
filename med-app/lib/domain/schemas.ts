@@ -13,12 +13,27 @@ export const phaseSchema = z.object({
     path: ["dayEnd"],
 });
 
+export const actionInstructionSchema = z.union([
+    z.object({ type: z.literal("wait_between_actions"), minutes: z.number(), appliesToActionIds: z.array(z.string()).optional() }),
+    z.object({ type: z.literal("avoid_food"), appliesToActionIds: z.array(z.string()).optional() }),
+    z.object({ type: z.literal("separate_medications"), appliesToActionIds: z.array(z.string()).optional() }),
+    z.object({
+        type: z.literal("note"),
+        messageKey: z.string(),
+        params: z.record(z.string(), z.string().or(z.number())).optional(),
+        appliesToActionIds: z.array(z.string()).optional()
+    }),
+]);
+
 export const protocolActionSchema = z.object({
     id: z.string().min(1),
     name: z.string().min(1),
     notes: z.string().optional(),
     phases: z.array(phaseSchema).min(1),
     minDurationMinutes: z.number().min(0).optional(),
+    color: z.string().optional(),
+    route: z.enum(["eye_drop", "oral", "other"]).optional(),
+    instructions: z.array(actionInstructionSchema).optional(),
 });
 
 export const medicationSchema = protocolActionSchema;

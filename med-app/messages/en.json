@@ -121,10 +121,14 @@
             "pdf": "Export to PDF",
             "exporting": "Exporting..."
         },
-        "warning": "⚠️ Wait 5 minutes between drops",
         "empty": "No drops in the selected date range.",
         "dayHeader": "Day {day} • {date}",
-        "dosesCount": "{count} doses this day"
+        "dosesCount": "{count} doses this day",
+        "slotNote_waitBetween": "Taken together — wait {minutes} minutes between treatments.",
+        "slotNote_waitBetweenEyeDrops": "Wait {minutes} minutes between eye drops.",
+        "slotNote_avoidFood": "Avoid food.",
+        "slotNote_separateMeds": "Do not take together — separate between medications as instructed.",
+        "slotNote_generic": "{text}"
     },
     "Prescription": {
         "title": "Post-Op Instructions Summary",

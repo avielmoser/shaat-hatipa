@@ -4,15 +4,17 @@
 // מציג את לוח הזמנים לקבוצות של ימים ושעות, עם אפשרות סינון והוספת בועה
 // "המתן 5 דקות בין טיפות". משתמש במפת הצבעים החדשה כדי לצבוע את התרופות.
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from 'next-intl';
-import type { DoseSlot, ProtocolScheduleInput } from "../types/prescription";
+import { ActionInstruction, DoseSlot, ProtocolScheduleInput, ProtocolAction } from "../types/prescription";
 import { getMedicationColor } from "../lib/theme/medicationColors";
+import { getSlotInstructions, buildInstructionIndex, toSuperscript, ProcessedInstruction } from "../lib/utils/instructions";
 import { downloadScheduleIcs } from "../lib/utils/ics";
 import { openSchedulePdf } from "../lib/utils/pdf";
 import { trackEvent } from "../lib/client/analytics";
 
 import type { ClinicConfig } from "../config/clinics";
+import { ScrollIndicator } from "./ui/ScrollIndicator";
 
 interface ScheduleViewProps {
   schedule: DoseSlot[];
@@ -113,8 +115,36 @@ function filterByMode(
   return { filtered, todayStr };
 }
 
+interface DaySlotsListProps {
+  children: React.ReactNode;
+  locale: string;
+}
+
+function DaySlotsList({ children, locale }: DaySlotsListProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div className="relative w-full">
+      <div
+        ref={containerRef}
+        className="space-y-2 text-base overflow-y-auto max-h-96 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        style={{ direction: locale === 'he' ? 'rtl' : 'ltr' }}
+      >
+        <div style={{ direction: locale === 'he' ? 'rtl' : 'ltr' }}>
+          {children}
+        </div>
+      </div>
+      <ScrollIndicator
+        containerRef={containerRef}
+        isRtl={locale === 'he'}
+      />
+    </div>
+  );
+}
+
 export default function ScheduleView({ schedule, prescription, clinicConfig }: ScheduleViewProps) {
   const t = useTranslations('Schedule');
+  const st = t; // Scoped translator for schedule notes
   const locale = useLocale();
   const [mode, setMode] = useState<FilterMode>("today");
 
@@ -277,18 +307,13 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
         </div>
       </div>
 
-      {/* Wait 5 minutes bubble */}
-      <div className="mt-4 mb-5 rounded-xl bg-yellow-50 px-4 py-3 text-base font-bold text-yellow-900 border-2 border-yellow-200 shadow-sm">
-        {t('warning')}
-      </div>
-
       {dayGroups.length === 0 ? (
         <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-base text-slate-700">
           {prescription && prescription.medications.length > 0 ? (
             <div className="space-y-4">
               <p className="font-semibold">{t('empty')}</p>
               <div className="space-y-2">
-                {prescription.medications.map(med => (
+                {prescription.medications.map((med: ProtocolAction) => (
                   <div key={med.id} className="p-3 bg-white rounded-lg border border-slate-200">
                     <div className="font-bold text-slate-900">{med.name}</div>
                     {med.notes && <div className="text-sm text-slate-600">{med.notes}</div>}
@@ -320,17 +345,9 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                   </div>
                 </div>
 
-                <div className="space-y-2 text-base overflow-y-auto max-h-96">
+                <DaySlotsList locale={locale}>
                   {timeGroups.map((tg) => {
-                    const notesSet = new Set(
-                      tg.slots
-                        .map((s) => s.notes?.trim())
-                        .filter((n): n is string => !!n)
-                    );
-                    const combinedNotes =
-                      notesSet.size > 0
-                        ? Array.from(notesSet).join(" • ")
-                        : null;
+                    const { numbersByActionId, numberedInstructions } = buildInstructionIndex(tg.slots, clinicConfig?.defaultSlotInstructions, clinicConfig?.slotRules);
 
                     return (
                       <div
@@ -345,24 +362,29 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
 
                             <div className="flex flex-wrap items-center gap-2">
                               {tg.slots.map((slot) => {
-                                // Use medicationColor from slot (assigned by schedule builder)
-                                // Fallback to getMedicationColor for backward compatibility
                                 const color = slot.medicationColor || getMedicationColor(
                                   slot.medicationName,
                                   slot.medicationId
                                 );
+
+                                const applicableInstNumbers = numbersByActionId[slot.medicationId] || [];
+
                                 return (
                                   <span
                                     key={slot.id}
-                                    className="inline-flex items-center rounded-full border-2 px-3 py-1 text-sm font-bold"
+                                    className="relative inline-flex items-center rounded-full border-2 px-3 py-1 text-sm font-bold gap-0.5"
                                     style={{
                                       backgroundColor: `${color ?? "#e5e7eb"}22`,
                                       color: color ?? "#0f172a",
-                                      borderColor:
-                                        color ?? "rgba(15,23,42,0.16)",
+                                      borderColor: color ?? "rgba(15,23,42,0.16)",
                                     }}
                                   >
                                     {slot.medicationName}
+                                    {applicableInstNumbers.length > 0 && (
+                                      <sup className="text-[10px] ms-0.5 mb-1.5 font-bold tracking-tighter">
+                                        {applicableInstNumbers.map(toSuperscript).join("")}
+                                      </sup>
+                                    )}
                                   </span>
                                 );
                               })}
@@ -370,20 +392,56 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                           </div>
                         </div>
 
-                        {combinedNotes && (
-                          <div className="text-sm font-medium text-slate-700 ps-1">
-                            {combinedNotes}
+                        {numberedInstructions.length > 0 && (
+                          <div className="mt-1 space-y-1.5 ps-1 border-t border-slate-50 pt-2">
+                            {numberedInstructions.map((inst: ProcessedInstruction) => {
+                              const icon = {
+                                "wait_between_actions": "⏱",
+                                "avoid_food": "🥪",
+                                "separate_medications": "⚠️",
+                                "note": "📝",
+                              }[inst.type as string] || "•";
+
+                              return (
+                                <div
+                                  key={inst.id}
+                                  className="text-sm text-slate-600 flex items-start gap-1.5"
+                                >
+                                  <span className="font-bold text-slate-400 min-w-[1.25rem]">
+                                    {inst.number}
+                                  </span>
+                                  <span className="flex-shrink-0">{icon}</span>
+                                  <span>
+                                    {inst.type === "wait_between_actions" &&
+                                      inst.minutes > 0 &&
+                                      (inst.messageKey ?
+                                        st(inst.messageKey as any, inst.params) :
+                                        st("slotNote_waitBetween", {
+                                          minutes: inst.minutes,
+                                        }))
+                                    }
+                                    {inst.type === "avoid_food" &&
+                                      st("slotNote_avoidFood")}
+                                    {inst.type === "separate_medications" &&
+                                      st("slotNote_separateMeds")}
+                                    {inst.type === "note" &&
+                                      st((inst as any).messageKey as any, (inst as any).params)}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
                     );
                   })}
-                </div>
+                </DaySlotsList>
               </div>
             );
           })}
         </div>
-      )}
+      )
+      }
     </div>
   );
 }

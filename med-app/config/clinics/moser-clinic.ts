@@ -17,7 +17,9 @@ const headacheProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 },
             ],
-            notes: "לקחת 2 כדורים כל 6 שעות"
+            notes: "לקחת 2 כדורים כל 6 שעות",
+            instructions: [{ type: "avoid_food" }],
+            route: "oral"
         },
         {
             id: "ibuprofen-headache",
@@ -31,7 +33,8 @@ const headacheProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 },
             ],
-            notes: "לקחת כדור אחד כל 6 שעות"
+            notes: "לקחת כדור אחד כל 6 שעות",
+            route: "oral"
         }
     ],
     label: {
@@ -60,7 +63,8 @@ const soreThroatProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 }
             ],
-            notes: "נגד דלקת וכאב"
+            notes: "נגד דלקת וכאב",
+            route: "oral"
         },
         {
             id: "acamol-throat",
@@ -74,7 +78,8 @@ const soreThroatProtocol: ProtocolDefinition = {
                     intervalHours: 6,
                 }
             ],
-            notes: "להורדת חום וכאב"
+            notes: "להורדת חום וכאב",
+            route: "oral"
         },
         {
             id: "strepsils",
@@ -88,7 +93,8 @@ const soreThroatProtocol: ProtocolDefinition = {
                     intervalHours: 4,
                 }
             ],
-            notes: "למציצה כל 4 שעות"
+            notes: "למציצה כל 4 שעות",
+            route: "oral"
         }
     ],
     label: {
@@ -116,7 +122,11 @@ const eyePainProtocol: ProtocolDefinition = {
                     timesPerDay: 0, // As needed
                 }
             ],
-            notes: "להשתמש לפי הצורך, ללא הגבלה. מומלץ כל שעתיים-שלוש אם יש יובש."
+            notes: "להשתמש לפי הצורך, ללא הגבלה. מומלץ כל שעתיים-שלוש אם יש יובש.",
+            instructions: [
+                { type: "note", messageKey: "schedule.slotNote_generic", params: { text: "May cause drowsiness" } }
+            ],
+            route: "eye_drop"
         }
     ],
     label: {
@@ -169,4 +179,10 @@ export const moserClinic: ClinicConfig = {
         "strepsils": "#f59e0b",            // amber-500 - Strepsils
         "lubricating-drops": "#06b6d4",    // cyan-500 - Lubricating drops
     },
+    slotRules: {
+        spacing: {
+            minutes: 0,
+            routes: []
+        }
+    }
 };

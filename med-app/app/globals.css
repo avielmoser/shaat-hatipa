@@ -273,3 +273,26 @@ html.a11y-reduce-motion .animate-blob-slow,
 html.a11y-reduce-motion .animate-blob-slower {
   display: none !important;
 }
+/* Custom Native-Style Scrollbar */
+.sht-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #B9C0CC #E9EDF3;
+}
+
+.sht-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sht-scrollbar::-webkit-scrollbar-track {
+  background: #E9EDF3;
+  border-radius: 999px;
+}
+
+.sht-scrollbar::-webkit-scrollbar-thumb {
+  background: #B9C0CC;
+  border-radius: 999px;
+}
+
+.sht-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #A7B0BF;
+}

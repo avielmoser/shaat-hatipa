@@ -40,16 +40,16 @@ export function resolveProtocol(
     // Inject default duration if needed
     const defaultDuration = clinicConfig.defaultActionDuration ?? 0;
 
-    let actions = protocol.actions.map(action => ({
+    const processedActions: ProtocolAction[] = protocol.actions.map(action => ({
         ...action,
         minDurationMinutes: action.minDurationMinutes ?? defaultDuration
     }));
 
     // Assign colors to all actions (deterministic, consistent across all clinics)
-    actions = assignActionColors(actions, clinicConfig);
+    const coloredActions = assignActionColors(processedActions, clinicConfig);
 
     return {
         ...protocol,
-        actions
+        actions: coloredActions
     };
 }

@@ -383,6 +383,8 @@ export function buildProtocolSchedule(prescription: ProtocolScheduleInput): Dose
             time,
             dayIndex: absoluteDayIndex + dayCarry,
             notes: med.notes,
+            instructions: med.instructions,
+            actions: [med],
           });
         }
       }
