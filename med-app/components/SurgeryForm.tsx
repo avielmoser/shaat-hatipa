@@ -104,15 +104,15 @@ export default function SurgeryForm({
                 className="space-y-6 sm:space-y-8"
                 aria-labelledby="step1-title"
             >
-                {/* Header */}
-                <div className="space-y-2 text-start">
+                {/* Header - More compact on mobile */}
+                <div className="space-y-1 text-start">
                     <h2
                         id="step1-title"
-                        className="text-xl sm:text-3xl font-bold tracking-tight text-slate-900"
+                        className="text-lg sm:text-3xl font-bold tracking-tight text-slate-900"
                     >
                         {t('title')}
                     </h2>
-                    <p className="max-w-xl text-sm sm:text-base text-slate-500 sm:mx-0">
+                    <p className="max-w-xl text-xs sm:text-base text-slate-500">
                         {t('description')}
                     </p>
                 </div>
@@ -149,9 +149,9 @@ export default function SurgeryForm({
                                         type="button"
                                         onClick={() => setSurgeryType(key)}
                                         className={`
-                                            relative flex flex-col sm:flex-row items-center sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
+                                            relative flex items-center gap-3 sm:gap-4 p-3 sm:p-5 rounded-2xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
                                             ${isSelected
-                                                ? "border-sky-600 bg-sky-50 shadow-sm"
+                                                ? "border-sky-600 bg-sky-50 shadow-sm ring-1 ring-sky-600/10"
                                                 : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                                             }
                                         `}
@@ -159,7 +159,7 @@ export default function SurgeryForm({
                                     >
                                         {/* Icon Box */}
                                         <div className={`
-                                            flex h-8 w-8 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl transition-colors mb-2 sm:mb-0
+                                            flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl transition-colors
                                             ${isSelected ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-500"}
                                         `}>
                                             {/* Icon Logic: Eye for eye procedures, Activity for general/pain */}
@@ -171,23 +171,23 @@ export default function SurgeryForm({
                                         </div>
 
                                         {/* Text Content */}
-                                        <div className="flex-1 text-start">
+                                        <div className="flex-1 text-start overflow-hidden">
                                             <div className="flex items-center justify-start">
-                                                <span className={`text-sm sm:text-xl font-bold ${isSelected ? "text-sky-900" : "text-slate-900"}`}>
+                                                <span className={`text-sm sm:text-xl font-bold truncate ${isSelected ? "text-sky-900" : "text-slate-900"}`}>
                                                     {label}
                                                 </span>
                                             </div>
                                             {description && (
-                                                <p className={`mt-0.5 text-xs ${isSelected ? "text-sky-700" : "text-slate-500"}`}>
+                                                <p className={`mt-0.5 text-[10px] sm:text-sm leading-tight ${isSelected ? "text-sky-700/80" : "text-slate-500"}`}>
                                                     {description}
                                                 </p>
                                             )}
                                         </div>
 
-                                        {/* Checkmark Absolute for selected - simplified on mobile */}
+                                        {/* Checkmark - Better placement for mobile */}
                                         {isSelected && (
-                                            <div className="absolute top-2 right-2 sm:top-4 sm:end-4 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm">
-                                                <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                                            <div className="absolute top-1.5 end-1.5 sm:top-3 sm:end-3 flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm ring-2 ring-white">
+                                                <Check className="h-3 w-3" />
                                             </div>
                                         )}
                                     </button>
@@ -269,21 +269,28 @@ export default function SurgeryForm({
                         fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none transition-transform duration-300 ease-in-out
                         ${showFloatingBtn ? 'translate-y-0' : 'translate-y-full sm:translate-y-0'}
                     `}>
-                        <div className="mx-auto w-full max-w-md sm:max-w-md sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
-                            <button
-                                type="button"
-                                onClick={onNext}
-                                disabled={!surgeryType}
-                                className={`
-                                    flex w-full items-center justify-center gap-2 rounded-xl py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-sm transition-all
-                                    ${surgeryType
-                                        ? "bg-sky-600 text-white hover:bg-sky-500 hover:shadow-md hover:shadow-sky-500/20 active:scale-[0.98]"
-                                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                    }
-                                `}
-                            >
-                                {t('nextButton')}
-                            </button>
+                        <div className="mx-auto w-full max-w-md sm:max-w-md">
+                            {/* Medical Disclaimer moved inside the fixed button area on mobile for better visibility/trust */}
+                            <p className="mb-3 text-center text-[10px] sm:text-xs text-slate-400 px-4 sm:hidden">
+                                {t('medicalDisclaimer')}
+                            </p>
+
+                            <div className="sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
+                                <button
+                                    type="button"
+                                    onClick={onNext}
+                                    disabled={!surgeryType}
+                                    className={`
+                                        flex w-full items-center justify-center gap-2 rounded-xl py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-sm transition-all
+                                        ${surgeryType
+                                            ? "bg-sky-600 text-white hover:bg-sky-500 hover:shadow-md hover:shadow-sky-500/20 active:scale-[0.98]"
+                                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        }
+                                    `}
+                                >
+                                    {t('nextButton')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -291,7 +298,7 @@ export default function SurgeryForm({
                 {/* Medical Disclaimer - Shown below form on desktop, maybe hidden behind fixed CTA on mobile? 
                     I'll add it here but it might need padding on mobile.
                 */}
-                <p className="text-center text-[10px] sm:text-xs text-slate-400 px-4">
+                <p className="hidden sm:block text-center text-[10px] sm:text-xs text-slate-400 px-4">
                     {t('medicalDisclaimer')}
                 </p>
             </div>

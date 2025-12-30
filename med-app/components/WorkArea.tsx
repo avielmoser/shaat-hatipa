@@ -266,64 +266,73 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
       >
         <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
           {/* Stepper */}
-          <ol
-            className="flex items-center justify-center gap-4 text-base"
-            aria-label="Schedule creation steps"
-          >
-            {stepperItems.map((stepItem) => {
-              const isActive = step === stepItem.idx;
-              const isDone = step > stepItem.idx;
+          <nav aria-label={t('steps.1')}>
+            <ol
+              className="flex items-center justify-center gap-2 sm:gap-4 text-base"
+              aria-label="Schedule creation steps"
+            >
+              {stepperItems.map((stepItem) => {
+                const isActive = step === stepItem.idx;
+                const isDone = step > stepItem.idx;
 
-              const canGoForward =
-                stepItem.idx === 1 ||
-                (stepItem.idx === 2 && hasPrescription) ||
-                (stepItem.idx === 3 && hasSchedule);
+                const canGoForward =
+                  stepItem.idx === 1 ||
+                  (stepItem.idx === 2 && hasPrescription) ||
+                  (stepItem.idx === 3 && hasSchedule);
 
-              return (
-                <li key={stepItem.idx} className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (canGoForward) {
-                        handleStepClick(stepItem.idx);
-                      }
-                    }}
-                    disabled={!canGoForward}
-                    className={`flex items-center gap-2 rounded-full px-2 py-1 transition ${canGoForward
-                      ? "cursor-pointer"
-                      : "cursor-not-allowed opacity-60"
-                      }`}
-                    aria-current={isActive ? "step" : undefined}
-                    aria-label={`Step ${stepItem.idx}: ${stepItem.label}`}
-                  >
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold transition ${isDone
-                        ? "bg-emerald-500 border-emerald-500 text-white"
-                        : isActive
-                          ? "bg-sky-600 border-sky-600 text-white"
-                          : "bg-slate-200 border-slate-300 text-slate-600"
+                return (
+                  <li key={stepItem.idx} className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (canGoForward) {
+                          handleStepClick(stepItem.idx);
+                        }
+                      }}
+                      disabled={!canGoForward}
+                      className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-1 py-1 transition ${canGoForward
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed opacity-60"
                         }`}
-                      aria-hidden="true"
+                      aria-current={isActive ? "step" : undefined}
+                      aria-label={`Step ${stepItem.idx}: ${stepItem.label}`}
                     >
-                      {stepItem.idx}
-                    </span>
-                    <span
-                      className={`text-sm sm:text-base font-bold ${isActive
-                        ? "text-sky-800"
-                        : isDone
-                          ? "text-emerald-700"
-                          : canGoForward
-                            ? "text-slate-700 hover:text-sky-800"
-                            : "text-slate-600"
-                        }`}
-                    >
-                      {stepItem.label}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
+                      <span
+                        className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border text-xs sm:text-sm font-bold transition ${isDone
+                          ? "bg-emerald-500 border-emerald-500 text-white"
+                          : isActive
+                            ? "bg-sky-600 border-sky-600 text-white"
+                            : "bg-slate-200 border-slate-300 text-slate-600"
+                          }`}
+                        aria-hidden="true"
+                      >
+                        {stepItem.idx}
+                      </span>
+                      <span
+                        className={`text-sm sm:text-base font-bold transition-colors ${isActive
+                          ? "text-sky-800"
+                          : isDone
+                            ? "text-emerald-700"
+                            : canGoForward
+                              ? "text-slate-700 hover:text-sky-800"
+                              : "text-slate-600"
+                          } ${isActive ? "block" : "hidden sm:block"}`}
+                      >
+                        {stepItem.label}
+                      </span>
+                    </button>
+                    {stepItem.idx < 3 && (
+                      <div className="h-0.5 w-4 sm:w-8 bg-slate-200 mx-1 sm:mx-2 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-emerald-500 transition-all duration-500 ${isDone ? 'w-full' : 'w-0'}`}
+                        />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
 
           {/* ===== Step 1 – Surgery Details ===== */}
           {step === 1 && (

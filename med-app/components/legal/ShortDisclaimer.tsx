@@ -20,14 +20,14 @@ export default function ShortDisclaimer({
 
   return (
     <div
-      className={`rounded-xl border p-4 transition-colors ${showError ? "border-red-300 bg-red-50" : "border-amber-200 bg-amber-50"
+      className={`rounded-2xl border p-4 transition-colors ${showError ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"
         }`}
     >
       <div className="space-y-4">
-        <div className="text-sm text-slate-800">
-          <p className="font-bold text-amber-900 mb-1">{t("title")}</p>
-          <p className="mb-2">{t("content")}</p>
-          <p className="font-medium text-amber-900">{t("confirmation")}</p>
+        <div className="text-sm text-slate-700">
+          <p className="font-bold text-slate-900 mb-1">{t("title")}</p>
+          <p className="mb-2 leading-relaxed">{t("content")}</p>
+          <p className="font-semibold text-sky-800">{t("confirmation")}</p>
         </div>
 
         {/* Checkbox and Link Area */}

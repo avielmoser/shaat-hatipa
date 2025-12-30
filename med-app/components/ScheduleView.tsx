@@ -221,18 +221,18 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900">
+        <div className="flex flex-col items-stretch gap-2 min-w-0">
+          <h3 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
             {t('title', { range: rangeLabel })}
           </h3>
           {surgeryDateStr &&
             daysSinceSurgery != null &&
             daysSinceSurgery >= 0 && (
-              <p className="mt-1 text-sm text-slate-700">
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
                 {t.rich('todayIs', {
                   day: daysSinceSurgery + 1,
                   date: todayStr,
-                  bold: (chunks) => <span className="font-bold">{chunks}</span>
+                  bold: (chunks) => <span className="font-bold text-slate-700">{chunks}</span>
                 })}
               </p>
             )}
@@ -281,27 +281,29 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
             </button>
           </div>
 
-          <div className="flex flex-wrap justify-end gap-3 text-sm">
+          <div className="flex items-center gap-2 text-sm sm:justify-end">
             <button
               type="button"
               onClick={handleExportIcs}
               disabled={!filtered || filtered.length === 0}
               title={(!filtered || filtered.length === 0) ? "No timed events to export" : ""}
-              className={`inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium ${(!filtered || filtered.length === 0)
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 sm:py-2 font-bold transition-all ${(!filtered || filtered.length === 0)
                 ? "cursor-not-allowed text-slate-400 bg-slate-50 border-slate-200"
-                : "text-sky-700 hover:bg-sky-100"}`}
+                : "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 active:scale-95"}`}
             >
+              <span>📅</span>
               {t('export.calendar')}
             </button>
             <button
               type="button"
               onClick={handleExportPdf}
               disabled={pdfLoading}
-              className={`inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium ${pdfLoading
-                ? "cursor-not-allowed text-slate-400"
-                : "text-slate-700 hover:bg-white"
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 sm:py-2 font-bold transition-all ${pdfLoading
+                ? "cursor-not-allowed text-slate-400 bg-slate-50 border-slate-100"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 shadow-sm"
                 }`}
             >
+              <span>📄</span>
               {pdfLoading ? t('export.exporting') : t('export.pdf')}
             </button>
           </div>
@@ -335,7 +337,7 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
             return (
               <div
                 key={day.date}
-                className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3"
+                className="rounded-3xl bg-slate-100/40 p-3 sm:p-4 sm:border sm:border-slate-100"
               >
                 <div className="mb-3 flex items-center justify-between">
                   <div className="text-lg font-bold text-slate-900">

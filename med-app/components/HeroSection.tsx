@@ -59,15 +59,15 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
 
   return (
     <section
-      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-8 pb-12 sm:pt-20 sm:pb-24 sm:px-6 lg:px-8"
+      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-4 pb-8 sm:pt-20 sm:pb-24 sm:px-6 lg:px-8"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
         <div className="flex-1 flex flex-col items-start text-start">
           {/* Clinic Logo (if exists) */}
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-start gap-3 w-full">
             {/* Always show the label, maybe with logo if available */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-start gap-2">
               {clinicConfig && clinicConfig.logoUrl && clinicConfig.id !== 'default' ? (
                 <img
                   src={clinicConfig.logoUrl}
@@ -87,24 +87,24 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
 
           <div className="mb-4 sm:mb-8 w-full mt-4 sm:mt-6">
             <h1 className={cn(
-              "font-bold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-2 sm:mb-4 max-w-lg mx-auto md:mx-0",
-              "text-2xl sm:text-4xl lg:text-5xl"
+              "font-extrabold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-2 sm:mb-4 max-w-lg",
+              "text-3xl sm:text-4xl lg:text-5xl"
             )}>
               {heroTitle}
             </h1>
-            <h2 className="text-lg sm:text-2xl lg:text-3xl font-medium leading-normal text-slate-600 max-w-lg mx-auto md:mx-0 text-balance">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-medium leading-snug text-slate-600 max-w-lg text-balance">
               {heroSubtitle}
             </h2>
           </div>
 
           {/* Description hidden on mobile to save space if needed? Prompt said 'Reduce vertical margins', keep content readable but compact. 
               I'll keep it but ensure margins are small. */}
-          <p className="text-sm sm:text-lg text-slate-500 mb-6 sm:mb-10 max-w-xl font-normal leading-relaxed mx-auto md:mx-0 px-1 sm:px-0">
+          <p className="text-sm sm:text-lg text-slate-500 mb-6 sm:mb-10 max-w-xl font-normal leading-relaxed px-1 sm:px-0">
             <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
           </p>
 
           <ul className={cn(
-            "flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-10 items-start w-full max-w-md mx-auto md:mx-0 text-start"
+            "flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-10 items-start w-full max-w-md text-start"
           )}>
             {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
               <li key={i} className={cn(
@@ -119,7 +119,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
             ))}
           </ul>
 
-          <div className="flex flex-col items-center md:items-start gap-4 mt-2 w-full">
+          <div className="flex flex-col items-start gap-4 mt-2 w-full">
             <button
               type="button"
               onClick={handleScrollToWorkArea}
@@ -149,14 +149,14 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
               {t('startNow')}
             </button>
 
-            <span className="block max-w-xs text-xs font-normal text-slate-400/80 mt-1 text-start mx-auto md:mx-0">
+            <span className="block max-w-xs text-[10px] sm:text-xs font-normal text-slate-400/80 mt-1 text-start">
               {t('medicalAdviceDisclaimer')}
             </span>
           </div>
         </div>
 
-        {/* Example Card – Left side on desktop (now second in DOM) */}
-        <div className="flex-1 flex justify-center md:justify-start w-full px-2 sm:px-0 mt-8 sm:mt-0">
+        {/* Example Card – Downgraded on mobile (HIDDEN to focus on CTA) */}
+        <div className="hidden sm:flex sm:flex-1 sm:justify-start w-full px-2 sm:px-0 mt-8 sm:mt-0">
           <div className="w-full max-w-[320px] sm:max-w-sm rounded-3xl border border-sky-50 bg-white p-4 sm:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.1)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
             <div className="mb-3 sm:mb-4 flex items-center justify-between">
               <div>

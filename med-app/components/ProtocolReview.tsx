@@ -51,16 +51,6 @@ export default function ProtocolReview({
                 >
                     {t('title')}
                 </h2>
-                <button
-                    type="button"
-                    onClick={() => {
-                        onBack();
-
-                    }}
-                    className="text-base text-slate-700 underline-offset-2 hover:text-slate-900 hover:underline"
-                >
-                    {t('backToStep1')}
-                </button>
             </div>
 
             <PrescriptionView prescription={prescription} />

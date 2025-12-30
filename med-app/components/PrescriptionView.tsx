@@ -30,32 +30,32 @@ export default function PrescriptionView({ prescription }: Props) {
         : t('protocols.custom');
 
   return (
-    <div className="space-y-3 sm:space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-4 sm:p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
+    <div className="space-y-3 sm:space-y-4 rounded-3xl border border-slate-200 bg-white/90 p-3 sm:p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
       {/* Header + Surgery Type Badge */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5 sm:space-y-1">
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+          <h3 className="text-sm sm:text-lg font-semibold text-slate-900">
             {t('title')}
           </h3>
-          <p className="text-sm sm:text-base text-slate-800">{surgeryTypeText}</p>
+          <p className="text-xs sm:text-base text-slate-800">{surgeryTypeText}</p>
         </div>
-        <span className="rounded-full border-2 border-sky-200 bg-sky-50 px-3 py-1 text-sm font-bold text-sky-800 sm:px-4 sm:py-1.5 sm:text-base">
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-xs font-bold text-sky-800 sm:border-2 sm:px-4 sm:py-1.5 sm:text-base">
           {surgeryType}
         </span>
       </div>
 
       {/* Basic Details: Date, Waking Hours, Med Count */}
-      <div className="grid gap-3 rounded-2xl bg-slate-50/80 p-4 text-base text-slate-800 sm:grid-cols-2 sm:gap-4 sm:p-5 sm:text-lg">
+      <div className="grid gap-2 rounded-2xl bg-slate-50/50 p-3 text-xs text-slate-700 sm:grid-cols-2 sm:gap-4 sm:p-5 sm:text-lg">
         <div>
-          <span className="font-semibold">{t('labels.surgeryDate')} </span>
+          <span className="font-semibold text-slate-900">{t('labels.surgeryDate')} </span>
           {surgeryDate}
         </div>
         <div>
-          <span className="font-semibold">{t('labels.wakingHours')} </span>
+          <span className="font-semibold text-slate-900">{t('labels.wakingHours')} </span>
           {wakeTime}–{sleepTime}
         </div>
         <div>
-          <span className="font-semibold">{t('labels.medCount')} </span>
+          <span className="font-semibold text-slate-900">{t('labels.medCount')} </span>
           {medications.length}
         </div>
       </div>
