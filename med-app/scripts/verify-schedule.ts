@@ -1,5 +1,6 @@
-import { buildLaserSchedule } from "../lib/domain/schedule-builder";
-import { LaserPrescriptionInput, SurgeryType } from "../types/prescription";
+import { buildLaserSchedule } from "@/domain/scheduling/schedule-builder";
+import { LaserPrescriptionInput, SurgeryType } from "@/types/prescription";
+import { defaultClinic } from "@/config/clinics/default";
 
 console.log("\n--- Verifying generateSchedule ---");
 const input: LaserPrescriptionInput = {
@@ -21,7 +22,7 @@ const input: LaserPrescriptionInput = {
     ]
 };
 
-const schedule = buildLaserSchedule(input);
+const schedule = buildLaserSchedule(input, defaultClinic);
 schedule.forEach(slot => {
     console.log(`[Day ${slot.dayIndex}] ${slot.date} ${slot.time} - ${slot.medicationName} `);
 });

@@ -1,6 +1,7 @@
 // scripts/test-schedule-logic.ts
-import { buildLaserSchedule, ImpossibleScheduleError } from "../lib/domain/schedule-builder";
-import { LaserPrescriptionInput } from "../types/prescription";
+import { buildLaserSchedule, ImpossibleScheduleError } from "@/domain/scheduling/schedule-builder";
+import { LaserPrescriptionInput } from "@/types/prescription";
+import { defaultClinic } from "@/config/clinics/default";
 
 const mockMeds = [
     {
@@ -13,7 +14,7 @@ const mockMeds = [
 function runTest(name: string, input: LaserPrescriptionInput, shouldFail: boolean = false) {
     console.log(`\n--- Running Test: ${name} ---`);
     try {
-        const schedule = buildLaserSchedule(input);
+        const schedule = buildLaserSchedule(input, defaultClinic);
         if (shouldFail) {
             console.error("❌ FAILED: Expected error but got schedule");
         } else {

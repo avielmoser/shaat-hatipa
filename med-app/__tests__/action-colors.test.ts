@@ -1,6 +1,6 @@
-import { getActionColor, assignActionColors } from '../lib/domain/action-colors';
-import type { ProtocolAction } from '../types/prescription';
-import type { ClinicConfig } from '../config/clinics/types';
+import { getActionColor, assignActionColors } from '@/domain/scheduling/action-colors';
+import type { ProtocolAction } from '@/types/prescription';
+import type { ClinicConfig } from '@/config/clinics/types';
 
 describe('action-colors', () => {
   describe('getActionColor', () => {

@@ -1,5 +1,5 @@
-import { getSlotInstructions, buildInstructionIndex, toSuperscript } from "../lib/utils/instructions";
-import { ActionInstruction, DoseSlot } from "../types/prescription";
+import { getSlotInstructions, buildInstructionIndex, toSuperscript } from "@/lib/utils/instructions";
+import { ActionInstruction, DoseSlot } from "@/types/prescription";
 
 const mockSlot: DoseSlot = {
     id: "slot-1",

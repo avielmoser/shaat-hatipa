@@ -1,5 +1,5 @@
-import { buildProtocolSchedule } from '../lib/domain/schedule-builder';
-import type { ProtocolScheduleInput, ProtocolAction } from '../types/prescription';
+import { buildProtocolSchedule } from '@/domain/scheduling/schedule-builder';
+import type { ProtocolScheduleInput, ProtocolAction } from '@/types/prescription';
 
 describe('Regression Protocols & Edge Cases', () => {
 

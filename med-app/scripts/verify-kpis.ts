@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { getFunnelKPIs } from "../lib/server/analytics-kpis";
+import { getFunnelKPIs } from "@/lib/server/analytics-kpis";
 
 const prisma = new PrismaClient();
 

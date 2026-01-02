@@ -1,5 +1,5 @@
-import { buildProtocolSchedule, ImpossibleScheduleError } from '../lib/domain/schedule-builder';
-import type { ProtocolScheduleInput, ProtocolAction } from '../types/prescription';
+import { buildProtocolSchedule, ImpossibleScheduleError } from '@/domain/scheduling/schedule-builder';
+import type { ProtocolScheduleInput, ProtocolAction } from '@/types/prescription';
 
 describe('buildProtocolSchedule', () => {
     const baseInput: ProtocolScheduleInput = {

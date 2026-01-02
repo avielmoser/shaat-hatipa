@@ -1,6 +1,7 @@
 
-import { resolveClinicConfig, resolveProtocol } from "../lib/domain/protocol-resolver";
-import { getInterlasikMedications } from "../constants/protocols";
+import { resolveProtocol } from "@/domain/protocols/protocol-resolver";
+import { getClinicConfig } from "@/config/clinics";
+import { getInterlasikMedications } from "@/constants/protocols";
 
 function assert(condition: boolean, message: string) {
     if (!condition) {
@@ -13,14 +14,14 @@ async function verify() {
     console.log("Starting verification...");
 
     // 1. Default Behavior
-    const defaultConfig = resolveClinicConfig(undefined);
+    const defaultConfig = getClinicConfig(undefined);
     assert(defaultConfig.id === "default", "Default config ID is 'default'");
     const defaultProtocol = resolveProtocol(defaultConfig, "INTERLASIK");
     assert(defaultProtocol.actions.length > 0, "Default protocol returns meds");
     assert((defaultProtocol.actions[0].notes || "") === "", "Default Sterodex has empty notes");
 
     // 2. Ein Tal (Standard)
-    const einTalConfig = resolveClinicConfig("ein-tal");
+    const einTalConfig = getClinicConfig("ein-tal");
     assert(einTalConfig.id === "ein-tal", "Ein Tal config ID is 'ein-tal'");
     const einTalProtocol = resolveProtocol(einTalConfig, "INTERLASIK");
     assert(einTalProtocol.actions.length > 0, "Ein Tal protocol returns meds");
@@ -42,7 +43,7 @@ async function verify() {
     // Better to focus on Moser Clinic which I added.
 
     // 3. Moser Clinic
-    const moserConfig = resolveClinicConfig("moser-clinic");
+    const moserConfig = getClinicConfig("moser-clinic");
     assert(moserConfig.id === "moser-clinic", "Moser config ID is 'moser-clinic'");
     const moserProtocol = resolveProtocol(moserConfig, "HEADACHE");
     assert(moserProtocol.actions.length > 0, "Moser protocol returns meds");

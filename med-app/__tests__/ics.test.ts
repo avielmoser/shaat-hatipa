@@ -1,4 +1,4 @@
-import { toICalDateTime, downloadScheduleIcs } from "../lib/utils/ics";
+import { toICalDateTime, downloadScheduleIcs } from "@/lib/utils/ics";
 
 describe("ICS Utils", () => {
     describe("toICalDateTime", () => {

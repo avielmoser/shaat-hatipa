@@ -5,7 +5,7 @@ const config: Config = {
     testEnvironment: 'node',
     forceExit: true,
     moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/$1',
+        '^@/(.*)$': '<rootDir>/src/$1',
     },
     transform: {
         '^.+\\.tsx?$': ['ts-jest', {

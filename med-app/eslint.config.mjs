@@ -13,6 +13,54 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: ["src/domain/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "next",
+              message: "Domain layer must not depend on Next.js.",
+            },
+            {
+              name: "prisma",
+              message: "Domain layer must not depend on Prisma.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["@/app/**", "@/components/**", "@/infrastructure/**", "next/**", "@prisma/**"],
+              message: "Domain layer must remain pure and not depend on UI or Infrastructure.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/application/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "prisma",
+              message: "Application layer must not depend on Prisma directly. Use repositories.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["@/infrastructure/**", "@prisma/**", "@/lib/server/**", "@/lib/client/**"],
+              message: "Application layer must depend on Domain only, and use Repository interfaces for Infrastructure.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
