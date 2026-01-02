@@ -20,5 +20,8 @@ export type DashboardMetrics = {
     filters: {
         clinics: string[];
         protocols: string[];
-    }
+    };
+    debug?: {
+        totalDbEvents: number;
+    };
 };

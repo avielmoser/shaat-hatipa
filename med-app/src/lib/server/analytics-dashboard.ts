@@ -33,7 +33,10 @@ export type DashboardMetrics = {
     filters: {
         clinics: string[];
         protocols: string[];
-    }
+    };
+    debug?: {
+        totalDbEvents: number;
+    };
 };
 
 type FilterParams = {
@@ -42,14 +45,12 @@ type FilterParams = {
     startDate: Date;
     endDate: Date;
     locale?: string;
-    device?: string; // meta->device (if tracked, but user didn't ask to track device explicitly, maybe user agent?)
-    // Note regarding Device: Requirement said "Device (mobile / desktop)". We don't currently track user agent or device type explicitly in all events.
-    // We will attempt to filter if 'device' field exists in meta, otherwise ignore or implement heuristic if needed.
-    // For now we will support passing it, and usage depends on data availability.
+    device?: string; // meta->device
+    view?: string; // "meaningful" | "all"
 };
 
 export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterParams): Promise<DashboardMetrics> {
-    const { startDate, endDate, clinicSlug, protocol } = filters;
+    const { startDate, endDate, clinicSlug, protocol, view } = filters;
 
     // 0. Fallback "Zero" metrics
     const ZERO_METRICS: DashboardMetrics = {
@@ -64,7 +65,8 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
         },
         graphs: { monthly: [], yearly: [] },
         funnel: { started: 0, step2: 0, generated: 0 },
-        filters: { clinics: [], protocols: [] }
+        filters: { clinics: [], protocols: [] },
+        debug: { totalDbEvents: 0 }
     };
 
     try {
@@ -90,6 +92,16 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
                 path: ['surgeryType'],
                 equals: protocol
             };
+        }
+
+        // D) Meaningful Filter (Optional)
+        // If view=meaningful, we want to exclude strictly noise (page_view) OR include only action/conversion.
+        if (view === "meaningful") {
+            // We check both the top-level column and the meta field for robustness
+            where.OR = [
+                { eventType: { in: ["action", "conversion"] } },
+                { meta: { path: ["eventType"], not: "page_view" } }
+            ];
         }
 
         // Optimization: limit to relevant event names
@@ -400,6 +412,9 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
         // We'll leave protocols empty here, UI can use static config or hardcoded list if needed.
         const uniqueProtocols: string[] = []; // Populate if feasible or use predefined
 
+        // Diagnostic: Count total events in DB to distinguish "No Data" vs "Filter too strict"
+        const totalDbEvents = await prisma.analyticsEvent.count();
+
         return {
             kpis: {
                 totalVisits: totalUniqueSessions,
@@ -426,6 +441,9 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
             filters: {
                 clinics: uniqueClinics,
                 protocols: uniqueProtocols
+            },
+            debug: {
+                totalDbEvents
             }
         };
     } catch (e) {

@@ -11,13 +11,14 @@ export async function GET(req: NextRequest) {
 
         // --- Auth Check ---
         const authHeader = req.headers.get("x-admin-key");
-        const adminKey = process.env.ADMIN_ACCESS_KEY;
+        // Support both keys to fix environment mismatch without breaking potential existing integrations
+        const adminKey = process.env.ADMIN_ACCESS_KEY || process.env.ADMIN_DASHBOARD_KEY;
 
         if (!authHeader) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (authHeader !== adminKey) {
+        if (!adminKey || authHeader !== adminKey) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
         const protocol = searchParams.get("protocol") || undefined;
         const locale = searchParams.get("locale") || undefined;
         const device = searchParams.get("device") || undefined;
+        const view = searchParams.get("view") || undefined; // "meaningful" | "all" | undefined
 
         // Dates: Default to last 30 days
         const end = searchParams.get("endDate")
@@ -47,7 +49,8 @@ export async function GET(req: NextRequest) {
             startDate: start,
             endDate: end,
             locale,
-            device
+            device,
+            view // Pass the view filter
         });
 
         return NextResponse.json(metrics);

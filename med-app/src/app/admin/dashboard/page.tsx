@@ -35,6 +35,7 @@ function AdminDashboardContent() {
     const [dateRange, setDateRange] = useState("30d"); // 30d, 90d, 1y
     const [clinic, setClinic] = useState("all");
     const [protocol, setProtocol] = useState("all");
+    const [view, setView] = useState("all"); // all, meaningful
 
     // Derived Date Range
     const getDates = () => {
@@ -57,6 +58,7 @@ function AdminDashboardContent() {
             });
             if (clinic !== "all") query.append("clinic", clinic);
             if (protocol !== "all") query.append("protocol", protocol);
+            if (view !== "all") query.append("view", view);
 
             const res = await fetch(`/api/analytics/dashboard?${query.toString()}`, {
                 headers: {
@@ -79,7 +81,7 @@ function AdminDashboardContent() {
             fetchData();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dateRange, clinic, protocol, adminKey]);
+    }, [dateRange, clinic, protocol, view, adminKey]);
 
     if (loading && !metrics) {
         return (
@@ -130,6 +132,16 @@ function AdminDashboardContent() {
                         <option value="30d">Last 30 Days</option>
                         <option value="90d">Last 90 Days</option>
                         <option value="1y">Last Year</option>
+                    </select>
+
+                    {/* View Filter */}
+                    <select
+                        value={view}
+                        onChange={(e) => setView(e.target.value)}
+                        className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                        <option value="all">All Events</option>
+                        <option value="meaningful">Meaningful</option>
                     </select>
 
                     {/* Clinic Filter */}
@@ -213,6 +225,25 @@ function AdminDashboardContent() {
                     </div>
                 </div>
             </div>
+
+            {/* Empty State Guardrail */}
+            {metrics.kpis.totalVisits === 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3 text-amber-800 text-sm">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold">No data found for this range/filter.</p>
+                        {metrics.debug?.totalDbEvents ? (
+                            <p className="mt-1 text-amber-700">
+                                Diagnoses: DB has {metrics.debug.totalDbEvents} total events, but none matched your filters ({formatRangeLabel(dateRange)}).
+                            </p>
+                        ) : (
+                            <p className="mt-1 text-amber-700">
+                                Diagnoses: The database appears completely empty. Check ingestion.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Graphs */}
             <div className="space-y-6">
@@ -326,4 +357,13 @@ function FunnelStep({ label, count, sub, total, isLast }: { label: string, count
             </div>
         </div>
     );
+}
+
+function formatRangeLabel(rangeIndex: string): string {
+    switch (rangeIndex) {
+        case "30d": return "Last 30 Days";
+        case "90d": return "Last 90 Days";
+        case "1y": return "Last Year";
+        default: return rangeIndex;
+    }
 }
