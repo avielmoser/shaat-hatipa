@@ -2,6 +2,9 @@
     "layout": {
         "trialBanner": "גרסת ניסיון · המידע המוצג אינו מהווה ייעוץ רפואי"
     },
+    "common": {
+        "clinic_logo_alt": "לוגו מרפאת {name}"
+    },
     "HomePage": {
         "title": "שעת הטיפה",
         "description": "מחולל לוח זמנים לטיפות לאחר ניתוח"

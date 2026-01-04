@@ -146,7 +146,7 @@ export const moserClinic: ClinicConfig = {
     id: "moser-clinic",
     slug: "moser-clinic",
     name: "Moser Clinic",
-    logoUrl: "/logo.png", // Using default placeholder as requested
+    logoUrl: "/clinics/moser-clinic/logo.svg", // Using new SVG placeholder
     colors: {
         primary: "#3B82F6", // Blue-500
         secondary: "#EFF6FF", // Blue-50

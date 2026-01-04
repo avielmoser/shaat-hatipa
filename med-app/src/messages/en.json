@@ -2,6 +2,9 @@
     "layout": {
         "trialBanner": "Trial Version · Not medical advice"
     },
+    "common": {
+        "clinic_logo_alt": "{name} clinic logo"
+    },
     "HomePage": {
         "title": "ShaatHaTipa",
         "description": "Personal drop schedule generator after surgery"

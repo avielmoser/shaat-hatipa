@@ -94,7 +94,7 @@ export const einTalClinic: ClinicConfig = {
     id: "ein-tal",
     slug: "ein-tal",
     name: "Ein Tal",
-    logoUrl: "/clinics/eintal-logo.png",
+    logoUrl: "/clinics/ein-tal/logo.png",
     colors: {
         primary: "#0EA5E9",
         secondary: "#E0F2FE",
