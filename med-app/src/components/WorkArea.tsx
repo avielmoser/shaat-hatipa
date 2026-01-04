@@ -14,7 +14,7 @@ import ProtocolReview from "./ProtocolReview";
 import ScheduleDisplay from "./ScheduleDisplay";
 import GlobalErrorBoundary from "./GlobalErrorBoundary";
 import { normalizeAwakeWindow, isImpossibleAwakeWindow } from "../lib/utils";
-import { resolveProtocol } from "@/domain/protocols/protocol-resolver";
+import { resolveProtocol, ProtocolResolver, ClinicConfigStrategy, DefaultFallbackStrategy } from "@/domain/protocols/protocol-resolver";
 import { trackEvent } from "../lib/client/analytics";
 import type { ClinicConfig } from "../config/clinics";
 
@@ -138,7 +138,16 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
 
     let medications: any[] = [];
     try {
-      const protocolDef = resolveProtocol(clinicConfig, protocolKey);
+      // Mission Alignment: Explicit Strategy Pattern usage
+      const strategies = [];
+      if (clinicConfig) {
+        strategies.push(new ClinicConfigStrategy(clinicConfig));
+      }
+      strategies.push(new DefaultFallbackStrategy());
+
+      const resolver = new ProtocolResolver(strategies);
+      const protocolDef = resolver.resolve(protocolKey);
+
       medications = protocolDef.actions;
     } catch (e) {
       console.error("Failed to resolve protocol", e);

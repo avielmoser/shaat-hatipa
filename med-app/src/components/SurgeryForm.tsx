@@ -266,7 +266,7 @@ export default function SurgeryForm({
 
                     {/* Fixed Bottom CTA for Mobile / Sticky for Desktop */}
                     <div className={`
-                        fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none transition-transform duration-300 ease-in-out
+                        fixed bottom-0 start-0 end-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none transition-transform duration-300 ease-in-out
                         ${showFloatingBtn ? 'translate-y-0' : 'translate-y-full sm:translate-y-0'}
                     `}>
                         <div className="mx-auto w-full max-w-md sm:max-w-md">

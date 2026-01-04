@@ -1,5 +1,5 @@
 import { buildProtocolSchedule, ImpossibleScheduleError } from "@/domain/scheduling/schedule-builder";
-import { resolveProtocol } from "@/domain/protocols/protocol-resolver";
+import { ProtocolResolver, ClinicConfigStrategy, DefaultFallbackStrategy } from "@/domain/protocols/protocol-resolver";
 import type { ProtocolScheduleInput, DoseSlot } from "@/types/prescription";
 import { IClinicRepository } from "@/domain/contracts/clinic-repository";
 import { ILogger } from "@/domain/contracts/logging";
@@ -26,7 +26,15 @@ export class ScheduleService {
         // Resolve medications from config if not provided in the request
         if (!medications || medications.length === 0) {
             const clinicConfig = this.clinicRepository.getClinicConfig(input.clinicSlug);
-            const protocol = resolveProtocol(clinicConfig, input.protocolKey);
+
+            // Explicit Strategy Pattern
+            const strategies = [];
+            if (clinicConfig) {
+                strategies.push(new ClinicConfigStrategy(clinicConfig));
+            }
+            strategies.push(new DefaultFallbackStrategy());
+
+            const protocol = new ProtocolResolver(strategies).resolve(input.protocolKey);
 
             if (protocol.kind === "AS_NEEDED") {
                 isAsNeeded = true;
