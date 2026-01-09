@@ -105,8 +105,8 @@ export async function POST(req: NextRequest) {
         console.error("Analytics API Error:", error);
 
         return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 200 } // Return 200 to avoid client-side errors
+            { error: "Internal Server Error", details: (error as Error).message },
+            { status: 500 }
         );
     }
 }

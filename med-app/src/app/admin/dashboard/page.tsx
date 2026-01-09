@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { Loader2, Filter, Download, AlertCircle } from "lucide-react";
 import type { DashboardMetrics } from "@/types/analytics";
+import heMessages from "@/messages/he.json";
 
 function AdminDashboardContent() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -15,21 +16,10 @@ function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
 
     // --- Key Management ---
-    const searchParams = useSearchParams();
+    // Handled via Server Middleware (Cookie Auth)
     const router = useRouter();
-    const [adminKey, setAdminKey] = useState("");
+    const searchParams = useSearchParams();
 
-    // Capture key from URL and strip it
-    useEffect(() => {
-        const key = searchParams.get("key");
-        if (key) {
-            setAdminKey(key);
-            // Remove key from URL
-            const params = new URLSearchParams(searchParams.toString());
-            params.delete("key");
-            router.replace(`/admin/dashboard?${params.toString()}`);
-        }
-    }, [searchParams, router]);
 
     // Filters State
     const [dateRange, setDateRange] = useState("30d"); // 30d, 90d, 1y
@@ -60,28 +50,25 @@ function AdminDashboardContent() {
             if (protocol !== "all") query.append("protocol", protocol);
             if (view !== "all") query.append("view", view);
 
-            const res = await fetch(`/api/analytics/dashboard?${query.toString()}`, {
-                headers: {
-                    "x-admin-key": adminKey
-                }
-            });
-            if (!res.ok) throw new Error("Failed to fetch data");
+            const res = await fetch(`/api/analytics/dashboard?${query.toString()}`);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.details || errData.error || "Failed to fetch data");
+            }
             const data = await res.json();
             setMetrics(data);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            setError("Could not load analytics data.");
+            setError(e.message || "Could not load analytics data.");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (adminKey) {
-            fetchData();
-        }
+        fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dateRange, clinic, protocol, view, adminKey]);
+    }, [dateRange, clinic, protocol, view]);
 
     if (loading && !metrics) {
         return (
@@ -98,13 +85,23 @@ function AdminDashboardContent() {
                     <div className="bg-red-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-red-500">
                         <AlertCircle className="h-6 w-6" />
                     </div>
-                    <h2 className="text-lg font-bold text-slate-800">Error Loading Dashboard</h2>
-                    <p className="text-sm text-slate-600">{error}</p>
+                    <h2 className="text-lg font-bold text-slate-800">{heMessages.Admin.Dashboard.Errors.Title}</h2>
+                    <p className="text-sm text-slate-600">{heMessages.Admin.Dashboard.Errors.Generic}</p>
+
+                    {/* Admin Diagnostics (LTR) */}
+                    <div className="text-xs text-red-600 font-mono bg-red-50 p-2 rounded text-left break-all" dir="ltr">
+                        <span className="font-bold block mb-1">{heMessages.Admin.Dashboard.Errors.DiagnosticsTitle}</span>
+                        {error}
+                        <div className="mt-1 opacity-75 border-t border-red-100 pt-1">
+                            {heMessages.Admin.Dashboard.Errors.LikelyCause}
+                        </div>
+                    </div>
+
                     <button
                         onClick={fetchData}
                         className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700"
                     >
-                        Retry
+                        {heMessages.Admin.Dashboard.Errors.Retry}
                     </button>
                 </div>
             </div>

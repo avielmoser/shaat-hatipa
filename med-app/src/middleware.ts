@@ -35,6 +35,63 @@ const intlMiddleware = createMiddleware(routing);
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // -----------------------------------------------------------------------
+    // 0. ADMIN AUTHENTICATION
+    // -----------------------------------------------------------------------
+    // Define protected paths
+    const isAdminPath = pathname.startsWith('/admin/dashboard');
+    const isAnalyticsApi = pathname.startsWith('/api/analytics');
+
+    if (isAdminPath || isAnalyticsApi) {
+        // We need the admin key from env. 
+        // Note: In middleware (Edge), process.env is available but make sure it's populated.
+        const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY || process.env.ADMIN_DASHBOARD_KEY;
+        const urlKey = request.nextUrl.searchParams.get("key");
+        const sessionCookie = request.cookies.get("admin_session");
+
+        // A. Login Attempt (URL ?key=...)
+        // If user hits /admin/dashboard?key=SECRET, we validate and set cookie.
+        if (isAdminPath && urlKey) {
+            if (urlKey === ADMIN_KEY) {
+                // Determine redirect URL (strip the key from the URL)
+                const nextUrl = new URL(request.url);
+                nextUrl.searchParams.delete("key");
+
+                const res = NextResponse.redirect(nextUrl);
+
+                // Set HttpOnly cookie (simulating a session)
+                res.cookies.set("admin_session", "authenticated", {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "strict",
+                    path: "/",
+                    maxAge: 60 * 60 * 24 // 24 hours
+                });
+                return res;
+            } else {
+                // Invalid Key provided in URL -> 403
+                return new Response("Forbidden: Invalid Admin Key", { status: 403 });
+            }
+        }
+
+        // B. Session Check
+        // If no URL key, check for valid cookie.
+        if (!sessionCookie || sessionCookie.value !== "authenticated") {
+            // For API: JSON 401
+            if (isAnalyticsApi) {
+                return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                    status: 401,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+            // For Page: Simple 403 text or Redirect
+            return new Response("Forbidden: Access Denied. Please provide a valid key.", { status: 403 });
+        }
+
+        // C. If authorized (Cookie exists), proceed.
+    }
+
+
     // 1. Bypass Logic (Redundant if matcher is perfect, but good for safety)
     // If the matcher misses something, we exit early for statics/internals.
     if (
@@ -108,8 +165,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     // Matcher:
-    // 1. Negative lookahead for api, _next, static files, favicon, AND admin
-    // 2. Matches everything else
-    // This ensures that /admin routes are NEVER even seen by the intl middleware logic that might be bound to this matcher.
-    matcher: ['/((?!api|_next|favicon.ico).*)']
+    // Update to include API routes and Admin routes clearly, while excluding static assets.
+    // We remove the explicit exclusion of "api" so we can run logic on it.
+    matcher: ['/((?!_next|favicon.ico).*)']
 };
