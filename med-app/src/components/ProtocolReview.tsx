@@ -42,6 +42,11 @@ export default function ProtocolReview({
         }
     };
 
+    // Analytics: Track step 2
+    React.useEffect(() => {
+        trackEvent("step_viewed", { step: "2" });
+    }, []);
+
     return (
         <div className="relative space-y-4" aria-labelledby="step2-title">
             <div className="flex items-center justify-between">

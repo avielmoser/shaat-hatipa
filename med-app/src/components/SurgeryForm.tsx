@@ -59,9 +59,18 @@ export default function SurgeryForm({
         return () => observer.disconnect();
     }, []);
 
+    // Analytics: Track wizard entry
+    useEffect(() => {
+        // Fire wizard_viewed on mount
+        import("../lib/client/analytics").then(({ trackEvent }) => {
+            trackEvent("wizard_viewed", { step: "1" });
+        });
+    }, []);
+
     // Analytics: Track time modifications
     useEffect(() => {
         const defaultWake = "08:00";
+
         const defaultSleep = "22:00";
 
         // We use a timeout to avoid firing on initial render if defaults are different (though they shouldn't be)
@@ -116,6 +125,24 @@ export default function SurgeryForm({
                         {t('description')}
                     </p>
                 </div>
+
+                {/* Dev Only: Smoke Test Button */}
+                {process.env.NODE_ENV === "development" && (
+                    <div className="text-center">
+                        <button
+                            type="button"
+                            className="text-xs text-slate-400 underline hover:text-slate-600"
+                            onClick={() => {
+                                import("../lib/client/analytics").then(({ trackEvent }) => {
+                                    trackEvent("time_modified", { eventType: "action", smokeTest: true });
+                                    alert("Sent: time_modified");
+                                });
+                            }}
+                        >
+                            [DEV] Test Analytics Event
+                        </button>
+                    </div>
+                )}
 
                 {/* Main Form Area */}
                 <div className="space-y-6">

@@ -149,6 +149,12 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
   const locale = useLocale();
   const [mode, setMode] = useState<FilterMode>("today");
 
+  // Analytics: Track step 3 & Conversion
+  useEffect(() => {
+    trackEvent("step_viewed", { step: "3" });
+    trackEvent("schedule_generated", { eventType: "conversion" });
+  }, []);
+
   // Resolve action label safely
   const currentLocale = (locale === 'he' || locale === 'en') ? locale : 'en';
   const actionLabel = clinicConfig?.copy?.[currentLocale]?.actionLabel || (currentLocale === 'he' ? 'טיפות' : 'Drops');
