@@ -40,9 +40,11 @@ export async function middleware(request: NextRequest) {
     // -----------------------------------------------------------------------
     // Define protected paths
     const isAdminPath = pathname.startsWith('/admin/dashboard');
-    const isAnalyticsApi = pathname.startsWith('/api/analytics');
+    // Protect API routes used by dashboard, BUT allow public ingestion (/api/analytics)
+    // Protected: /api/analytics/dashboard, /api/analytics/health
+    const isProtectedApi = pathname.startsWith('/api/analytics/dashboard') || pathname.startsWith('/api/analytics/health');
 
-    if (isAdminPath || isAnalyticsApi) {
+    if (isAdminPath || isProtectedApi) {
         // We need the admin key from env. 
         // Note: In middleware (Edge), process.env is available but make sure it's populated.
         const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY || process.env.ADMIN_DASHBOARD_KEY;
@@ -78,7 +80,7 @@ export async function middleware(request: NextRequest) {
         // If no URL key, check for valid cookie.
         if (!sessionCookie || sessionCookie.value !== "authenticated") {
             // For API: JSON 401
-            if (isAnalyticsApi) {
+            if (isProtectedApi) {
                 return new Response(JSON.stringify({ error: "Unauthorized" }), {
                     status: 401,
                     headers: { "Content-Type": "application/json" }
