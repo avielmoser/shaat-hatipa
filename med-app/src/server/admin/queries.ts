@@ -26,7 +26,12 @@ export type QueryResult<T> =
  */
 export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>> {
     try {
-        const startDate = startOfDay(subDays(new Date(), rangeDays));
+        // Validate range
+        const validRanges = [7, 30, 90];
+        const safeRange = validRanges.includes(rangeDays) ? rangeDays : 30;
+
+        // Calculate start date (rangeDays inclusive of today)
+        const startDate = startOfDay(subDays(new Date(), safeRange - 1));
 
         // Parallel queries for efficiency
         const [total, sessionStart, scheduleGen] = await Promise.all([
@@ -53,7 +58,7 @@ export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>
                 totalEvents: total,
                 sessionStartCount: sessionStart,
                 scheduleGeneratedCount: scheduleGen,
-                rangeDays
+                rangeDays: safeRange
             }
         };
     } catch (error) {
