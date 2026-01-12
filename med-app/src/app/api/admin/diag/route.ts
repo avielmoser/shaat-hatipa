@@ -11,13 +11,18 @@ export async function GET(req: NextRequest) {
     const start = performance.now();
 
     // 1. Check Auth Header
+    // 1. Check Auth Header OR Cookie
     const authHeader = req.headers.get("x-admin-key") || "";
+    const sessionCookie = req.cookies.get("admin_session");
+
     // Support both env var names
     const envKey1 = process.env.ADMIN_ACCESS_KEY;
     const envKey2 = process.env.ADMIN_DASHBOARD_KEY;
 
     // Check if valid
-    const isAuthValid = (!!envKey1 && authHeader === envKey1) || (!!envKey2 && authHeader === envKey2);
+    const isKeyValid = (!!envKey1 && authHeader === envKey1) || (!!envKey2 && authHeader === envKey2);
+    const isCookieValid = sessionCookie?.value === "authenticated";
+    const isAuthValid = isKeyValid || isCookieValid;
 
     // 2. DB Query Test
     let dbStatus = {
@@ -55,7 +60,7 @@ export async function GET(req: NextRequest) {
         env: envStatus,
         request: {
             hasKeyHeader: !!authHeader,
-            keyLength: authHeader.length,
+            hasCookie: !!sessionCookie,
             authValid: isAuthValid
         },
         db: dbStatus
