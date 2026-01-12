@@ -1,77 +1,52 @@
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/server/db";
+import { isEnvConfigured } from "@/lib/env.server";
 
-// Force Node runtime to avoid Edge limitations with Prisma
+// NodeJS runtime required for Prisma performance timing
 export const runtime = "nodejs";
-// Ensure no caching so we get real-time results
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-    const start = performance.now();
-
-    // 1. Check Auth Header
-    // 1. Check Auth Header OR Cookie
-    const authHeader = req.headers.get("x-admin-key") || "";
-    const sessionCookie = req.cookies.get("admin_session");
-
-    // Support both env var names
-    const envKey1 = process.env.ADMIN_ACCESS_KEY;
-    const envKey2 = process.env.ADMIN_DASHBOARD_KEY;
-
-    // Check if valid
-    const isKeyValid = (!!envKey1 && authHeader === envKey1) || (!!envKey2 && authHeader === envKey2);
-    const isCookieValid = sessionCookie?.value === "authenticated";
-    const isAuthValid = isKeyValid || isCookieValid;
-
-    // 2. DB Query Test
-    let dbStatus = {
-        connected: false,
-        rowCount: -1,
-        durationMs: 0,
-        error: null as string | null
-    };
-
-    try {
-        const dbStart = performance.now();
-        // Run the exact count query
-        const count = await prisma.analyticsEvent.count();
-        const dbEnd = performance.now();
-
-        dbStatus.connected = true;
-        dbStatus.rowCount = count;
-        dbStatus.durationMs = Math.round(dbEnd - dbStart);
-    } catch (e: any) {
-        dbStatus.error = e.message || "Unknown DB Error";
+export async function GET() {
+    // 1. Auth Guard (Session Cookie)
+    const session = await getSession();
+    if (!session.isLoggedIn) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 3. Env Status (No secrets)
-    const envStatus = {
-        DATABASE_URL: !!process.env.DATABASE_URL ? "set" : "unset",
-        ADMIN_ACCESS_KEY: !!process.env.ADMIN_ACCESS_KEY ? "set" : "unset",
-        ADMIN_DASHBOARD_KEY: !!process.env.ADMIN_DASHBOARD_KEY ? "set" : "unset",
-        APP_URL: !!process.env.NEXT_PUBLIC_APP_URL ? "set" : "unset",
-        NODE_ENV: process.env.NODE_ENV || "unset"
-    };
+    // 2. Environment Check (Safe Boolean)
+    const envOk = isEnvConfigured();
 
-    const responseData = {
-        ok: isAuthValid && dbStatus.connected,
-        runtime: process.env.NEXT_RUNTIME || "nodejs",
-        env: envStatus,
-        request: {
-            hasKeyHeader: !!authHeader,
-            hasCookie: !!sessionCookie,
-            authValid: isAuthValid
-        },
-        db: dbStatus
-    };
+    // 3. Database Check (Latency)
+    let dbOk = false;
+    let latencyMs = -1;
 
-    // Return with Cache-Control: no-store
-    return NextResponse.json(responseData, {
+    try {
+        const start = performance.now();
+        // Lightweight check (count is cheap, raw query is better if available but count is safe)
+        // Using count for simplicity and broad compatibility
+        await prisma.analyticsEvent.count({ take: 1 });
+        const end = performance.now();
+
+        dbOk = true;
+        latencyMs = Math.round(end - start);
+    } catch (e) {
+        console.error("[Diagnostics] DB Check Failed:", e);
+        dbOk = false;
+    }
+
+    // 4. Response
+    return NextResponse.json({
+        ok: envOk && dbOk,
+        env_ok: envOk,
+        db_ok: dbOk,
+        latency_ms: latencyMs,
+        timestamp: new Date().toISOString()
+    }, {
         headers: {
-            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache"
         }
     });
 }
