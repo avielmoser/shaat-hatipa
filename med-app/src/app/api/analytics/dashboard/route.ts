@@ -12,15 +12,10 @@ export const runtime = "nodejs";
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
-    // --- DIAGNOSTIC LOGGING (TEMP) ---
-    console.log("[API] Dashboard Analytics Request Started");
-    console.log("[API] Runtime:", process.env.NEXT_RUNTIME || "nodejs (default)");
-    console.log("[API] Node Env:", process.env.NODE_ENV);
-    console.log("[API] Env Check:", {
-        DATABASE_URL: !!process.env.DATABASE_URL,
-        DIRECT_URL: !!process.env.DIRECT_URL,
-        ADMIN_KEY: !!(process.env.ADMIN_ACCESS_KEY || process.env.ADMIN_DASHBOARD_KEY),
-    });
+    // --- DIAGNOSTIC LOGGING (Refined) ---
+    // Stable prefix for Vercel log filtering: [ADMIN_PROD_DIAG]
+    console.log(`[ADMIN_PROD_DIAG] Request | Runtime: ${process.env.NEXT_RUNTIME || "nodejs"} | Auth: Checked by Middleware`);
+    console.log(`[ADMIN_PROD_DIAG] Env Check | DB_URL: ${!!process.env.DATABASE_URL} | ADMIN_KEY: ${!!(process.env.ADMIN_ACCESS_KEY || process.env.ADMIN_DASHBOARD_KEY)}`);
     // ---------------------------------
 
     // --- Auth Check ---
