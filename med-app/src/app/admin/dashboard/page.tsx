@@ -13,6 +13,7 @@ import heMessages from "@/messages/he.json";
 function AdminDashboardContent() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [diagResult, setDiagResult] = useState<any>(null);
 
     const runDiagnostics = async () => {
