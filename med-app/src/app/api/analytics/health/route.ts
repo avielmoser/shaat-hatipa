@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/db";
-import { env } from "@/lib/env";
+import { getServerEnv } from "@/lib/env";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
     try {
+        const env = getServerEnv();
         // Fingerprint DB (Safe)
         const dbUrl = env.DATABASE_URL;
         const host = new URL(dbUrl).hostname;

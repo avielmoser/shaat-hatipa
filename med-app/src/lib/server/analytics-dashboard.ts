@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { env } from "@/lib/env";
+
 
 /**
  * PRODUCTION ANALYTICS DASHBOARD - AGGREGATION LOGIC
@@ -86,7 +86,7 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
         lte: adjustedEndDate
     };
 
-    if (env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development") {
         console.log(`[Analytics] Fetching range: ${startDate.toISOString()} -> ${adjustedEndDate.toISOString()}`);
     }
 

@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+
 
 type LogLevel = "info" | "warn" | "error" | "debug";
 
@@ -32,7 +32,7 @@ class Logger {
         }
 
         // In local dev, we might want pretty printing, but JSON is safer for structured logging tools
-        if (env.NODE_ENV === "development") {
+        if (process.env.NODE_ENV === "development") {
             const color = level === "error" ? "\x1b[31m" : level === "warn" ? "\x1b[33m" : "\x1b[36m";
             console.log(`${color}[${level.toUpperCase()}] ${message}\x1b[0m`, context || "", error || "");
         } else {

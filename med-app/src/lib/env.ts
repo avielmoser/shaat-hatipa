@@ -37,45 +37,46 @@ const processEnv = {
     NEXT_PUBLIC_ANALYTICS_DEBUG: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG,
 };
 
-// Singleton Logic
-// We use a try/catch block to format the error nicely if validation fails.
-let env: z.infer<typeof envSchema>;
+// Singleton Lazy Logic
+let parsedEnv: z.infer<typeof envSchema> | undefined;
 
-try {
-    // Docker Build Support: Skip validation if flag is set
-    if (process.env.SKIP_ENV_VALIDATION === "true" || process.env.SKIP_ENV_VALIDATION === "1") {
-        console.warn("⚠️ Skipping environment validation (SKIP_ENV_VALIDATION is set). Using mock values.");
-        // Return a mock object that satisfies the schema types but isn't real data
-        env = {
-            DATABASE_URL: "postgresql://mock:mock@localhost:5432/mock",
-            NODE_ENV: "development",
-            VERCEL: undefined,
-            ADMIN_ACCESS_KEY: "mock-key",
-            PROD_DB_HOSTS: undefined,
-            DATABASE_URL_PROD: undefined,
-            NEXT_PUBLIC_APP_URL: "http://localhost:3000",
-            NEXT_PUBLIC_ANALYTICS_DEBUG: "0",
-        };
-    } else {
-        env = envSchema.parse(processEnv);
-    }
-} catch (error) {
-    if (error instanceof z.ZodError) {
-        const missingVars = error.issues.map((issue) => {
-            const path = issue.path.join(".");
-            return `${path}: ${issue.message}`;
-        }).join("\n  - ");
+export function getServerEnv() {
+    if (parsedEnv) return parsedEnv;
 
-        console.error(
-            `\n❌ Invalid environment variables:\n  - ${missingVars}\n\n` +
-            `Fix this in your .env file or Vercel project settings.\n`
-        );
+    try {
+        // Docker Build Support: Skip validation if flag is set
+        if (process.env.SKIP_ENV_VALIDATION === "true" || process.env.SKIP_ENV_VALIDATION === "1") {
+            console.warn("⚠️ Skipping environment validation (SKIP_ENV_VALIDATION is set). Using mock values.");
+            parsedEnv = {
+                DATABASE_URL: "postgresql://mock:mock@localhost:5432/mock",
+                NODE_ENV: "development",
+                VERCEL: undefined,
+                ADMIN_ACCESS_KEY: "mock-key",
+                PROD_DB_HOSTS: undefined,
+                DATABASE_URL_PROD: undefined,
+                NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+                NEXT_PUBLIC_ANALYTICS_DEBUG: "0",
+            };
+        } else {
+            parsedEnv = envSchema.parse(processEnv);
+        }
+        return parsedEnv;
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            const missingVars = error.issues.map((issue) => {
+                const path = issue.path.join(".");
+                return `${path}: ${issue.message}`;
+            }).join("\n  - ");
 
-        // In strict mode, we kill the process.
-        throw new Error("Invalid environment variables");
-    } else {
-        throw error;
+            console.error(
+                `\n❌ Invalid environment variables:\n  - ${missingVars}\n\n` +
+                `Fix this in your .env file or Vercel project settings.\n`
+            );
+
+            // In strict mode, we kill the process.
+            throw new Error("Invalid environment variables");
+        } else {
+            throw error;
+        }
     }
 }
-
-export { env };
