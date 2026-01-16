@@ -1,6 +1,7 @@
 
 import { prisma } from "@/lib/server/db";
 import { subDays, startOfDay } from "date-fns";
+import { getDateRanges } from "./utils";
 
 export interface AdminKpis {
     totalEvents: number;
@@ -16,13 +17,201 @@ export interface AdminEvent {
     meta: any; // Json type
 }
 
+export interface BusinessKpis {
+    schedulesGenerated: number;
+    activationRate: number; // 0-1
+    exportRate: number; // 0-1
+    returningUsers: number;
+    biggestDropoffStep: string;
+    deltas?: {
+        schedulesGenerated: number;
+        activationRate: number;
+        exportRate: number;
+        returningUsers: number;
+    }
+}
+
 export type QueryResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
 
 /**
+ * Fetch new Business/Product KPIs.
+ * Calculates metrics for the current range and the previous range to provide deltas.
+ */
+export async function getAdminKpis(rangeDays: number): Promise<QueryResult<BusinessKpis>> {
+    try {
+        const { currentStart, previousStart, previousEnd } = getDateRanges(rangeDays);
+        const currentEnd = new Date(); // now
+
+        const [currentMetrics, previousMetrics] = await Promise.all([
+            getMetricsForRange(currentStart, currentEnd),
+            getMetricsForRange(previousStart, previousEnd)
+        ]);
+
+        const deltas = {
+            schedulesGenerated: calculateDelta(currentMetrics.schedulesGenerated, previousMetrics.schedulesGenerated),
+            activationRate: calculateDelta(currentMetrics.activationRate, previousMetrics.activationRate),
+            exportRate: calculateDelta(currentMetrics.exportRate, previousMetrics.exportRate),
+            returningUsers: calculateDelta(currentMetrics.returningUsers, previousMetrics.returningUsers),
+        };
+
+        return {
+            success: true,
+            data: {
+                ...currentMetrics,
+                deltas
+            }
+        };
+    } catch (error) {
+        console.error("[AdminQueries] getAdminKpis failed:", error);
+        return { success: false, error: "Failed to fetch KPIs" };
+    }
+}
+
+async function getMetricsForRange(start: Date, end: Date) {
+    // 1. Schedules Generated (North Star)
+    // Count distinct sessions that generated a schedule? Or total schedules?
+    // "NB: Activation Rate = schedule_generated / wizard_viewed (by session_id...)"
+    // For 'Schedules Generated' raw count is usually better for North Star, unless specified otherwise.
+    // User said: "Schedules Generated (last X days)" -> Implies count.
+
+    // We'll use aggregation to be efficient.
+    const schedulesGeneratedCount = await prisma.analyticsEvent.count({
+        where: {
+            eventName: "schedule_generated",
+            createdAt: { gte: start, lt: end }
+        }
+    });
+
+    // 2. Activation Rate inputs
+    // Distinct sessions that viewed wizard
+    const distinctWizardViews = await prisma.analyticsEvent.groupBy({
+        by: ['sessionId'],
+        where: {
+            eventName: "wizard_viewed",
+            createdAt: { gte: start, lt: end },
+            sessionId: { not: null }
+        }
+    }).then(r => r.length);
+
+    // Distinct sessions that generated schedule
+    const distinctScheduleGens = await prisma.analyticsEvent.groupBy({
+        by: ['sessionId'],
+        where: {
+            eventName: "schedule_generated",
+            createdAt: { gte: start, lt: end },
+            sessionId: { not: null }
+        }
+    }).then(r => r.length);
+
+    const activationRate = distinctWizardViews > 0
+        ? distinctScheduleGens / distinctWizardViews
+        : 0;
+
+    // 3. Export Rate inputs
+    // Distinct sessions that clicked export
+    const distinctExportClicks = await prisma.analyticsEvent.groupBy({
+        by: ['sessionId'],
+        where: {
+            eventName: "export_clicked",
+            createdAt: { gte: start, lt: end },
+            sessionId: { not: null }
+        }
+    }).then(r => r.length);
+
+    const exportRate = distinctScheduleGens > 0
+        ? distinctExportClicks / distinctScheduleGens
+        : 0;
+
+    // 4. Returning Users
+    // Users in this range who had events BEFORE this range.
+    // We use a raw query for performance to avoid fetching all IDs.
+    // Note: We need to ensure table name matches schema: "analytics_events"
+    const returningUsersCountRaw = await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT current.session_id) as count
+        FROM "analytics_events" as current
+        WHERE current.created_at >= ${start} AND current.created_at < ${end}
+        AND current.session_id IS NOT NULL
+        AND EXISTS (
+            SELECT 1 FROM "analytics_events" as past
+            WHERE past.session_id = current.session_id
+            AND past.created_at < ${start}
+        )
+    `;
+    const returningUsers = Number(returningUsersCountRaw[0]?.count || 0);
+
+    // 5. Biggest Drop-off Step
+    // We need step counts.
+    // Steps: wizard_viewed -> step_viewed(1) -> ... -> step_viewed(N)
+    // We'll fetch all step_viewed events and aggregate in memory as stepId is in JSON meta.
+    // If volume is high, this is risky, but for now it's acceptable.
+    // Optimization: limit fields.
+    const stepEvents = await prisma.analyticsEvent.findMany({
+        where: {
+            eventName: "step_viewed",
+            createdAt: { gte: start, lt: end },
+        },
+        select: {
+            meta: true,
+            sessionId: true
+        }
+    });
+
+    // Group distinct sessions per step
+    const stepCounts: Record<string, Set<string>> = {};
+    stepEvents.forEach(e => {
+        const meta = e.meta as any;
+        const stepId = meta?.stepId ? String(meta.stepId) : "unknown";
+        if (!stepCounts[stepId]) stepCounts[stepId] = new Set();
+        if (e.sessionId) stepCounts[stepId].add(e.sessionId);
+    });
+
+    // Find biggest drop
+    // Assuming steps 0, 1, 2, 3...
+    // We also consider 'wizard_viewed' as logical step 0 if we want, but user said "max drop between step_viewed counts".
+    // We'll stick to the steps found in `step_viewed`.
+    // Sort keys numerically
+    const sortedSteps = Object.keys(stepCounts).sort((a, b) => Number(a) - Number(b));
+    let maxDrop = 0;
+    let biggestDropStep = "N/A";
+
+    for (let i = 0; i < sortedSteps.length - 1; i++) {
+        const currStep = sortedSteps[i];
+        const nextStep = sortedSteps[i + 1];
+        const currCount = stepCounts[currStep].size;
+        const nextCount = stepCounts[nextStep].size;
+
+        // Drop is (curr - next). We care about absolute drop? or percentage?
+        // "Biggest Drop-off" usually means absolute loss of users.
+        const drop = currCount - nextCount;
+        if (drop > maxDrop) {
+            maxDrop = drop;
+            biggestDropStep = `Step ${currStep} code→ ${nextStep}`;
+        }
+    }
+
+    // Also check initial wizard -> first step drop if requested?
+    // "identify the step with max drop between step_viewed counts" -> strict reading: only between steps.
+
+    return {
+        schedulesGenerated: schedulesGeneratedCount,
+        activationRate,
+        exportRate,
+        returningUsers,
+        biggestDropoffStep: biggestDropStep === "N/A" && sortedSteps.length > 0 ? "None" : biggestDropStep
+    };
+}
+
+function calculateDelta(current: number, previous: number): number {
+    if (previous === 0) return 0; // Or specific indicator? UI will handle 0 as "--" or similar if we want.
+    return ((current - previous) / previous) * 100;
+}
+
+/**
  * Fetch KPI counts for the given date range.
  * Best-effort: catches DB errors and returns success=false.
+ * @deprecated Use getAdminKpis instead
  */
 export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>> {
     try {
