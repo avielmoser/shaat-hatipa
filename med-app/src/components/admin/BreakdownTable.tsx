@@ -1,4 +1,6 @@
 
+"use client";
+
 import React, { useState } from 'react';
 import { BreakdownItem, BreakdownResult } from '@/server/admin/queries';
 

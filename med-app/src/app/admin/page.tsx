@@ -2,21 +2,19 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
-import { getAdminKpis, getAdminFunnel, getAdminBreakdown, getLatestEvents } from "@/server/admin/queries";
+import { getAdminKpis, getAdminFunnel, getAdminBreakdown, getLatestEvents, getDebugStats } from "@/server/admin/queries";
 import { logout } from "./actions";
 import KpiCards from "@/components/admin/KpiCards";
 import FunnelWidget from "@/components/admin/FunnelWidget";
 import BreakdownTable from "@/components/admin/BreakdownTable";
 import EventsTable from "@/components/admin/EventsTable";
-import { AlertCircle, Clock } from "lucide-react";
+import { AlertCircle, Clock, Bug } from "lucide-react";
 
 // Ensure dynamic rendering for real-time dashboard data
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage({
-    searchParams
-}: {
-    searchParams?: { range?: string | string[] }
+export default async function AdminPage(props: {
+    searchParams: Promise<{ range?: string | string[] }>
 }) {
     // 1. Auth Guard (Session)
     const session = await getSession();
@@ -27,7 +25,9 @@ export default async function AdminPage({
     // 2. Parse Params Safely (Synchronous Access)
     let rangeDays = 30;
     try {
-        const rawRange = Array.isArray(searchParams?.range) ? searchParams.range[0] : searchParams?.range;
+        // Next.js 15: searchParams is a promise
+        const params = await props.searchParams;
+        const rawRange = Array.isArray(params?.range) ? params.range[0] : params?.range;
         const parsed = Number(rawRange || "30");
         if ([7, 30, 90].includes(parsed)) {
             rangeDays = parsed;
@@ -37,13 +37,14 @@ export default async function AdminPage({
     }
 
     // 3. Data Fetching (Parallel & Resilient)
-    let kpiResult, funnelResult, breakdownResult, eventsResult;
+    let kpiResult, funnelResult, breakdownResult, eventsResult, debugStats;
     try {
-        [kpiResult, funnelResult, breakdownResult, eventsResult] = await Promise.all([
+        [kpiResult, funnelResult, breakdownResult, eventsResult, debugStats] = await Promise.all([
             getAdminKpis(rangeDays),
             getAdminFunnel(rangeDays),
             getAdminBreakdown(rangeDays),
-            getLatestEvents(20)
+            getLatestEvents(20),
+            getDebugStats(rangeDays)
         ]);
     } catch (e) {
         console.error("[AdminPage] Critical Fetch Error:", e);
@@ -52,6 +53,7 @@ export default async function AdminPage({
         funnelResult = { success: false, error: "Critical fetch error" } as const;
         breakdownResult = { success: false, error: "Critical fetch error" } as const;
         eventsResult = { success: false, error: "Critical fetch error" } as const;
+        debugStats = null;
     }
 
     // 4. Safe Date Rendering
@@ -130,6 +132,18 @@ export default async function AdminPage({
                         <AlertCircle className="w-5 h-5" />
                         <span className="text-sm font-medium">חלק מהנתונים לא נטענו. בדוק את חיבור המסד.</span>
                     </div>
+                )}
+
+                {/* DEBUG PANEL */}
+                {debugStats && (
+                    <details className="bg-white border border-slate-300 rounded-lg p-4 mb-4 text-xs font-mono text-left" dir="ltr">
+                        <summary className="cursor-pointer font-bold flex items-center gap-2 text-slate-700">
+                            <Bug size={14} /> Debug Analytics (Hidden in Prod)
+                        </summary>
+                        <pre className="mt-2 bg-slate-50 p-2 rounded overflow-auto max-h-64">
+                            {JSON.stringify(debugStats, null, 2)}
+                        </pre>
+                    </details>
                 )}
 
                 <div className="space-y-8">
