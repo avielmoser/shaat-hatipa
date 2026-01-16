@@ -115,47 +115,22 @@ export interface BreakdownResult {
 /**
  * Fetch Breakdown Stats: Top Clinics & Protocols
  */
+/**
+ * Fetch Breakdown Stats: Top Clinics & Protocols
+ */
 export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<BreakdownResult>> {
     try {
         const { currentStart } = getDateRanges(rangeDays);
         const currentEnd = new Date();
-
-        // 1. By Clinic (using native column clinicSlug)
-        // We need counts for:
-        // - Wizard Views (for activation) - grouped by clinic
-        // - Schedules Gen (for count + activation + export) - grouped by clinic
-        // - Export Clicks (for export rate) - grouped by clinic
-
-        // Helper to query group counts
-        const getGroupCounts = async (eventName: string, groupByField: 'clinicSlug') => {
-            return prisma.analyticsEvent.groupBy({
-                by: [groupByField],
-                where: {
-                    eventName,
-                    createdAt: { gte: currentStart, lt: currentEnd },
-                    [groupByField]: { not: null }
-                },
-                _count: { sessionId: true } // Distinct per session better? 
-                // GroupBy count gives total rows. Distinct session is harder with groupBy in one go.
-                // We'll stick to event counts or session counts if possible?
-                // "activationRate: schedule_generated / wizard_viewed (by session_id...)"
-                // Prisma groupBy doesn't support distinct counts strictly inside easily without raw.
-                // We'll use counts for breakdown to be fast, or raw query for distinct.
-                // Let's use Raw for accuracy as per "North Star" quality.
-            });
-        };
-
-        // We will use raw queries for Breakdowns to support the "Distinct Session" logic
-        // and JSON extraction for protocols.
 
         // --- Clinics ---
         // Get all stats aggregated by clinic_slug
         const clinicStatsRaw = await prisma.$queryRaw<any[]>`
             SELECT 
                 COALESCE(e.clinic_slug, 'unknown') as id,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'wizard_viewed' THEN e.session_id END) as views,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'schedule_generated' THEN e.session_id END) as gens,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'export_clicked' THEN e.session_id END) as exports
+                COUNT(DISTINCT CASE WHEN e.event_name = 'wizard_viewed' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as views,
+                COUNT(DISTINCT CASE WHEN e.event_name = 'schedule_generated' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as gens,
+                COUNT(DISTINCT CASE WHEN e.event_name = 'export_clicked' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as exports
             FROM "analytics_events" e
             WHERE e.created_at >= ${currentStart} AND e.created_at < ${currentEnd}
             GROUP BY 1
@@ -168,7 +143,7 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
 
             return {
                 id: row.id,
-                label: row.id, // We could map slug to name if we had config, use slug for now
+                label: row.id,
                 schedulesGenerated: gens,
                 activationRate: views > 0 ? (gens / views) * 100 : 0,
                 exportRate: gens > 0 ? (exports / gens) * 100 : 0,
@@ -177,15 +152,12 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
 
         // --- Protocols ---
         // Group by meta->>'protocol' (or protocolKey)
-        // adjust key based on actual event payload. Assuming 'protocol' or 'protocolKey'.
-        // We'll check both or assume 'protocol' based on taxonomy?
-        // Let's guess 'protocol' first.
         const protocolStatsRaw = await prisma.$queryRaw<any[]>`
             SELECT 
                 COALESCE(e.meta->>'protocol', e.meta->>'protocolKey', 'unknown') as id,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'wizard_viewed' THEN e.session_id END) as views,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'schedule_generated' THEN e.session_id END) as gens,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'export_clicked' THEN e.session_id END) as exports
+                COUNT(DISTINCT CASE WHEN e.event_name = 'wizard_viewed' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as views,
+                COUNT(DISTINCT CASE WHEN e.event_name = 'schedule_generated' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as gens,
+                COUNT(DISTINCT CASE WHEN e.event_name = 'export_clicked' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as exports
             FROM "analytics_events" e
             WHERE e.created_at >= ${currentStart} AND e.created_at < ${currentEnd}
             GROUP BY 1
