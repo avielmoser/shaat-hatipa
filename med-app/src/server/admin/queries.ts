@@ -377,6 +377,7 @@ export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>
     }
 }
 
+
 /**
  * Fetch latest raw events for the table.
  * Restricted to stable columns only.
@@ -399,5 +400,58 @@ export async function getLatestEvents(limit: number = 20): Promise<QueryResult<A
     } catch (error) {
         console.error("[AdminQueries] getLatestEvents failed:", error);
         return { success: false, error: "Database Connection Error" };
+    }
+}
+
+/**
+ * DEBUG ONLY: Fetch raw stats to diagnose why KPIs might be 0.
+ */
+export async function getDebugStats(rangeDays: number) {
+    if (process.env.ADMIN_DEBUG_ANALYTICS !== "1") {
+        return null; // Return nothing if debug is off
+    }
+
+    try {
+        const { currentStart } = getDateRanges(rangeDays);
+        const currentEnd = new Date();
+
+        // Histogram of ALL event names in range
+        const histogram = await prisma.analyticsEvent.groupBy({
+            by: ['eventName'],
+            where: {
+                createdAt: { gte: currentStart, lt: currentEnd }
+            },
+            _count: {
+                id: true
+            }
+        });
+
+        // Check for actorId presence
+        const totalEvents = await prisma.analyticsEvent.count({
+            where: { createdAt: { gte: currentStart, lt: currentEnd } }
+        });
+
+        const withSession = await prisma.analyticsEvent.count({
+            where: {
+                createdAt: { gte: currentStart, lt: currentEnd },
+                sessionId: { not: null }
+            }
+        });
+
+        // Get sample of 5 recent events raw (to check timezones/names)
+        const sampleEvents = await prisma.analyticsEvent.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: { eventName: true, createdAt: true, sessionId: true, meta: true }
+        });
+
+        return {
+            range: { start: currentStart.toISOString(), end: currentEnd.toISOString() },
+            histogram: histogram.map(h => ({ name: h.eventName, count: h._count.id })),
+            actorStats: { total: totalEvents, withSession },
+            last5: sampleEvents
+        };
+    } catch (e) {
+        return { error: String(e) };
     }
 }
