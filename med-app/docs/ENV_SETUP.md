@@ -37,26 +37,25 @@ To run the app locally, you MUST point to a development Neon branch or a local P
 
 ### Confirming Environment Separation
 
-1.  **Check Dashboard Badge**:
-    - Go to `/admin/dashboard`.
-    - You should see a **"LOCAL DEV DATA"** badge.
-    - If you see "PRODUCTION DATA", stop immediately—you are connected to Production!
+1.  **Check Logs on Startup**:
+    - When you run `npm run dev`, look for the line:
+      `[ENV CHECK] env=development db_host=... expected=dev`
 
-2.  **Verify Analytics Writes**:
-    - Trigger an event (e.g., click a button).
-    - Check your terminal logs. You should see:
-      `[Analytics] Writing event '...' to DB host: ep-cool-dev-123...`
+2.  **Safety Test (Fail Fast)**:
+    - Temporarily change your `.env.local`:
+      ```env
+      # Simulate a production host config
+      DATABASE_URL="postgres://neondb_owner:pass@ep-misty-feather-agshpgmp-pooler.c-2.eu-central-1.aws.neon.tech/neondb"
+      ```
+    - Run `npm run dev`.
+    - **Result**: The app should **CRASH** immediately with:
+      `FATAL: Environment is connected to the wrong database.`
 
-3.  **SQL Verification**:
-    Connect to your **Development DB** (using a tool or `psql`) and run:
-    ```sql
-    -- Check event count
-    SELECT COUNT(*) FROM analytics_events;
-    
-    -- See recent events (ensure they match what you just did)
-    SELECT event_name, created_at FROM analytics_events ORDER BY created_at DESC LIMIT 5;
-    ```
-    Then connect to **Production DB** and verify the new test events are **NOT** there.
+3.  **Production Verification**:
+    - Ensure your Vercel Production environment variables include:
+      - `NODE_ENV`: `production`
+      - `DATABASE_URL`: Must match `ep-misty-feather-agshpgmp-pooler.c-2.eu-central-1.aws.neon.tech`.
+    - Any other hostname in Production will trigger a fatal error.
 
 ## 3. Common Issues
 

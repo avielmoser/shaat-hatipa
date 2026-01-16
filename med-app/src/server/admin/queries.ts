@@ -56,14 +56,14 @@ export async function getAdminFunnel(rangeDays: number): Promise<QueryResult<Fun
 
         // Single Round-Trip aggregation for Funnel Steps using Robust Actor Logic
         const countsRaw = await prisma.$queryRaw<{ step: string, count: bigint }[]>`
-            SELECT 
-                event_name as step,
-                COUNT(DISTINCT COALESCE(session_id, meta->>'userId', meta->>'deviceId')) as count
-            FROM "analytics_events"
-            WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
-            AND event_name IN ('wizard_viewed', 'generate_schedule_clicked', 'schedule_generated', 'export_clicked')
-            GROUP BY event_name
-        `;
+                SELECT 
+                    event_name as step,
+                    COUNT(DISTINCT COALESCE(session_id, meta->>'userId', meta->>'deviceId')) as count
+                FROM "analytics_events"
+                WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
+                AND event_name IN ('wizard_viewed', 'generate_schedule_clicked', 'schedule_generated', 'export_clicked')
+                GROUP BY event_name
+            `;
 
         const countsMap = countsRaw.reduce((acc, curr) => {
             acc[curr.step] = Number(curr.count);

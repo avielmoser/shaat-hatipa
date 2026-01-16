@@ -13,6 +13,11 @@ type AnalyticsEventData = {
     [key: string]: unknown;
 };
 
+console.log(
+    "[ANALYTICS DB HOST]",
+    process.env.DATABASE_URL && new URL(process.env.DATABASE_URL).hostname
+);
+
 /**
  * Tracks an analytics event by sending it to the server.
  * This function is fire-and-forget and will not throw errors to the caller.
@@ -42,24 +47,37 @@ export function trackEvent(eventName: string, data: AnalyticsEventData) {
 
     // 3. Smart Sampling & Deduplication
     if (typeof window !== "undefined") {
-        if (finalEventType === "page_view") {
-            // Deduplicate per session + path
-            // Only 1 write per session per page
-            const dedupKey = `analytics_deduplicated:${eventName}:${currentPath}`;
-            if (sessionStorage.getItem(dedupKey)) {
-                if (process.env.NODE_ENV === "development") {
-                    console.log(`[Analytics] Skipped duplicate page_view: ${eventName} at ${currentPath}`);
+        try {
+            if (finalEventType === "page_view") {
+                // Deduplicate per session + path
+                // Only 1 write per session per page
+                const dedupKey = `analytics_deduplicated:${eventName}:${currentPath}`;
+                if (sessionStorage.getItem(dedupKey)) {
+                    if (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
+                        console.log(`[Analytics] Skipped duplicate page_view: ${eventName} at ${currentPath}`);
+                    }
+                    return;
                 }
-                return;
+                sessionStorage.setItem(dedupKey, "true");
             }
-            sessionStorage.setItem(dedupKey, "true");
+        } catch (e) {
+            // Storage access blocked/failed? Ignore and proceed to track.
         }
         // actions & conversions: always allow (subject to allowlist above)
     }
 
-    const sessionId = getSessionId();
+    let sessionId: string | null = null;
+    try {
+        sessionId = getSessionId();
+    } catch (e) {
+        // Recoverable: proceed without session if storage/crypto blocked
+    }
 
     try {
+        if (process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
+            console.log(`[Analytics Debug] sending ${eventName}`, { eventType: finalEventType, path: currentPath });
+        }
+
         // Fire and forget - don't await
         fetch("/api/analytics", {
             method: "POST",
@@ -86,7 +104,7 @@ export function trackEvent(eventName: string, data: AnalyticsEventData) {
         });
     } catch (err) {
         // Safety net for synchronous errors
-        if (process.env.NODE_ENV === "development") {
+        if (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
             console.error("Analytics tracking error:", err);
         }
     }

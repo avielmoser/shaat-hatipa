@@ -17,8 +17,9 @@ const envSchema = z.object({
 
     // Guardrails
     ADMIN_ACCESS_KEY: z.string().min(1, "ADMIN_ACCESS_KEY is required for dashboard access"),
+    // PROD_DB_HOSTS is critical for the safety mechanism.
+    // Ideally, it should be a comma-separated list of hostnames that are CONSIDERED PRODUCTION.
     PROD_DB_HOSTS: z.string().optional().describe("Comma-separated list of production DB hostnames"),
-    DATABASE_URL_PROD: z.string().url().optional().describe("Explicit production DB URL for checking mismatches"),
 
     // App Config
     NEXT_PUBLIC_APP_URL: z.string().url().optional().default("http://localhost:3000"), // Used for absolute links
@@ -32,7 +33,6 @@ const processEnv = {
     VERCEL: process.env.VERCEL,
     ADMIN_ACCESS_KEY: process.env.ADMIN_ACCESS_KEY,
     PROD_DB_HOSTS: process.env.PROD_DB_HOSTS,
-    DATABASE_URL_PROD: process.env.DATABASE_URL_PROD,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_ANALYTICS_DEBUG: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG,
 };
@@ -53,7 +53,6 @@ export function getServerEnv() {
                 VERCEL: undefined,
                 ADMIN_ACCESS_KEY: "mock-key",
                 PROD_DB_HOSTS: undefined,
-                DATABASE_URL_PROD: undefined,
                 NEXT_PUBLIC_APP_URL: "http://localhost:3000",
                 NEXT_PUBLIC_ANALYTICS_DEBUG: "0",
             };

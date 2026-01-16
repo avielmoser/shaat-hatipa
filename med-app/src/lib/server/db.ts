@@ -17,49 +17,67 @@ export const prisma =
         },
     });
 
-// --- SAFETY CHECK ---
-if (process.env.NODE_ENV === "development" && process.env.VERCEL !== "1") {
-    const dbUrl = process.env.DATABASE_URL || "";
+// --- STRICT SAFETY CHECK ---
+// This runs on every cold start in production and development.
 
-    // If missing, we can't really check, but Prisma will fail anyway.
+const dbUrl = process.env.DATABASE_URL || "";
+if (dbUrl) {
+    try {
+        const urlObj = new URL(dbUrl);
+        const hostname = urlObj.hostname;
+        const isNeon = hostname.includes("neon.tech");
 
-    if (dbUrl) {
-        try {
-            const urlObj = new URL(dbUrl);
-            const hostname = urlObj.hostname;
+        // DEFINED HOSTNAMES (Source of Truth)
+        const HOST_PROD = "ep-misty-feather-agshpgmp-pooler.c-2.eu-central-1.aws.neon.tech";
+        const HOST_DEV = "ep-mute-shape-agvuwmh8-pooler.c-2.eu-central-1.aws.neon.tech";
 
-            const prodHostsRaw = process.env.PROD_DB_HOSTS || "";
-            const prodHosts = prodHostsRaw.split(",").map(h => h.trim()).filter(Boolean);
+        const isProductionEnv = process.env.NODE_ENV === "production";
 
-            const isNeon = hostname.includes("neon.tech");
+        // Log for observability (Requirement B)
+        let branchId = "unknown";
+        if (isNeon) {
+            branchId = hostname.split('.')[0] || "unknown";
+        }
 
-            // SAFETY: Check against explicit PROD_DB_HOSTS or explicit DATABASE_URL_PROD hostname
-            const prodUrlRaw = process.env.DATABASE_URL_PROD;
-            let prodHostname = "";
-            if (prodUrlRaw) {
-                try {
-                    prodHostname = new URL(prodUrlRaw).hostname;
-                } catch (e) { /* ignore invalid prod url in checking */ }
-            }
+        const logMsg = `[ENV CHECK] env=${process.env.NODE_ENV} db_host=${hostname} expected=${isProductionEnv ? 'prod' : 'dev'}`;
+        console.log(logMsg);
 
-            if ((prodHosts.length > 0 && prodHosts.includes(hostname)) || (prodHostname && hostname === prodHostname)) {
-                throw new Error("Match found in PROD_DB_HOSTS or DATABASE_URL_PROD");
-            }
-
-        } catch (e: any) {
-            const msg = e.message || "Unknown error";
-            if (msg.includes("Match found in PROD_DB_HOSTS")) {
-                console.error(
-                    "\n\n🚨 CRITICAL SAFETY ERROR 🚨\n" +
-                    "You are running in DEVELOPMENT mode but your DATABASE_URL points to a generic or production host: " + new URL(dbUrl).hostname + "\n" +
-                    "Blocked by PROD_DB_HOSTS check.\n" +
-                    "Please point to your specific Neon DEVELOPMENT branch in .env.local.\n" +
-                    "See docs/ENV_SETUP.md for instructions.\n\n"
-                );
-                throw new Error("SAFETY: blocked connection to production DB in dev.");
+        // RULE 1: If PRODUCTION env, MUST match the specific Production host.
+        if (isProductionEnv) {
+            // We allow exact match.
+            if (hostname !== HOST_PROD) {
+                // FAIL LOUDLY
+                const msg =
+                    `\n🚨 FATAL CONFIGURATION ERROR 🚨\n` +
+                    `NODE_ENV is 'production', but DATABASE_URL hostname '${hostname}' is NOT the verified Production Host.\n` +
+                    `Expected: ${HOST_PROD}\n` +
+                    `Received: ${hostname}\n`;
+                console.error(msg);
+                throw new Error("FATAL: Environment is connected to the wrong database.");
             }
         }
-    }
 
-    globalForPrisma.prisma = prisma;
+        // RULE 2: If NOT production env, MUST NOT match the Production host.
+        if (!isProductionEnv) {
+            if (hostname === HOST_PROD) {
+                const msg =
+                    `\n🚨 CRITICAL SAFETY ERROR 🚨\n` +
+                    `You are running in '${process.env.NODE_ENV}' mode but DATABASE_URL points to the PRODUCTION host.\n` +
+                    `Blocked connection to: ${hostname}\n` +
+                    `Please point to your specific Neon DEVELOPMENT branch (${HOST_DEV}) in .env.local.\n`;
+                console.error(msg);
+                throw new Error("FATAL: Environment is connected to the wrong database.");
+            }
+        }
+
+    } catch (e: any) {
+        // Re-throw if it's our safety error
+        if (e.message && e.message.includes("FATAL:")) {
+            throw e;
+        }
+        // If malformed URL etc, let Prisma handle it or fail later, but warn.
+        console.warn("[ENV CHECK] Could not validate DB URL safety:", e.message);
+    }
 }
+
+globalForPrisma.prisma = prisma;

@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
         const result = analyticsSchema.safeParse(body);
 
         if (process.env.ANALYTICS_DEBUG === "1") {
-            console.log("[Analytics Debug] Received payload:", JSON.stringify(body, null, 2));
+            const { eventName, eventType } = body;
+            console.log(`[Analytics Debug] POST received: ${eventName} (${eventType})`);
+
             if (!result.success) {
                 console.warn("[Analytics Debug] Validation failed:", result.error.format());
             }
