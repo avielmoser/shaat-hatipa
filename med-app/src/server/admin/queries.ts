@@ -31,9 +31,92 @@ export interface BusinessKpis {
     }
 }
 
+export interface FunnelStep {
+    stepName: string;
+    label: string;
+    count: number;
+    conversionRate: number; // % of previous step
+    dropOffRate: number; // % lost from previous step
+}
+
 export type QueryResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
+
+/**
+ * Fetch Funnel Metrics: Wizard -> Generate Click -> Generated -> Export
+ */
+export async function getAdminFunnel(rangeDays: number): Promise<QueryResult<FunnelStep[]>> {
+    try {
+        const { currentStart } = getDateRanges(rangeDays);
+        const currentEnd = new Date();
+
+        // 1. Wizard Views
+        const countWizard = await prisma.analyticsEvent.groupBy({
+            by: ['sessionId'],
+            where: {
+                eventName: "wizard_viewed",
+                createdAt: { gte: currentStart, lt: currentEnd },
+                sessionId: { not: null }
+            }
+        }).then(r => r.length);
+
+        // 2. Generate Clicked
+        // Note: Check taxonomy if 'generate_schedule_clicked' is tracked. 
+        // User request says: "generate_schedule_clicked". 
+        // Commit 6 task is to "Add emit if missing". For now we assume logic exists or will be 0.
+        const countGenClick = await prisma.analyticsEvent.groupBy({
+            by: ['sessionId'],
+            where: {
+                eventName: "generate_schedule_clicked",
+                createdAt: { gte: currentStart, lt: currentEnd },
+                sessionId: { not: null }
+            }
+        }).then(r => r.length);
+
+        // 3. Schedule Generated
+        const countGenerated = await prisma.analyticsEvent.groupBy({
+            by: ['sessionId'],
+            where: {
+                eventName: "schedule_generated",
+                createdAt: { gte: currentStart, lt: currentEnd },
+                sessionId: { not: null }
+            }
+        }).then(r => r.length);
+
+        // 4. Export Clicked
+        const countExport = await prisma.analyticsEvent.groupBy({
+            by: ['sessionId'],
+            where: {
+                eventName: "export_clicked",
+                createdAt: { gte: currentStart, lt: currentEnd },
+                sessionId: { not: null }
+            }
+        }).then(r => r.length);
+
+        // Build Steps
+        const steps: FunnelStep[] = [
+            { stepName: "wizard_viewed", label: "Wizard Views", count: countWizard, conversionRate: 100, dropOffRate: 0 },
+            { stepName: "generate_schedule_clicked", label: "Generate Clicked", count: countGenClick, ...calcRates(countGenClick, countWizard) },
+            { stepName: "schedule_generated", label: "Schedules Created", count: countGenerated, ...calcRates(countGenerated, countGenClick) },
+            { stepName: "export_clicked", label: "Export Clicked", count: countExport, ...calcRates(countExport, countGenerated) }
+        ];
+
+        return { success: true, data: steps };
+    } catch (error) {
+        console.error("[AdminQueries] getAdminFunnel failed:", error);
+        return { success: false, error: "Failed to fetch Funnel" };
+    }
+}
+
+function calcRates(current: number, previous: number) {
+    if (previous === 0) return { conversionRate: 0, dropOffRate: 0 };
+    const conversionRate = (current / previous) * 100;
+    return {
+        conversionRate,
+        dropOffRate: 100 - conversionRate
+    };
+}
 
 /**
  * Fetch new Business/Product KPIs.
