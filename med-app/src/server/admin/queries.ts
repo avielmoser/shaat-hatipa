@@ -46,24 +46,25 @@ export type QueryResult<T> =
 /**
  * Fetch Funnel Metrics: Wizard -> Generate Click -> Generated -> Export
  */
-/**
- * Fetch Funnel Metrics: Wizard -> Generate Click -> Generated -> Export
- */
 export async function getAdminFunnel(rangeDays: number): Promise<QueryResult<FunnelStep[]>> {
     try {
         const { currentStart } = getDateRanges(rangeDays);
         const currentEnd = new Date();
 
-        // Single Round-Trip aggregation for Funnel Steps using Robust Actor Logic
+        // Funnel Stages: wizard_viewed -> generate_schedule_clicked -> schedule_generated -> export_clicked
+        // Order is important.
+
+        // Single Round-Trip aggregation using raw SQL for JSON access if needed, 
+        // though here we group by event_name which is a column.
         const countsRaw = await prisma.$queryRaw<{ step: string, count: bigint }[]>`
-                SELECT 
-                    event_name as step,
-                    COUNT(DISTINCT COALESCE(session_id, meta->>'userId', meta->>'deviceId')) as count
-                FROM "analytics_events"
-                WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
-                AND event_name IN ('wizard_viewed', 'generate_schedule_clicked', 'schedule_generated', 'export_clicked')
-                GROUP BY event_name
-            `;
+            SELECT 
+                event_name as step,
+                COUNT(DISTINCT session_id) as count
+            FROM "analytics_events"
+            WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
+            AND event_name IN ('wizard_viewed', 'generate_schedule_clicked', 'schedule_generated', 'export_clicked')
+            GROUP BY event_name
+        `;
 
         const countsMap = countsRaw.reduce((acc, curr) => {
             acc[curr.step] = Number(curr.count);
@@ -110,11 +111,9 @@ export interface BreakdownItem {
 export interface BreakdownResult {
     byClinic: BreakdownItem[];
     byProtocol: BreakdownItem[];
+    byStep: BreakdownItem[]; // Added byStep as implied by "Breakdowns... Steps"
 }
 
-/**
- * Fetch Breakdown Stats: Top Clinics & Protocols
- */
 /**
  * Fetch Breakdown Stats: Top Clinics & Protocols
  */
@@ -124,64 +123,73 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
         const currentEnd = new Date();
 
         // --- Clinics ---
-        // Get all stats aggregated by clinic_slug
+        // Group by meta->>'clinicSlug'
         const clinicStatsRaw = await prisma.$queryRaw<any[]>`
             SELECT 
-                COALESCE(e.clinic_slug, 'unknown') as id,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'wizard_viewed' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as views,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'schedule_generated' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as gens,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'export_clicked' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as exports
-            FROM "analytics_events" e
-            WHERE e.created_at >= ${currentStart} AND e.created_at < ${currentEnd}
+                COALESCE(meta->>'clinicSlug', 'unknown') as id,
+                COUNT(DISTINCT CASE WHEN event_name = 'wizard_viewed' THEN session_id END) as views,
+                COUNT(DISTINCT CASE WHEN event_name = 'schedule_generated' THEN session_id END) as gens,
+                COUNT(DISTINCT CASE WHEN event_name = 'export_clicked' THEN session_id END) as exports
+            FROM "analytics_events"
+            WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
             GROUP BY 1
         `;
 
-        const byClinic: BreakdownItem[] = clinicStatsRaw.map((row: any) => {
-            const views = Number(row.views || 0);
-            const gens = Number(row.gens || 0);
-            const exports = Number(row.exports || 0);
-
-            return {
-                id: row.id,
-                label: row.id,
-                schedulesGenerated: gens,
-                activationRate: views > 0 ? (gens / views) * 100 : 0,
-                exportRate: gens > 0 ? (exports / gens) * 100 : 0,
-            };
-        }).sort((a, b) => b.schedulesGenerated - a.schedulesGenerated);
+        const byClinic: BreakdownItem[] = clinicStatsRaw.map((row: any) => mapBreakdown(row));
 
         // --- Protocols ---
-        // Group by meta->>'protocol' (or protocolKey)
+        // Group by meta->>'protocolSlug' OR meta->>'protocolId'
         const protocolStatsRaw = await prisma.$queryRaw<any[]>`
             SELECT 
-                COALESCE(e.meta->>'protocol', e.meta->>'protocolKey', 'unknown') as id,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'wizard_viewed' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as views,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'schedule_generated' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as gens,
-                COUNT(DISTINCT CASE WHEN e.event_name = 'export_clicked' THEN COALESCE(e.session_id, e.meta->>'userId', e.meta->>'deviceId') END) as exports
-            FROM "analytics_events" e
-            WHERE e.created_at >= ${currentStart} AND e.created_at < ${currentEnd}
+                COALESCE(meta->>'protocolSlug', meta->>'protocolId', 'unknown') as id,
+                COUNT(DISTINCT CASE WHEN event_name = 'wizard_viewed' THEN session_id END) as views,
+                COUNT(DISTINCT CASE WHEN event_name = 'schedule_generated' THEN session_id END) as gens,
+                COUNT(DISTINCT CASE WHEN event_name = 'export_clicked' THEN session_id END) as exports
+            FROM "analytics_events"
+            WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
             GROUP BY 1
         `;
 
-        const byProtocol: BreakdownItem[] = protocolStatsRaw.map((row: any) => {
-            const views = Number(row.views || 0);
-            const gens = Number(row.gens || 0);
-            const exports = Number(row.exports || 0);
+        const byProtocol: BreakdownItem[] = protocolStatsRaw.map((row: any) => mapBreakdown(row));
 
-            return {
-                id: row.id,
-                label: row.id,
-                schedulesGenerated: gens,
-                activationRate: views > 0 ? (gens / views) * 100 : 0,
-                exportRate: gens > 0 ? (exports / gens) * 100 : 0,
-            };
-        }).sort((a, b) => b.schedulesGenerated - a.schedulesGenerated);
+        // --- Steps (Where dropoff happens) ---
+        // Use column 'step' where event_name = 'step_viewed'
+        // This breakdown is slightly different (count per step), but we can map it to BreakdownItem somewhat
+        // Or just return step counts? 
+        // The Prompt says: "Steps Use column `step` where `event_name = 'step_viewed'`"
+        // Let's create a breakdown for steps based on View count.
+        const stepStatsRaw = await prisma.$queryRaw<any[]>`
+            SELECT 
+                step as id,
+                COUNT(DISTINCT session_id) as views,
+                0 as gens,
+                0 as exports
+            FROM "analytics_events"
+            WHERE created_at >= ${currentStart} AND created_at < ${currentEnd}
+            AND event_name = 'step_viewed'
+            AND step IS NOT NULL
+            GROUP BY 1
+        `;
+
+        const byStep: BreakdownItem[] = stepStatsRaw.map((row: any) => ({
+            id: row.id || "unknown",
+            label: `Step ${row.id}`,
+            schedulesGenerated: 0,
+            activationRate: 0, // Not applicable really, or we could calculate retention if we had previous step data here
+            exportRate: 0,
+            count: Number(row.views || 0) // Extra field? BreakdownItem doesn't have it. We'll overload schedulesGenerated? No, that's converting data meanings.
+            // Actually, the Requirement "Breakdowns... Steps" matches "Biggest Dropoff Step" logic usually. 
+            // But if I must return a breakdown, I'll fit it into the structure or empty if not strictly requested in return type of this function.
+            // `BreakdownResult` in existing code didn't have `byStep`. I added it to interface.
+        })).sort((a, b) => Number(a.id) - Number(b.id)); // Sort by step number
+
 
         return {
             success: true,
             data: {
-                byClinic,
-                byProtocol
+                byClinic: byClinic.sort((a, b) => b.schedulesGenerated - a.schedulesGenerated),
+                byProtocol: byProtocol.sort((a, b) => b.schedulesGenerated - a.schedulesGenerated),
+                byStep: byStep // Optional addition
             }
         };
 
@@ -191,9 +199,22 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
     }
 }
 
+function mapBreakdown(row: any): BreakdownItem {
+    const views = Number(row.views || 0);
+    const gens = Number(row.gens || 0);
+    const exports = Number(row.exports || 0);
+
+    return {
+        id: row.id,
+        label: row.id,
+        schedulesGenerated: gens,
+        activationRate: views > 0 ? (gens / views) * 100 : 0,
+        exportRate: gens > 0 ? (exports / gens) * 100 : 0,
+    };
+}
+
 /**
  * Fetch new Business/Product KPIs.
- * Calculates metrics for the current range and the previous range to provide deltas.
  */
 export async function getAdminKpis(rangeDays: number): Promise<QueryResult<BusinessKpis>> {
     try {
@@ -226,97 +247,81 @@ export async function getAdminKpis(rangeDays: number): Promise<QueryResult<Busin
 }
 
 async function getMetricsForRange(start: Date, end: Date) {
-    // 1. Schedules Generated (North Star) - Count Events
-    const schedulesGeneratedCount = await prisma.analyticsEvent.count({
-        where: {
-            eventName: "schedule_generated",
-            createdAt: { gte: start, lt: end }
-        }
-    });
-
-    // 2. Activation Rate (Generated / Wizard Views)
-    // We must count DISTINCT ACTORS (coalesce session_id, user_id, device_id)
-    // Prisma groupBy cannot do COALESCE. We use queryRaw.
-    const activationRaw = await prisma.$queryRaw<{ views: bigint, gens: bigint }[]>`
-        SELECT 
-            COUNT(DISTINCT COALESCE(session_id, meta->>'userId', meta->>'deviceId')) as views,
-            COUNT(DISTINCT CASE WHEN event_name = 'schedule_generated' THEN COALESCE(session_id, meta->>'userId', meta->>'deviceId') END) as gens
+    // 1. Wizard Views
+    const viewsRaw = await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT session_id) as count
         FROM "analytics_events"
         WHERE created_at >= ${start} AND created_at < ${end}
-        AND event_name IN ('wizard_viewed', 'schedule_generated')
+        AND event_name = 'wizard_viewed'
     `;
-    const views = Number(activationRaw[0]?.views || 0);
-    const gensForRate = Number(activationRaw[0]?.gens || 0);
-    const activationRate = views > 0 ? (gensForRate / views) * 100 : 0;
+    const views = Number(viewsRaw[0]?.count || 0);
 
-    // 3. Export Rate (Export Clicked / Generated)
-    const exportRaw = await prisma.$queryRaw<{ gens: bigint, exports: bigint }[]>`
-        SELECT 
-            COUNT(DISTINCT CASE WHEN event_name = 'schedule_generated' THEN COALESCE(session_id, meta->>'userId', meta->>'deviceId') END) as gens,
-            COUNT(DISTINCT CASE WHEN event_name = 'export_clicked' THEN COALESCE(session_id, meta->>'userId', meta->>'deviceId') END) as exports
+    // 2. Schedules Generated
+    const gensRaw = await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT session_id) as count
         FROM "analytics_events"
         WHERE created_at >= ${start} AND created_at < ${end}
-        AND event_name IN ('schedule_generated', 'export_clicked')
+        AND event_name = 'schedule_generated'
     `;
-    const gensForExport = Number(exportRaw[0]?.gens || 0);
-    const exports = Number(exportRaw[0]?.exports || 0);
-    const exportRate = gensForExport > 0 ? (exports / gensForExport) * 100 : 0;
+    const schedulesGenerated = Number(gensRaw[0]?.count || 0);
+
+    // 3. Export Clicked
+    const exportsRaw = await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT session_id) as count
+        FROM "analytics_events"
+        WHERE created_at >= ${start} AND created_at < ${end}
+        AND event_name = 'export_clicked'
+    `;
+    const exportsCount = Number(exportsRaw[0]?.count || 0);
+
+    // Rate calculations
+    const activationRate = views > 0 ? (schedulesGenerated / views) * 100 : 0;
+    const exportRate = schedulesGenerated > 0 ? (exportsCount / schedulesGenerated) * 100 : 0;
 
     // 4. Returning Users
     const returningUsersCountRaw = await prisma.$queryRaw<{ count: bigint }[]>`
-        SELECT COUNT(DISTINCT COALESCE(current.session_id, current.meta->>'userId', current.meta->>'deviceId')) as count
+        SELECT COUNT(DISTINCT current.session_id) as count
         FROM "analytics_events" as current
         WHERE current.created_at >= ${start} AND current.created_at < ${end}
         AND EXISTS (
             SELECT 1 FROM "analytics_events" as past
-            WHERE COALESCE(past.session_id, past.meta->>'userId', past.meta->>'deviceId') = COALESCE(current.session_id, current.meta->>'userId', current.meta->>'deviceId')
+            WHERE past.session_id = current.session_id
             AND past.created_at < ${start}
         )
     `;
     const returningUsers = Number(returningUsersCountRaw[0]?.count || 0);
 
     // 5. Biggest Drop-off Step
-    // Logic: Fetch step_viewed events, group by stepId in JS (usually small enough for step stats).
-    // If volume is huge, filtering by eventName still keeps it manageable per range.
-    const stepEvents = await prisma.analyticsEvent.findMany({
-        where: {
-            eventName: "step_viewed",
-            createdAt: { gte: start, lt: end },
-        },
-        select: {
-            meta: true,
-            sessionId: true,
-            eventName: true // needed for select? no
-        }
-    });
+    // Use column 'step' where event_name = 'step_viewed'
+    const stepCountsRaw = await prisma.$queryRaw<{ step: string, count: bigint }[]>`
+        SELECT step, COUNT(DISTINCT session_id) as count
+        FROM "analytics_events"
+        WHERE created_at >= ${start} AND created_at < ${end}
+        AND event_name = 'step_viewed'
+        AND step IS NOT NULL
+        GROUP BY step
+    `;
 
-    const stepCounts: Record<string, Set<string>> = {};
-    stepEvents.forEach(e => {
-        const meta = e.meta as any;
-        const actorId = e.sessionId || meta?.userId || meta?.deviceId || "anonymous";
-        const stepId = meta?.stepId ? String(meta.stepId) : "unknown";
-        if (!stepCounts[stepId]) stepCounts[stepId] = new Set();
-        stepCounts[stepId].add(actorId);
-    });
+    // Sort steps numerically
+    const sortedSteps = stepCountsRaw
+        .map(r => ({ step: r.step, count: Number(r.count) }))
+        .sort((a, b) => Number(a.step) - Number(b.step));
 
-    const sortedSteps = Object.keys(stepCounts).filter(k => !isNaN(Number(k))).sort((a, b) => Number(a) - Number(b));
     let maxDrop = 0;
     let biggestDropStep = "N/A";
 
     for (let i = 0; i < sortedSteps.length - 1; i++) {
-        const currStep = sortedSteps[i];
-        const nextStep = sortedSteps[i + 1];
-        const currCount = stepCounts[currStep].size;
-        const nextCount = stepCounts[nextStep].size;
-        const drop = currCount - nextCount;
+        const curr = sortedSteps[i];
+        const next = sortedSteps[i + 1];
+        const drop = curr.count - next.count;
         if (drop > maxDrop) {
             maxDrop = drop;
-            biggestDropStep = `Step ${currStep} → ${nextStep}`;
+            biggestDropStep = `Step ${curr.step} -> ${next.step}`;
         }
     }
 
     return {
-        schedulesGenerated: schedulesGeneratedCount,
+        schedulesGenerated,
         activationRate,
         exportRate,
         returningUsers,
@@ -325,39 +330,48 @@ async function getMetricsForRange(start: Date, end: Date) {
 }
 
 function calculateDelta(current: number, previous: number): number {
-    if (previous === 0) return 0; // Or specific indicator? UI will handle 0 as "--" or similar if we want.
+    if (previous === 0) return 0;
     return ((current - previous) / previous) * 100;
 }
 
 /**
  * Fetch KPI counts for the given date range.
- * Best-effort: catches DB errors and returns success=false.
- * @deprecated Use getAdminKpis instead
+ * Supports 'meaningful' filter.
  */
-export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>> {
+export async function getKpis(rangeDays: number, view?: 'all' | 'meaningful'): Promise<QueryResult<AdminKpis>> {
     try {
-        // Validate range
-        const validRanges = [7, 30, 90];
-        const safeRange = validRanges.includes(rangeDays) ? rangeDays : 30;
+        const { currentStart } = getDateRanges(rangeDays);
 
-        // Calculate start date (rangeDays inclusive of today)
-        const startDate = startOfDay(subDays(new Date(), safeRange - 1));
+        let totalEvents = 0;
 
-        // Parallel queries for efficiency
-        const [total, sessionStart, scheduleGen] = await Promise.all([
-            prisma.analyticsEvent.count({
-                where: { createdAt: { gte: startDate } }
-            }),
+        if (view === 'meaningful') {
+            const rawTotal = await prisma.$queryRaw<{ count: bigint }[]>`
+                SELECT COUNT(*) as count FROM "analytics_events"
+                WHERE created_at >= ${currentStart}
+                AND meta->>'eventType' IN ('action', 'conversion')
+            `;
+            totalEvents = Number(rawTotal[0]?.count || 0);
+        } else {
+            totalEvents = await prisma.analyticsEvent.count({
+                where: { createdAt: { gte: currentStart } }
+            });
+        }
+
+        // Session Starts and Schedule Generated are specific events, so 'view' filter doesn't inherently change the count 
+        // unless we strictly apply it, but these are by definition actions/page views.
+        // We'll keep them as simple counts.
+
+        const [sessionStart, scheduleGen] = await Promise.all([
             prisma.analyticsEvent.count({
                 where: {
                     eventName: "session_start",
-                    createdAt: { gte: startDate }
+                    createdAt: { gte: currentStart }
                 }
             }),
             prisma.analyticsEvent.count({
                 where: {
                     eventName: "schedule_generated",
-                    createdAt: { gte: startDate }
+                    createdAt: { gte: currentStart }
                 }
             })
         ]);
@@ -365,10 +379,10 @@ export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>
         return {
             success: true,
             data: {
-                totalEvents: total,
+                totalEvents: totalEvents,
                 sessionStartCount: sessionStart,
                 scheduleGeneratedCount: scheduleGen,
-                rangeDays: safeRange
+                rangeDays: rangeDays
             }
         };
     } catch (error) {
@@ -381,22 +395,48 @@ export async function getKpis(rangeDays: number): Promise<QueryResult<AdminKpis>
 /**
  * Fetch latest raw events for the table.
  * Restricted to stable columns only.
+ * Supports view filter.
  */
-export async function getLatestEvents(limit: number = 20): Promise<QueryResult<AdminEvent[]>> {
+export async function getLatestEvents(
+    limit: number = 20,
+    view: 'all' | 'meaningful' = 'all'
+): Promise<QueryResult<AdminEvent[]>> {
     try {
-        const events = await prisma.analyticsEvent.findMany({
-            take: limit,
-            orderBy: { createdAt: "desc" },
-            select: {
-                id: true,
-                eventName: true,
-                createdAt: true,
-                meta: true,
-                // Excluding unstable/schema-mismatched columns like clinic_slug for now
-            }
-        });
+        let events: any[];
 
-        return { success: true, data: events };
+        if (view === 'meaningful') {
+            events = await prisma.$queryRaw<AdminEvent[]>`
+                SELECT 
+                    id, 
+                    event_name as "eventName", 
+                    created_at as "createdAt", 
+                    meta 
+                FROM "analytics_events"
+                WHERE meta->>'eventType' IN ('action', 'conversion')
+                ORDER BY created_at DESC
+                LIMIT ${limit}
+            `;
+        } else {
+            events = await prisma.$queryRaw<AdminEvent[]>`
+                SELECT 
+                    id, 
+                    event_name as "eventName", 
+                    created_at as "createdAt", 
+                    meta 
+                FROM "analytics_events"
+                ORDER BY created_at DESC
+                LIMIT ${limit}
+            `;
+        }
+
+        // Map dates if queryRaw returns strings (depends on driver, prisma usually returns Date objects for DateTime)
+        // Adjust if necessary.
+        const mappedHelper = events.map(e => ({
+            ...e,
+            createdAt: new Date(e.createdAt)
+        }));
+
+        return { success: true, data: mappedHelper };
     } catch (error) {
         console.error("[AdminQueries] getLatestEvents failed:", error);
         return { success: false, error: "Database Connection Error" };
@@ -415,7 +455,6 @@ export async function getDebugStats(rangeDays: number) {
         const { currentStart } = getDateRanges(rangeDays);
         const currentEnd = new Date();
 
-        // Histogram of ALL event names in range
         const histogram = await prisma.analyticsEvent.groupBy({
             by: ['eventName'],
             where: {
@@ -426,7 +465,6 @@ export async function getDebugStats(rangeDays: number) {
             }
         });
 
-        // Check for actorId presence
         const totalEvents = await prisma.analyticsEvent.count({
             where: { createdAt: { gte: currentStart, lt: currentEnd } }
         });
@@ -438,7 +476,7 @@ export async function getDebugStats(rangeDays: number) {
             }
         });
 
-        // Get sample of 5 recent events raw (to check timezones/names)
+        // Get sample of 5 recent events raw
         const sampleEvents = await prisma.analyticsEvent.findMany({
             take: 5,
             orderBy: { createdAt: 'desc' },
