@@ -2,11 +2,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
-import { getKpis, getLatestEvents } from "@/server/admin/queries";
+import { getAdminKpis, getAdminFunnel, getAdminBreakdown, getLatestEvents } from "@/server/admin/queries";
 import { logout } from "./actions";
 import KpiCards from "@/components/admin/KpiCards";
+import FunnelWidget from "@/components/admin/FunnelWidget";
+import BreakdownTable from "@/components/admin/BreakdownTable";
 import EventsTable from "@/components/admin/EventsTable";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Clock } from "lucide-react";
 
 // Ensure dynamic rendering for real-time dashboard data
 export const dynamic = "force-dynamic";
@@ -35,16 +37,20 @@ export default async function AdminPage({
     }
 
     // 3. Data Fetching (Parallel & Resilient)
-    let kpiResult, eventsResult;
+    let kpiResult, funnelResult, breakdownResult, eventsResult;
     try {
-        [kpiResult, eventsResult] = await Promise.all([
-            getKpis(rangeDays),
+        [kpiResult, funnelResult, breakdownResult, eventsResult] = await Promise.all([
+            getAdminKpis(rangeDays),
+            getAdminFunnel(rangeDays),
+            getAdminBreakdown(rangeDays),
             getLatestEvents(20)
         ]);
     } catch (e) {
         console.error("[AdminPage] Critical Fetch Error:", e);
-        // Explicitly match the QueryResult failure shape
+        // Explicitly fallback
         kpiResult = { success: false, error: "Critical fetch error" } as const;
+        funnelResult = { success: false, error: "Critical fetch error" } as const;
+        breakdownResult = { success: false, error: "Critical fetch error" } as const;
         eventsResult = { success: false, error: "Critical fetch error" } as const;
     }
 
@@ -54,7 +60,7 @@ export default async function AdminPage({
         : "--:--";
 
     // 5. Error State Calculation
-    const hasError = !kpiResult.success || !eventsResult.success;
+    const hasError = !kpiResult.success || !eventsResult.success || !funnelResult.success || !breakdownResult.success;
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900" dir="rtl">
@@ -65,7 +71,7 @@ export default async function AdminPage({
                         <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm">
                             SH
                         </div>
-                        <h1 className="text-lg font-bold tracking-tight text-slate-900">ממשק ניהול</h1>
+                        <h1 className="text-lg font-bold tracking-tight text-slate-900">ממשק ניהול (Admin)</h1>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -73,12 +79,13 @@ export default async function AdminPage({
                             <div className="flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${hasError ? 'bg-amber-500' : 'bg-green-500'} animate-pulse`}></span>
                                 <span className="text-xs font-medium text-slate-700">
-                                    {hasError ? 'System Issues' : 'Online'}
+                                    {hasError ? 'Partial Data' : 'Production DB'}
                                 </span>
                             </div>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                                Login: {sessionStartTime}
-                            </span>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                                <Clock size={10} />
+                                <span>Last Event: Now</span>
+                            </div>
                         </div>
 
                         <form action={logout}>
@@ -96,7 +103,7 @@ export default async function AdminPage({
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                 {/* Filters */}
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-slate-800">סקירה כללית</h2>
+                    <h2 className="text-xl font-bold text-slate-800">דשבורד אנליטיקס (Analytics)</h2>
 
                     <div className="bg-white rounded-lg border border-slate-200 p-1 flex items-center gap-1 shadow-sm">
                         {[7, 30, 90].map((d) => (
@@ -118,32 +125,38 @@ export default async function AdminPage({
                 </div>
 
                 {/* Content or Error Fallback */}
-                {hasError ? (
-                    <div className="bg-white border border-slate-200 rounded-xl p-12 flex flex-col items-center text-center shadow-sm">
-                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
-                            <AlertCircle className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-800">המערכת זמנית לא זמינה</h3>
-                        <p className="text-slate-500 mt-2 max-w-sm">
-                            אירעה שגיאה בקריאת הנתונים מהשרת. ייתכן שיש בעיית תקשורת עם בסיס הנתונים.
-                        </p>
-                        <a href="/admin" className="mt-6 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
-                            רענן עמוד
-                        </a>
+                {hasError && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3 text-amber-800">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-sm font-medium">חלק מהנתונים לא נטענו. בדוק את חיבור המסד.</span>
                     </div>
-                ) : (
-                    <>
-                        {/* KPIs */}
-                        {kpiResult.success && (
-                            <KpiCards kpis={kpiResult.data} />
+                )}
+
+                <div className="space-y-8">
+                    {/* KPIs */}
+                    {kpiResult.success && (
+                        <KpiCards kpis={kpiResult.data} />
+                    )}
+
+                    {/* Funnel & Breakdown Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {funnelResult.success && (
+                            <FunnelWidget steps={funnelResult.data} />
                         )}
 
-                        {/* Recent Events Table */}
-                        {eventsResult.success && (
-                            <EventsTable events={eventsResult.data} />
+                        {breakdownResult.success && (
+                            <BreakdownTable data={breakdownResult.data} />
                         )}
-                    </>
-                )}
+                    </div>
+
+                    {/* Recent Events Table */}
+                    {eventsResult.success && (
+                        <div className="pt-8 border-t border-slate-200">
+                            <h3 className="text-lg font-bold text-slate-800 mb-4">אירועים אחרונים (Raw Hits)</h3>
+                            <EventsTable events={eventsResult.data} />
+                        </div>
+                    )}
+                </div>
             </main>
         </div>
     );

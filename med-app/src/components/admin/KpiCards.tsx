@@ -1,73 +1,95 @@
 
-import { Users, FileText, Activity } from "lucide-react";
-import { AdminKpis } from "@/server/admin/queries";
+import React from 'react';
+import { BusinessKpis } from '@/server/admin/queries';
+import { Target, Users, Zap, Share2, ArrowDownRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-export default function KpiCards({ kpis }: { kpis: AdminKpis }) {
-    // Calculate conversion rate safely
-    const conversionRate = kpis.sessionStartCount > 0
-        ? ((kpis.scheduleGeneratedCount / kpis.sessionStartCount) * 100).toFixed(1)
-        : "0.0";
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" dir="rtl">
-            <Card
-                label="סה״כ כניסות (Sessions)"
-                value={kpis.sessionStartCount}
-                icon={<Users className="w-5 h-5 text-blue-600" />}
-                subText={`ב-${kpis.rangeDays} הימים האחרונים`}
-                accentClass="bg-blue-500"
-                containerClass="bg-blue-50 border-blue-100"
-            />
-            <Card
-                label="לוחות זמנים (Schedules)"
-                value={kpis.scheduleGeneratedCount}
-                icon={<FileText className="w-5 h-5 text-emerald-600" />}
-                subText={`${conversionRate}% יחס המרה`}
-                accentClass="bg-emerald-500"
-                containerClass="bg-emerald-50 border-emerald-100"
-            />
-            <Card
-                label="כלל האירועים (Events)"
-                value={kpis.totalEvents}
-                icon={<Activity className="w-5 h-5 text-indigo-600" />}
-                subText="נפח פעילות כללי"
-                accentClass="bg-indigo-500"
-                containerClass="bg-indigo-50 border-indigo-100"
-            />
-        </div>
-    );
+interface KpiCardsProps {
+    kpis: BusinessKpis;
 }
 
-interface CardProps {
-    label: string;
-    value: number;
-    icon: React.ReactNode;
-    subText: string;
-    accentClass: string;
-    containerClass: string;
-}
+export default function KpiCards({ kpis }: KpiCardsProps) {
+    const { schedulesGenerated, activationRate, exportRate, returningUsers, biggestDropoffStep, deltas } = kpis;
 
-function Card({ label, value, icon, subText, accentClass, containerClass }: CardProps) {
+    const cards = [
+        {
+            label: "Schedules Generated (North Star)",
+            value: schedulesGenerated.toLocaleString(),
+            icon: Target,
+            color: "blue",
+            delta: deltas?.schedulesGenerated,
+            suffix: ""
+        },
+        {
+            label: "Activation Rate",
+            value: activationRate.toFixed(1) + "%",
+            icon: Zap,
+            color: "emerald",
+            delta: deltas?.activationRate,
+            suffix: " conversion"
+        },
+        {
+            label: "Export Rate",
+            value: exportRate.toFixed(1) + "%",
+            icon: Share2,
+            color: "purple",
+            delta: deltas?.exportRate,
+            suffix: " of generated"
+        },
+        {
+            label: "Returning Users",
+            value: returningUsers.toLocaleString(),
+            icon: Users,
+            color: "amber",
+            delta: deltas?.returningUsers,
+            suffix: " total"
+        },
+        {
+            label: "Biggest Drop-off",
+            value: biggestDropoffStep,
+            icon: ArrowDownRight,
+            color: "rose",
+            delta: null, // No delta for text
+            suffix: ""
+        }
+    ];
+
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between h-32 relative overflow-hidden group hover:shadow-md transition-shadow">
-            {/* Left Accent Bar */}
-            <div className={`absolute top-0 left-0 w-1 h-full ${accentClass}`}></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {cards.map((card, idx) => {
+                const DeltaIcon = card.delta && card.delta > 0 ? TrendingUp : (card.delta && card.delta < 0 ? TrendingDown : Minus);
+                const deltaColor = card.delta && card.delta > 0 ? "text-green-500" : (card.delta && card.delta < 0 ? "text-red-500" : "text-slate-400");
+                const deltaText = card.delta !== undefined && card.delta !== null ? `${Math.abs(card.delta).toFixed(1)}%` : null;
 
-            <div className="flex justify-between items-start">
-                <div>
-                    <p className="text-slate-500 text-xs font-medium tracking-wider mb-1">
-                        {label}
-                    </p>
-                    <h3 className="text-3xl font-bold text-slate-900">{value.toLocaleString()}</h3>
-                </div>
-                <div className={`p-2 rounded-lg ${containerClass}`}>
-                    {icon}
-                </div>
-            </div>
+                return (
+                    <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-32">
+                        <div className="flex items-start justify-between">
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-tight">{card.label}</span>
+                            <div className={`p-1.5 rounded-lg bg-${card.color}-50 text-${card.color}-600`}>
+                                <card.icon size={16} />
+                            </div>
+                        </div>
 
-            <div className="mt-2">
-                <span className="text-xs text-slate-400 font-medium">{subText}</span>
-            </div>
+                        <div>
+                            <div className="text-2xl font-bold text-slate-900 truncate" title={card.value}>
+                                {card.value}
+                            </div>
+
+                            {/* Delta / Sublabel */}
+                            <div className="flex items-center gap-1 mt-1 text-[10px] font-medium">
+                                {deltaText ? (
+                                    <>
+                                        <DeltaIcon size={12} className={deltaColor} />
+                                        <span className={deltaColor}>{deltaText}</span>
+                                        <span className="text-slate-400">vs prev</span>
+                                    </>
+                                ) : (
+                                    <span className="text-slate-400">{card.suffix || "—"}</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 }
