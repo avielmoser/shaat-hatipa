@@ -219,18 +219,19 @@ export default function SurgeryForm({
                                     {t('surgeryDate')}
                                 </label>
                                 <div className="flex min-w-0 flex-col gap-1.5">
-                                    {/* Mobile: cap row width so the control reads as a compact field, not a full-bleed bar */}
-                                    <div className="flex min-w-0 w-full max-w-[min(100%,18rem)] items-stretch gap-2 self-start sm:max-w-none sm:items-center sm:gap-3 sm:self-stretch">
-                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-md bg-slate-100 text-slate-500 sm:h-12 sm:w-12 sm:rounded-xl">
-                                            <Calendar className="h-3.5 w-3.5 sm:h-6 sm:w-6" />
+                                    {/* Mobile: cap row width; min-w-0 + flex-1 on input shell avoids RTL flex clipping; no overflow-hidden on wrapper (clips native date UI) */}
+                                    <div className="flex min-w-0 w-full max-w-[min(100%,18rem)] items-center gap-2 self-start sm:max-w-none sm:gap-3 sm:self-stretch">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 sm:h-12 sm:w-12 sm:rounded-xl">
+                                            <Calendar className="h-4 w-4 sm:h-6 sm:w-6" />
                                         </div>
-                                        <div className="relative min-w-0 flex-1 overflow-hidden">
+                                        <div className="relative min-w-0 flex-1">
                                             <input
                                                 id="surgery-date"
                                                 type="date"
+                                                dir="ltr"
                                                 value={surgeryDate}
                                                 onChange={(e) => setSurgeryDate(e.target.value)}
-                                                className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
+                                                className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-start text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
                                             />
                                         </div>
                                     </div>
