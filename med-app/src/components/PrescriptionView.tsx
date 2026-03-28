@@ -86,7 +86,7 @@ export default function PrescriptionView({ prescription }: Props) {
                     className="inline-block h-4 w-4 shrink-0 rounded-full border border-current md:h-5 md:w-5"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="truncate max-w-[9rem] sm:max-w-none">
+                  <span className="truncate max-w-[10rem] sm:max-w-none">
                     {resolvedName}
                   </span>
                 </span>

@@ -13,7 +13,7 @@ export default function LoginForm() {
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 ring-1 ring-slate-900/5">
                 {/* Header */}
                 <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+                    <div className="absolute top-0 start-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
                     <div className="mx-auto bg-slate-800/80 backdrop-blur-sm w-12 h-12 rounded-xl flex items-center justify-center mb-4 border border-slate-700 shadow-inner">
                         <Lock className="h-6 w-6 text-indigo-400" />
                     </div>

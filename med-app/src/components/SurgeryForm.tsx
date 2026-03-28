@@ -205,7 +205,7 @@ export default function SurgeryForm({
                                                 </span>
                                             </div>
                                             {description && (
-                                                <p className={`mt-0.5 text-[10px] sm:text-sm leading-tight ${isSelected ? "text-sky-700/80" : "text-slate-500"}`}>
+                                                <p className={`mt-0.5 text-xs sm:text-sm leading-tight ${isSelected ? "text-sky-700/80" : "text-slate-500"}`}>
                                                     {description}
                                                 </p>
                                             )}
@@ -298,7 +298,7 @@ export default function SurgeryForm({
                     `}>
                         <div className="mx-auto w-full max-w-md sm:max-w-md">
                             {/* Medical Disclaimer moved inside the fixed button area on mobile for better visibility/trust */}
-                            <p className="mb-3 text-center text-[10px] sm:text-xs text-slate-400 px-4 sm:hidden">
+                            <p className="mb-3 text-center text-xs sm:text-xs text-slate-400 px-4 sm:hidden">
                                 {t('medicalDisclaimer')}
                             </p>
 
@@ -325,7 +325,7 @@ export default function SurgeryForm({
                 {/* Medical Disclaimer - Shown below form on desktop, maybe hidden behind fixed CTA on mobile? 
                     I'll add it here but it might need padding on mobile.
                 */}
-                <p className="hidden sm:block text-center text-[10px] sm:text-xs text-slate-400 px-4">
+                <p className="hidden sm:block text-center text-xs sm:text-xs text-slate-400 px-4">
                     {t('medicalDisclaimer')}
                 </p>
             </div>

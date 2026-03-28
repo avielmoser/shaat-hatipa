@@ -73,7 +73,7 @@ export default function AccessibilityWidget() {
             {/* Floating Trigger Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-24 left-4 sm:bottom-6 sm:left-6 z-40 p-3 sm:p-4 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 hover:scale-110 print:hidden"
+                className="fixed bottom-24 start-4 sm:bottom-6 sm:start-6 z-40 p-3 sm:p-4 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 hover:scale-110 print:hidden"
                 aria-label="Accessibility Settings"
                 aria-expanded={isOpen}
                 aria-controls="accessibility-panel"
@@ -97,7 +97,7 @@ export default function AccessibilityWidget() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="a11y-title"
-                className={`fixed bottom-40 left-4 sm:bottom-24 sm:left-6 z-50 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl p-5 sm:p-6 transition-all duration-300 transform print:hidden border border-slate-100 ${isOpen
+                className={`fixed bottom-40 start-4 sm:bottom-24 sm:start-6 z-50 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl p-5 sm:p-6 transition-all duration-300 transform print:hidden border border-slate-100 ${isOpen
                     ? 'opacity-100 translate-y-0 scale-100'
                     : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
                     }`}
@@ -108,7 +108,7 @@ export default function AccessibilityWidget() {
                     </h2>
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                        className="p-2 -me-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
                         aria-label="Close accessibility menu"
                     >
                         <X className="w-5 h-5" />

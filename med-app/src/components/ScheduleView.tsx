@@ -365,7 +365,7 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-sm font-bold text-slate-900 min-w-[3.5rem] text-center">
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-sm font-bold text-slate-900 w-14 sm:min-w-[3.5rem] text-center shrink-0">
                               {tg.time}
                             </span>
 
@@ -390,7 +390,7 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                                   >
                                     {resolveLocalizedString(slot.medicationName, currentLocale)}
                                     {applicableInstNumbers.length > 0 && (
-                                      <sup className="text-[10px] ms-0.5 mb-1.5 font-bold tracking-tighter">
+                                      <sup className="text-xs ms-0.5 mb-1.5 font-bold tracking-tighter">
                                         {applicableInstNumbers.map(toSuperscript).join("")}
                                       </sup>
                                     )}
@@ -416,7 +416,7 @@ export default function ScheduleView({ schedule, prescription, clinicConfig }: S
                                   key={inst.id}
                                   className="text-sm text-slate-600 flex items-start gap-1.5"
                                 >
-                                  <span className="font-bold text-slate-400 min-w-[1.25rem]">
+                                  <span className="font-bold text-slate-400 w-5">
                                     {inst.number}
                                   </span>
                                   <span className="flex-shrink-0">{icon}</span>

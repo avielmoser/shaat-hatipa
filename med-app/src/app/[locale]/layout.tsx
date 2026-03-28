@@ -3,10 +3,21 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '../../i18n/routing';
+import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { ClinicBrandProvider } from "../../components/ClinicBrandProvider";
 import Navbar from "../../components/Navbar";
 import AccessibilityWidget from "../../components/accessibility/AccessibilityWidget";
+
+const geistSans = Geist({
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
     title: "ShaatHaTipa",
@@ -34,8 +45,8 @@ export default async function LocaleLayout({
     const dir = locale === 'he' ? 'rtl' : 'ltr';
 
     return (
-        <html lang={locale} dir={dir}>
-            <body className="min-h-screen bg-slate-50 text-slate-900 antialiased relative overflow-x-hidden font-sans">
+        <html lang={locale} dir={dir} className={`${geistSans.variable} ${geistMono.variable}`}>
+            <body className="min-h-screen bg-slate-50 text-slate-900 antialiased font-sans">
                 <NextIntlClientProvider messages={messages}>
                     <ClinicBrandProvider>
                         <Navbar />

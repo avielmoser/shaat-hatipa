@@ -27,7 +27,7 @@ export default function TermsPage() {
                         href="/"
                         className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-sky-600 transition-colors"
                     >
-                        {locale === 'en' ? <ArrowLeft className="w-4 h-4 mr-1" /> : <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />}
+                        {locale === 'en' ? <ArrowLeft className="w-4 h-4 me-1" /> : <ArrowLeft className="w-4 h-4 ms-1 rotate-180" />}
                         {t("backToHome")}
                     </Link>
                 </div>

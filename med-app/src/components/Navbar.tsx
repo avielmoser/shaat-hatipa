@@ -16,11 +16,11 @@ export default function Navbar() {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <header className="relative lg:sticky lg:top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm sm:shadow-none">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2">
           {brand.id !== 'default' && (
-            <div className="flex items-center justify-center h-8 w-auto min-w-[2rem] me-2">
+            <div className="flex items-center justify-center h-8 w-8 me-2">
               {!imgError && brand.logoUrl ? (
                 <img
                   src={brand.logoUrl}

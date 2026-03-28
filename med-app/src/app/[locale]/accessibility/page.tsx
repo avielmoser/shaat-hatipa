@@ -24,9 +24,9 @@ export default function AccessibilityPage() {
                         className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-sky-600 transition-colors"
                     >
                         {isRtl ? (
-                            <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
+                            <ArrowLeft className="w-4 h-4 ms-1 rotate-180" />
                         ) : (
-                            <ArrowLeft className="w-4 h-4 mr-1" />
+                            <ArrowLeft className="w-4 h-4 me-1" />
                         )}
                         {common("backToHome")}
                     </Link>

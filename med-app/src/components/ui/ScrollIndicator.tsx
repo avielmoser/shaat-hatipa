@@ -66,13 +66,11 @@ export function ScrollIndicator({ containerRef, isRtl }: ScrollIndicatorProps) {
         <>
             {/* Track */}
             <div
-                className={`absolute top-3 bottom-3 w-[6px] rounded-full bg-slate-100 z-20 pointer-events-none
-          ${isRtl ? 'left-[6px]' : 'right-[6px]'}`}
+                className="absolute top-3 bottom-3 w-[6px] rounded-full bg-slate-100 z-20 pointer-events-none start-[6px]"
             />
             {/* Thumb */}
             <div
-                className={`absolute w-[6px] rounded-full bg-slate-300 z-20 pointer-events-none shadow-sm transition-[top,height] duration-75
-          ${isRtl ? 'left-[6px]' : 'right-[6px]'}`}
+                className="absolute w-[6px] rounded-full bg-slate-300 z-20 pointer-events-none shadow-sm transition-[top,height] duration-75 start-[6px]"
                 style={{
                     height: `${thumbHeight}px`,
                     top: `${thumbTop}px`

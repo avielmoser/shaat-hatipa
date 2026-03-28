@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslations } from 'next-intl';
+import { motion, AnimatePresence } from "framer-motion";
 import type {
   LaserPrescriptionInput,
   DoseSlot,
@@ -343,59 +344,82 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
             </ol>
           </nav>
 
-          {/* ===== Step 1 – Surgery Details ===== */}
-          {step === 1 && (
-            <div ref={step1Ref}>
-              <SurgeryForm
-                surgeryType={surgeryType}
-                setSurgeryType={(val) => {
-                  setSurgeryType(val);
-                  setSchedule([]);
-                }}
-                surgeryDate={surgeryDate}
-                setSurgeryDate={(val) => {
-                  setSurgeryDate(val);
-                  setSchedule([]);
-                }}
-                wakeTime={wakeTime}
-                setWakeTime={setWakeTime}
-                sleepTime={sleepTime}
-                setSleepTime={setSleepTime}
-                invalidTime={invalidTime}
-                error={error}
-                onNext={handleContinueToStep2}
-                clinicConfig={clinicConfig}
-              />
-            </div>
-          )}
-
-          {/* ===== Step 2 – Protocol Review ===== */}
-          {step === 2 && prescription && (
-            <div ref={step2Ref}>
-              <ProtocolReview
-                prescription={prescription}
-                error={error}
-                loading={loading}
-                onBack={goToStep1}
-                onGenerate={handleGenerateSchedule}
-              />
-            </div>
-          )}
-
-          {/* ===== Step 3 – Schedule ===== */}
-          {step === 3 && hasSchedule && prescription && (
-            <div ref={step3Ref}>
-              <div ref={scheduleRef}>
-                <ScheduleDisplay
-                  schedule={schedule}
-                  prescription={prescription}
-                  onBack={goToStep2}
-                  onHome={goHome}
-                  clinicConfig={clinicConfig || undefined}
+          <AnimatePresence mode="wait">
+            {/* ===== Step 1 – Surgery Details ===== */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                ref={step1Ref}
+              >
+                <SurgeryForm
+                  surgeryType={surgeryType}
+                  setSurgeryType={(val) => {
+                    setSurgeryType(val);
+                    setSchedule([]);
+                  }}
+                  surgeryDate={surgeryDate}
+                  setSurgeryDate={(val) => {
+                    setSurgeryDate(val);
+                    setSchedule([]);
+                  }}
+                  wakeTime={wakeTime}
+                  setWakeTime={setWakeTime}
+                  sleepTime={sleepTime}
+                  setSleepTime={setSleepTime}
+                  invalidTime={invalidTime}
+                  error={error}
+                  onNext={handleContinueToStep2}
+                  clinicConfig={clinicConfig}
                 />
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+
+            {/* ===== Step 2 – Protocol Review ===== */}
+            {step === 2 && prescription && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                ref={step2Ref}
+              >
+                <ProtocolReview
+                  prescription={prescription}
+                  error={error}
+                  loading={loading}
+                  onBack={goToStep1}
+                  onGenerate={handleGenerateSchedule}
+                />
+              </motion.div>
+            )}
+
+            {/* ===== Step 3 – Schedule ===== */}
+            {step === 3 && hasSchedule && prescription && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.4 }}
+                ref={step3Ref}
+              >
+                <div ref={scheduleRef}>
+                  <ScheduleDisplay
+                    schedule={schedule}
+                    prescription={prescription}
+                    onBack={goToStep2}
+                    onHome={goHome}
+                    clinicConfig={clinicConfig || undefined}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
     </GlobalErrorBoundary>

@@ -40,7 +40,7 @@ export default function TimeInput({
                 className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500"
             >
                 {label}
-                {required && <span className="text-red-500 ml-1">*</span>}
+                {required && <span className="text-red-500 ms-1">*</span>}
             </label>
             <input
                 id={id}
