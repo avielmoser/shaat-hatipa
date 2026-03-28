@@ -271,10 +271,10 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
     <GlobalErrorBoundary>
       <section
         id="work-area"
-        className="px-4 pb-32 pt-6 sm:px-6 lg:px-8 sm:pt-10"
+        className="px-4 pb-20 pt-5 sm:px-6 sm:pb-16 lg:px-8 sm:pt-10"
         aria-label="Drop schedule builder workspace"
       >
-        <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
+        <div className="mx-auto max-w-3xl space-y-4 sm:space-y-8">
           {/* Stepper */}
           <nav aria-label={t('steps.1')}>
             <ol

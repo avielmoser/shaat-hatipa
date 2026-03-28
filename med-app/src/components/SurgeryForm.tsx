@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { useTranslations, useLocale } from 'next-intl';
 import { Calendar, Check, Eye, Activity } from "lucide-react";
 import { SurgeryType } from "../types/prescription";
@@ -39,25 +39,6 @@ export default function SurgeryForm({
     const t = useTranslations('Wizard.step1');
     const locale = useLocale();
     const isRtl = locale === 'he';
-
-    // Scroll Observer for Floating Button
-    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setShowFloatingBtn(entry.isIntersecting);
-            },
-            { threshold: 0.1 } // Show when 10% of form is visible
-        );
-
-        if (containerRef.current) {
-            observer.observe(containerRef.current);
-        }
-
-        return () => observer.disconnect();
-    }, []);
 
     // Analytics: Track wizard entry
     useEffect(() => {
@@ -108,20 +89,20 @@ export default function SurgeryForm({
         : (clinicConfig?.supportedSurgeries?.length ? clinicConfig.supportedSurgeries : ["INTERLASIK", "PRK"]);
 
     return (
-        <div ref={containerRef} className="relative pb-24 sm:pb-0"> {/* Padding bottom for fixed CTA on mobile */}
+        <div className="relative pb-2 sm:pb-0">
             <div
-                className="space-y-6 sm:space-y-8"
+                className="space-y-3 sm:space-y-8"
                 aria-labelledby="step1-title"
             >
-                {/* Header - More compact on mobile */}
-                <div className="space-y-1 text-start">
+                {/* Header */}
+                <div className="space-y-0.5 text-start">
                     <h2
                         id="step1-title"
-                        className="text-lg sm:text-3xl font-bold tracking-tight text-slate-900"
+                        className="text-base sm:text-3xl font-bold tracking-tight text-slate-900"
                     >
                         {t('title')}
                     </h2>
-                    <p className="max-w-xl text-xs sm:text-base text-slate-500">
+                    <p className="max-w-xl text-xs sm:text-base text-slate-500 leading-snug sm:leading-relaxed">
                         {t('description')}
                     </p>
                 </div>
@@ -145,14 +126,14 @@ export default function SurgeryForm({
                 )}
 
                 {/* Main Form Area */}
-                <div className="space-y-6">
+                <div className="space-y-3 sm:space-y-6">
 
                     {/* Protocol Selection - Compact Grid */}
-                    <div role="group" aria-labelledby="surgery-type-label" className="space-y-2">
+                    <div role="group" aria-labelledby="surgery-type-label" className="space-y-1.5 sm:space-y-2">
                         <label id="surgery-type-label" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
                             {t('surgeryType')}
                         </label>
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-4">
                             {protocols.map((key) => {
                                 const isSelected = surgeryType === key;
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -176,7 +157,7 @@ export default function SurgeryForm({
                                         type="button"
                                         onClick={() => setSurgeryType(key)}
                                         className={`
-                                            relative flex items-center gap-3 sm:gap-4 p-3 sm:p-5 rounded-2xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
+                                            relative flex min-h-11 items-center gap-2 sm:gap-4 p-2 sm:p-5 rounded-lg sm:rounded-2xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
                                             ${isSelected
                                                 ? "border-sky-600 bg-sky-50 shadow-sm ring-1 ring-sky-600/10"
                                                 : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -186,14 +167,13 @@ export default function SurgeryForm({
                                     >
                                         {/* Icon Box */}
                                         <div className={`
-                                            flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl transition-colors
+                                            hidden xs:flex sm:flex h-7 w-7 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-md sm:rounded-xl transition-colors
                                             ${isSelected ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-500"}
                                         `}>
-                                            {/* Icon Logic: Eye for eye procedures, Activity for general/pain */}
                                             {(key === 'INTERLASIK' || key === 'EYE_PAIN' || key === 'CUSTOM' || key === 'PRK') ? (
-                                                <Eye className="h-5 w-5 sm:h-6 sm:w-6" />
+                                                <Eye className="h-3.5 w-3.5 sm:h-6 sm:w-6" />
                                             ) : (
-                                                <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
+                                                <Activity className="h-3.5 w-3.5 sm:h-6 sm:w-6" />
                                             )}
                                         </div>
 
@@ -205,7 +185,7 @@ export default function SurgeryForm({
                                                 </span>
                                             </div>
                                             {description && (
-                                                <p className={`mt-0.5 text-xs sm:text-sm leading-tight ${isSelected ? "text-sky-700/80" : "text-slate-500"}`}>
+                                                <p className={`hidden sm:block mt-0.5 text-xs sm:text-sm leading-tight ${isSelected ? "text-sky-700/80" : "text-slate-500"}`}>
                                                     {description}
                                                 </p>
                                             )}
@@ -224,44 +204,41 @@ export default function SurgeryForm({
                     </div>
 
                     {/* Date & Time Details Card - Adjusted Spacing */}
-                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
                         {/* Header */}
-                        <div className="border-b border-slate-100 bg-slate-50/50 px-4 py-3 sm:px-6 sm:py-4">
-                            <h3 className="text-sm sm:text-base font-semibold text-slate-700">
+                        <div className="border-b border-slate-100 bg-slate-50/50 px-2.5 py-1.5 sm:px-6 sm:py-4">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 sm:text-base">
                                 {t('scheduleSettings')}
                             </h3>
                         </div>
 
-                        <div className="space-y-4 p-4 sm:p-6 sm:space-y-6">
+                        <div className="space-y-2.5 p-2.5 sm:space-y-6 sm:p-6">
                             {/* Date Input */}
-                            <div className="space-y-1.5">
-                                <label htmlFor="surgery-date" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
+                            <div className="space-y-1">
+                                <label htmlFor="surgery-date" className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('surgeryDate')}
                                 </label>
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-1.5">
                                     {/* Icon moved outside input for better mobile RTL support */}
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                                            <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        <div className="flex h-8 w-8 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-md sm:rounded-xl bg-slate-100 text-slate-500">
+                                            <Calendar className="h-3.5 w-3.5 sm:h-6 sm:w-6" />
                                         </div>
-                                        <div className="relative flex-1">
+                                        <div className="relative min-w-0 flex-1">
                                             <input
                                                 id="surgery-date"
                                                 type="date"
                                                 value={surgeryDate}
                                                 onChange={(e) => setSurgeryDate(e.target.value)}
-                                                className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base sm:text-lg text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/20"
+                                                className="block min-h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
                                             />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Divider */}
-                            <hr className="border-slate-100" />
-
                             {/* Time Inputs */}
-                            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:gap-6 sm:border-0 sm:pt-0">
                                 <TimeInput
                                     id="wake-time"
                                     label={t('wakeTime')}
@@ -284,48 +261,38 @@ export default function SurgeryForm({
                                 />
                             </div>
 
-                            {/* Dedicated Helper Text Section - calm, bottom, professional placement */}
-                            <p className="text-sm text-slate-500 text-start leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
+                            {/* Helper Text - compact inline style */}
+                            <p className="text-start text-xs leading-tight text-slate-400 sm:leading-snug">
                                 {t('helperText')}
                             </p>
                         </div>
                     </div>
 
-                    {/* Fixed Bottom CTA for Mobile / Sticky for Desktop */}
-                    <div className={`
-                        fixed bottom-0 start-0 end-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none transition-transform duration-300 ease-in-out
-                        ${showFloatingBtn ? 'translate-y-0' : 'translate-y-full sm:translate-y-0'}
-                    `}>
-                        <div className="mx-auto w-full max-w-md sm:max-w-md">
-                            {/* Medical Disclaimer moved inside the fixed button area on mobile for better visibility/trust */}
-                            <p className="mb-3 text-center text-xs sm:text-xs text-slate-400 px-4 sm:hidden">
+                    {/* Primary CTA — inline on mobile so it reads as the next step in the form; elevated card on desktop */}
+                    <div className="mt-3 sm:mt-6">
+                        <div className="mx-auto w-full max-w-md space-y-2 sm:space-y-0 sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
+                            <p className="px-1 text-center text-xs leading-snug text-slate-400 sm:hidden">
                                 {t('medicalDisclaimer')}
                             </p>
-
-                            <div className="sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
-                                <button
-                                    type="button"
-                                    onClick={onNext}
-                                    disabled={!surgeryType}
-                                    className={`
-                                        flex w-full items-center justify-center gap-2 rounded-xl py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-sm transition-all
-                                        ${surgeryType
-                                            ? "bg-sky-600 text-white hover:bg-sky-500 hover:shadow-md hover:shadow-sky-500/20 active:scale-[0.98]"
-                                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                        }
-                                    `}
-                                >
-                                    {t('nextButton')}
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={onNext}
+                                disabled={!surgeryType}
+                                className={`
+                                    flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all sm:min-h-0 sm:py-4 sm:text-lg sm:font-bold
+                                    ${surgeryType
+                                        ? "bg-sky-600 text-white hover:bg-sky-500 hover:shadow-md hover:shadow-sky-500/20 active:scale-[0.98]"
+                                        : "cursor-not-allowed bg-slate-100 text-slate-400"
+                                    }
+                                `}
+                            >
+                                {t('nextButton')}
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Medical Disclaimer - Shown below form on desktop, maybe hidden behind fixed CTA on mobile? 
-                    I'll add it here but it might need padding on mobile.
-                */}
-                <p className="hidden sm:block text-center text-xs sm:text-xs text-slate-400 px-4">
+                <p className="mt-3 hidden text-center text-xs text-slate-400 sm:block sm:px-4">
                     {t('medicalDisclaimer')}
                 </p>
             </div>
