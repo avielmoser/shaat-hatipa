@@ -60,9 +60,9 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
 
   return (
     <section
-      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-3 pb-6 shadow-[inset_0_-1px_0_0_rgb(226_232_240/0.9)] max-sm:min-h-[calc(100svh-5.5rem)] max-sm:flex max-sm:flex-col sm:pt-20 sm:pb-24 sm:px-6 sm:shadow-none lg:px-8"
+      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-4 pb-8 shadow-[inset_0_-1px_0_0_rgb(226_232_240/0.9)] sm:pt-20 sm:pb-24 sm:px-6 sm:shadow-none lg:px-8"
     >
-      <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-4 max-sm:min-h-0 max-sm:flex-1 max-sm:justify-center sm:gap-12 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-5 sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -103,12 +103,12 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
             </h2>
           </div>
 
-          <p className="mb-0 hidden max-w-xl px-1 font-normal leading-relaxed text-slate-500 sm:mb-10 sm:block sm:text-lg sm:px-0">
+          <p className="mt-2.5 max-w-xl text-sm font-normal leading-snug text-slate-500 sm:mb-10 sm:mt-0 sm:text-lg sm:leading-relaxed">
             <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
           </p>
 
           <ul className={cn(
-            "mb-0 hidden w-full max-w-md flex-col items-start gap-2.5 text-start sm:mb-10 sm:flex sm:flex-col sm:gap-4"
+            "mt-3 flex w-full max-w-md flex-col items-start gap-2 text-start sm:mb-10 sm:mt-0 sm:gap-4"
           )}>
             {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
               <li key={i} className={cn(
@@ -123,7 +123,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
             ))}
           </ul>
 
-          <div className="mt-5 flex w-full min-w-0 flex-col items-center gap-2 sm:mt-1 sm:items-start sm:gap-4">
+          <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-2 sm:mt-1 sm:items-start sm:gap-4">
             <button
               type="button"
               onClick={handleScrollToWorkArea}
