@@ -60,70 +60,78 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
 
   return (
     <section
-      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-4 pb-8 shadow-[inset_0_-1px_0_0_rgb(226_232_240/0.9)] sm:pt-20 sm:pb-24 sm:px-6 sm:shadow-none lg:px-8"
+      className="min-h-sht-first-screen flex w-full flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-4 pb-8 shadow-[inset_0_-1px_0_0_rgb(226_232_240/0.9)] sm:px-6 sm:pb-24 sm:pt-20 sm:shadow-none lg:px-8"
     >
-      <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-5 sm:gap-12 md:flex-row md:items-center md:justify-between">
-        {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
+      <div className="mx-auto flex min-h-0 w-full min-w-0 max-w-6xl flex-1 flex-col gap-5 sm:gap-12 md:flex-row md:items-stretch md:justify-between">
+        {/* Text + CTA – first column; flex-1 + justify-between fills first screen without hiding content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex w-full min-w-0 flex-1 flex-col items-stretch text-start sm:items-start"
+          className="flex min-h-0 w-full min-w-0 flex-1 flex-col justify-between text-start sm:items-start"
         >
-          {/* Clinic Logo (if exists) */}
-          <div className="flex w-full min-w-0 flex-col items-start gap-2 sm:gap-3">
-            {/* Always show the label, maybe with logo if available */}
-            <div className="flex flex-col items-start gap-1.5 sm:gap-2">
-              {clinicConfig && clinicConfig.logoUrl && clinicConfig.id !== 'default' ? (
-                <img
-                  src={clinicConfig.logoUrl}
-                  alt={clinicConfig.name}
-                  className="max-h-10 sm:max-h-14 w-auto object-contain"
-                  loading="eager"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              ) : null}
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                {clinicLabel}
-              </span>
+          <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
+            {/* Clinic Logo (if exists) */}
+            <div className="flex w-full min-w-0 flex-col items-start gap-2 sm:gap-3">
+              <div className="flex flex-col items-start gap-1.5 sm:gap-2">
+                {clinicConfig && clinicConfig.logoUrl && clinicConfig.id !== 'default' ? (
+                  <img
+                    src={clinicConfig.logoUrl}
+                    alt={clinicConfig.name}
+                    className="max-h-10 w-auto object-contain sm:max-h-14"
+                    loading="eager"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : null}
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  {clinicLabel}
+                </span>
+              </div>
             </div>
+
+            <div className="w-full min-w-0 sm:mb-0 sm:mt-0">
+              <h1
+                className={cn(
+                  "mb-1.5 max-w-lg font-extrabold leading-tight tracking-tight text-slate-900 rtl:tracking-normal sm:mb-4",
+                  "text-2xl sm:text-4xl lg:text-5xl",
+                )}
+              >
+                {heroTitle}
+              </h1>
+              <h2 className="max-w-lg text-pretty text-base font-medium leading-snug text-slate-600 sm:text-2xl lg:text-3xl">
+                {heroSubtitle}
+              </h2>
+            </div>
+
+            <p className="max-w-xl text-sm font-normal leading-snug text-slate-500 sm:text-lg sm:leading-relaxed">
+              <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
+            </p>
+
+            <ul
+              className={cn(
+                "flex w-full max-w-md flex-col items-start gap-2 text-start sm:gap-4",
+              )}
+            >
+              {[t("feature1"), t("feature2"), t("feature3")].map((feature, i) => (
+                <li
+                  key={i}
+                  className={cn(
+                    "flex items-center gap-2 font-medium text-slate-700 sm:gap-3",
+                    isRtl ? "w-full flex-row-reverse justify-end text-start" : "",
+                  )}
+                >
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 sm:h-6 sm:w-6">
+                    <Check size={14} strokeWidth={3} className="sm:h-3 sm:w-3" />
+                  </div>
+                  <span className="flex-1 text-sm leading-snug sm:text-base">{feature}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="mt-3 w-full min-w-0 sm:mb-8 sm:mt-6">
-            <h1 className={cn(
-              "mb-1.5 max-w-lg font-extrabold leading-tight tracking-tight text-slate-900 rtl:tracking-normal sm:mb-4",
-              "text-2xl sm:text-4xl lg:text-5xl"
-            )}>
-              {heroTitle}
-            </h1>
-            <h2 className="max-w-lg text-pretty text-base font-medium leading-snug text-slate-600 sm:text-2xl lg:text-3xl">
-              {heroSubtitle}
-            </h2>
-          </div>
-
-          <p className="mt-2.5 max-w-xl text-sm font-normal leading-snug text-slate-500 sm:mb-10 sm:mt-0 sm:text-lg sm:leading-relaxed">
-            <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
-          </p>
-
-          <ul className={cn(
-            "mt-3 flex w-full max-w-md flex-col items-start gap-2 text-start sm:mb-10 sm:mt-0 sm:gap-4"
-          )}>
-            {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
-              <li key={i} className={cn(
-                "flex items-center gap-2 sm:gap-3 text-slate-700 font-medium",
-                isRtl ? "flex-row-reverse text-start justify-end w-full" : ""
-              )}>
-                <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
-                  <Check size={14} strokeWidth={3} className="sm:w-3 sm:h-3" />
-                </div>
-                <span className="text-sm sm:text-base leading-snug flex-1">{feature}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-2 sm:mt-1 sm:items-start sm:gap-4">
+          <div className="mt-8 flex w-full min-w-0 shrink-0 flex-col items-center gap-2 sm:mt-10 sm:items-start sm:gap-4 md:mt-12">
             <button
               type="button"
               onClick={handleScrollToWorkArea}
@@ -135,24 +143,24 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
                 rtl:tracking-normal sm:h-auto sm:w-auto sm:px-10 sm:py-5 sm:text-xl
               "
               style={
-                clinicConfig && clinicConfig.id !== 'default'
-                  ? { backgroundColor: "var(--clinic-button)" } // Clinic color
-                  : undefined // Tailwind default
+                clinicConfig && clinicConfig.id !== "default"
+                  ? { backgroundColor: "var(--clinic-button)" }
+                  : undefined
               }
               onMouseEnter={(e) => {
-                if (!clinicConfig || clinicConfig.id === 'default') return;
+                if (!clinicConfig || clinicConfig.id === "default") return;
                 (e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.95)";
               }}
               onMouseLeave={(e) => {
-                if (!clinicConfig || clinicConfig.id === 'default') return;
+                if (!clinicConfig || clinicConfig.id === "default") return;
                 (e.currentTarget as HTMLButtonElement).style.filter = "none";
               }}
             >
-              {t('startNow')}
+              {t("startNow")}
             </button>
 
             <span className="block max-w-xs text-pretty text-center text-xs font-normal text-slate-400/80 sm:mt-1 sm:text-start">
-              {t('medicalAdviceDisclaimer')}
+              {t("medicalAdviceDisclaimer")}
             </span>
           </div>
         </motion.div>
@@ -161,7 +169,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="hidden sm:flex sm:flex-1 sm:justify-start w-full px-2 sm:px-0 mt-8 sm:mt-0"
+          className="mt-8 hidden min-h-0 w-full flex-1 flex-col justify-center sm:mt-0 sm:flex sm:px-2 md:px-0"
         >
           <div className="w-full max-w-[320px] sm:max-w-sm rounded-3xl border border-sky-50 bg-white p-4 sm:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.1)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
             <div className="mb-3 sm:mb-4 flex items-center justify-between">

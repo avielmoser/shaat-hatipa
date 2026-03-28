@@ -76,6 +76,8 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Sticky app header (Navbar h-16 + trial banner); keep aligned with Navbar.tsx */
+  --sht-app-header-height: 7rem;
 }
 
 .dark {
@@ -125,6 +127,19 @@
   input[type="date"],
   input[type="time"] {
     max-width: 100%;
+  }
+}
+
+/* First viewport below header: svh = conservative mobile load; dvh when supported */
+@layer utilities {
+  .min-h-sht-first-screen {
+    min-height: calc(100svh - var(--sht-app-header-height));
+  }
+
+  @supports (height: 100dvh) {
+    .min-h-sht-first-screen {
+      min-height: calc(100dvh - var(--sht-app-header-height));
+    }
   }
 }
 
