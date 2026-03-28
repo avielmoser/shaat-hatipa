@@ -16,8 +16,8 @@ export default async function Page({
   const clinicConfig = clinicRepository.getClinicConfig(clinicId);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main>
+    <div className="min-h-screen min-w-0 overflow-x-clip bg-slate-50 text-slate-900">
+      <main className="min-w-0">
         <HeroSection clinicConfig={clinicConfig} />
         <WorkArea clinicConfig={clinicConfig} />
       </main>

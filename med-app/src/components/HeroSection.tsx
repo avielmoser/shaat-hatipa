@@ -60,20 +60,20 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
 
   return (
     <section
-      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-2 pb-8 sm:pt-20 sm:pb-24 sm:px-6 lg:px-8"
+      className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50/50 via-white to-white px-4 pt-3 pb-6 shadow-[inset_0_-1px_0_0_rgb(226_232_240/0.9)] max-sm:min-h-[calc(100svh-5.5rem)] max-sm:flex max-sm:flex-col sm:pt-20 sm:pb-24 sm:px-6 sm:shadow-none lg:px-8"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:gap-12 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-4 max-sm:min-h-0 max-sm:flex-1 max-sm:justify-center sm:gap-12 md:flex-row md:items-center md:justify-between">
         {/* Text + CTA – Right side on desktop (now first in DOM for natural flow) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex-1 flex flex-col items-start text-start"
+          className="flex w-full min-w-0 flex-1 flex-col items-stretch text-start sm:items-start"
         >
           {/* Clinic Logo (if exists) */}
-          <div className="flex flex-col items-start gap-3 w-full">
+          <div className="flex w-full min-w-0 flex-col items-start gap-2 sm:gap-3">
             {/* Always show the label, maybe with logo if available */}
-            <div className="flex flex-col items-start gap-2">
+            <div className="flex flex-col items-start gap-1.5 sm:gap-2">
               {clinicConfig && clinicConfig.logoUrl && clinicConfig.id !== 'default' ? (
                 <img
                   src={clinicConfig.logoUrl}
@@ -91,26 +91,24 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
             </div>
           </div>
 
-          <div className="mb-4 sm:mb-8 w-full mt-4 sm:mt-6">
+          <div className="mt-3 w-full min-w-0 sm:mb-8 sm:mt-6">
             <h1 className={cn(
-              "font-extrabold leading-tight tracking-tight rtl:tracking-normal text-slate-900 mb-2 sm:mb-4 max-w-lg",
+              "mb-1.5 max-w-lg font-extrabold leading-tight tracking-tight text-slate-900 rtl:tracking-normal sm:mb-4",
               "text-2xl sm:text-4xl lg:text-5xl"
             )}>
               {heroTitle}
             </h1>
-            <h2 className="text-base sm:text-2xl lg:text-3xl font-medium leading-snug text-slate-600 max-w-lg text-balance">
+            <h2 className="max-w-lg text-pretty text-base font-medium leading-snug text-slate-600 sm:text-2xl lg:text-3xl">
               {heroSubtitle}
             </h2>
           </div>
 
-          {/* Description hidden on mobile to save space if needed? Prompt said 'Reduce vertical margins', keep content readable but compact. 
-              I'll keep it but ensure margins are small. */}
-          <p className="text-sm sm:text-lg text-slate-500 mb-6 sm:mb-10 max-w-xl font-normal leading-relaxed px-1 sm:px-0">
+          <p className="mb-0 hidden max-w-xl px-1 font-normal leading-relaxed text-slate-500 sm:mb-10 sm:block sm:text-lg sm:px-0">
             <span dangerouslySetInnerHTML={{ __html: t.raw('description') }} />
           </p>
 
           <ul className={cn(
-            "flex flex-col gap-2.5 sm:gap-4 mb-6 sm:mb-10 items-start w-full max-w-md text-start"
+            "mb-0 hidden w-full max-w-md flex-col items-start gap-2.5 text-start sm:mb-10 sm:flex sm:flex-col sm:gap-4"
           )}>
             {[t('feature1'), t('feature2'), t('feature3')].map((feature, i) => (
               <li key={i} className={cn(
@@ -125,19 +123,17 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
             ))}
           </ul>
 
-          <div className="flex flex-col items-start gap-4 mt-1 w-full">
+          <div className="mt-5 flex w-full min-w-0 flex-col items-center gap-2 sm:mt-1 sm:items-start sm:gap-4">
             <button
               type="button"
               onClick={handleScrollToWorkArea}
               className="
-    inline-flex items-center justify-center rounded-full
-    h-12 sm:h-auto px-8 py-0 sm:px-10 sm:py-5 
-    text-lg sm:text-xl font-bold text-white rtl:tracking-normal
-    shadow-lg shadow-sky-200/80 transition-all transform
-    bg-sky-600 hover:bg-sky-700 hover:scale-[1.02] active:scale-[0.98]
-    focus:outline-none focus:ring-4 focus:ring-sky-500 focus:ring-offset-2
-    w-full max-w-xs sm:w-auto
-  "
+                inline-flex h-12 w-full max-w-xs transform items-center justify-center rounded-full
+                bg-sky-600 px-8 py-0 text-lg font-bold text-white shadow-lg shadow-sky-200/80
+                transition-all hover:scale-[1.02] hover:bg-sky-700
+                active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-sky-500 focus:ring-offset-2
+                rtl:tracking-normal sm:h-auto sm:w-auto sm:px-10 sm:py-5 sm:text-xl
+              "
               style={
                 clinicConfig && clinicConfig.id !== 'default'
                   ? { backgroundColor: "var(--clinic-button)" } // Clinic color
@@ -155,7 +151,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
               {t('startNow')}
             </button>
 
-            <span className="block max-w-xs text-xs sm:text-xs font-normal text-slate-400/80 mt-1 text-start">
+            <span className="block max-w-xs text-pretty text-center text-xs font-normal text-slate-400/80 sm:mt-1 sm:text-start">
               {t('medicalAdviceDisclaimer')}
             </span>
           </div>

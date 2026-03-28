@@ -120,6 +120,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Native pickers have intrinsic min widths; keep them inside flex/grid parents with min-w-0 */
+  input[type="date"],
+  input[type="time"] {
+    max-width: 100%;
+  }
 }
 
 body {

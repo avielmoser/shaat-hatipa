@@ -89,9 +89,9 @@ export default function SurgeryForm({
         : (clinicConfig?.supportedSurgeries?.length ? clinicConfig.supportedSurgeries : ["INTERLASIK", "PRK"]);
 
     return (
-        <div className="relative pb-2 sm:pb-0">
+        <div className="relative min-w-0 pb-2 sm:pb-0">
             <div
-                className="space-y-3 sm:space-y-8"
+                className="min-w-0 space-y-3 sm:space-y-8"
                 aria-labelledby="step1-title"
             >
                 {/* Header */}
@@ -126,14 +126,14 @@ export default function SurgeryForm({
                 )}
 
                 {/* Main Form Area */}
-                <div className="space-y-3 sm:space-y-6">
+                <div className="min-w-0 space-y-3 sm:space-y-6">
 
                     {/* Protocol Selection - Compact Grid */}
-                    <div role="group" aria-labelledby="surgery-type-label" className="space-y-1.5 sm:space-y-2">
+                    <div role="group" aria-labelledby="surgery-type-label" className="min-w-0 space-y-1.5 sm:space-y-2">
                         <label id="surgery-type-label" className="block text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500">
                             {t('surgeryType')}
                         </label>
-                        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                        <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-4">
                             {protocols.map((key) => {
                                 const isSelected = surgeryType === key;
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,7 +157,7 @@ export default function SurgeryForm({
                                         type="button"
                                         onClick={() => setSurgeryType(key)}
                                         className={`
-                                            relative flex min-h-11 items-center gap-2 sm:gap-4 p-2 sm:p-5 rounded-lg sm:rounded-2xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
+                                            relative flex min-h-11 min-w-0 items-center gap-2 sm:gap-4 p-2 sm:p-5 rounded-lg sm:rounded-2xl border-2 transition-all duration-200 outline-none focus-visible:ring-4 focus-visible:ring-sky-500/30
                                             ${isSelected
                                                 ? "border-sky-600 bg-sky-50 shadow-sm ring-1 ring-sky-600/10"
                                                 : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -204,7 +204,7 @@ export default function SurgeryForm({
                     </div>
 
                     {/* Date & Time Details Card - Adjusted Spacing */}
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
+                    <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
                         {/* Header */}
                         <div className="border-b border-slate-100 bg-slate-50/50 px-2.5 py-1.5 sm:px-6 sm:py-4">
                             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 sm:text-base">
@@ -212,25 +212,25 @@ export default function SurgeryForm({
                             </h3>
                         </div>
 
-                        <div className="space-y-2.5 p-2.5 sm:space-y-6 sm:p-6">
+                        <div className="min-w-0 space-y-2.5 p-2.5 sm:space-y-6 sm:p-6">
                             {/* Date Input */}
                             <div className="space-y-1">
                                 <label htmlFor="surgery-date" className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('surgeryDate')}
                                 </label>
-                                <div className="flex flex-col gap-1.5">
-                                    {/* Icon moved outside input for better mobile RTL support */}
-                                    <div className="flex items-center gap-2 sm:gap-3">
-                                        <div className="flex h-8 w-8 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-md sm:rounded-xl bg-slate-100 text-slate-500">
+                                <div className="flex min-w-0 flex-col gap-1.5">
+                                    {/* Icon + date: min-w-0 chain so iOS date control cannot overflow the card */}
+                                    <div className="flex min-w-0 items-stretch gap-2 sm:items-center sm:gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-md bg-slate-100 text-slate-500 sm:h-12 sm:w-12 sm:rounded-xl">
                                             <Calendar className="h-3.5 w-3.5 sm:h-6 sm:w-6" />
                                         </div>
-                                        <div className="relative min-w-0 flex-1">
+                                        <div className="relative min-w-0 flex-1 overflow-hidden">
                                             <input
                                                 id="surgery-date"
                                                 type="date"
                                                 value={surgeryDate}
                                                 onChange={(e) => setSurgeryDate(e.target.value)}
-                                                className="block min-h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
+                                                className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
                                             />
                                         </div>
                                     </div>
@@ -238,9 +238,10 @@ export default function SurgeryForm({
                             </div>
 
                             {/* Time Inputs */}
-                            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:gap-6 sm:border-0 sm:pt-0">
+                            <div className="grid min-w-0 grid-cols-1 gap-3 border-t border-slate-100 pt-2.5 sm:grid-cols-2 sm:gap-6 sm:border-0 sm:pt-0">
                                 <TimeInput
                                     id="wake-time"
+                                    className="min-w-0"
                                     label={t('wakeTime')}
                                     value={wakeTime}
                                     onChange={setWakeTime}
@@ -253,6 +254,7 @@ export default function SurgeryForm({
 
                                 <TimeInput
                                     id="sleep-time"
+                                    className="min-w-0"
                                     label={t('bedtime')}
                                     value={sleepTime}
                                     onChange={setSleepTime}
@@ -269,8 +271,8 @@ export default function SurgeryForm({
                     </div>
 
                     {/* Primary CTA — inline on mobile so it reads as the next step in the form; elevated card on desktop */}
-                    <div className="mt-3 sm:mt-6">
-                        <div className="mx-auto w-full max-w-md space-y-2 sm:space-y-0 sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
+                    <div className="mt-3 min-w-0 sm:mt-6">
+                        <div className="mx-auto w-full min-w-0 max-w-md space-y-2 sm:space-y-0 sm:rounded-2xl sm:bg-white/80 sm:p-2 sm:shadow-2xl sm:ring-1 sm:ring-slate-900/5">
                             <p className="px-1 text-center text-xs leading-snug text-slate-400 sm:hidden">
                                 {t('medicalDisclaimer')}
                             </p>
