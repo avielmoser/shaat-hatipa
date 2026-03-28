@@ -52,7 +52,7 @@ export default function TimeInput({
                 aria-invalid={!!error}
                 aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
                 className={`
-          block min-h-11 w-full min-w-0 max-w-full rounded-lg border px-3 py-2 text-base shadow-sm transition-colors box-border sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg
+          block min-h-11 w-full min-w-0 max-w-full rounded-lg border px-2.5 py-2 text-base shadow-sm transition-colors box-border sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg
           focus:outline-none focus:ring-2 focus:ring-sky-500
           disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400
           ${error

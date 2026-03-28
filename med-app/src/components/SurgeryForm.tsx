@@ -219,8 +219,8 @@ export default function SurgeryForm({
                                     {t('surgeryDate')}
                                 </label>
                                 <div className="flex min-w-0 flex-col gap-1.5">
-                                    {/* Icon + date: min-w-0 chain so iOS date control cannot overflow the card */}
-                                    <div className="flex min-w-0 items-stretch gap-2 sm:items-center sm:gap-3">
+                                    {/* Mobile: cap row width so the control reads as a compact field, not a full-bleed bar */}
+                                    <div className="flex min-w-0 w-full max-w-[min(100%,18rem)] items-stretch gap-2 self-start sm:max-w-none sm:items-center sm:gap-3 sm:self-stretch">
                                         <div className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-md bg-slate-100 text-slate-500 sm:h-12 sm:w-12 sm:rounded-xl">
                                             <Calendar className="h-3.5 w-3.5 sm:h-6 sm:w-6" />
                                         </div>
@@ -230,7 +230,7 @@ export default function SurgeryForm({
                                                 type="date"
                                                 value={surgeryDate}
                                                 onChange={(e) => setSurgeryDate(e.target.value)}
-                                                className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
+                                                className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
                                             />
                                         </div>
                                     </div>
@@ -241,7 +241,7 @@ export default function SurgeryForm({
                             <div className="grid min-w-0 grid-cols-1 gap-3 border-t border-slate-100 pt-2.5 sm:grid-cols-2 sm:gap-6 sm:border-0 sm:pt-0">
                                 <TimeInput
                                     id="wake-time"
-                                    className="min-w-0"
+                                    className="min-w-0 w-full max-w-[min(100%,18rem)] justify-self-start sm:max-w-none sm:justify-self-stretch"
                                     label={t('wakeTime')}
                                     value={wakeTime}
                                     onChange={setWakeTime}
@@ -254,7 +254,7 @@ export default function SurgeryForm({
 
                                 <TimeInput
                                     id="sleep-time"
-                                    className="min-w-0"
+                                    className="min-w-0 w-full max-w-[min(100%,18rem)] justify-self-start sm:max-w-none sm:justify-self-stretch"
                                     label={t('bedtime')}
                                     value={sleepTime}
                                     onChange={setSleepTime}
