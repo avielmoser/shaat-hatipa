@@ -125,7 +125,7 @@ export default function TimeInput({
                         
                         <div className="flex h-48 justify-center gap-2 relative overflow-hidden mb-4 select-none">
                             {/* Selection Overlay */}
-                            <div className="absolute top-1/2 left-0 right-0 h-10 -translate-y-1/2 rounded-lg bg-sky-50 border border-sky-100 pointer-events-none" />
+                            <div className="absolute top-1/2 inset-inline-0 h-10 -translate-y-1/2 rounded-lg bg-sky-50 border border-sky-100 pointer-events-none" />
                             
                             {/* Hours Column */}
                             <div 

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { motion, AnimatePresence } from "framer-motion";
 import type {
   LaserPrescriptionInput,
@@ -27,6 +27,8 @@ interface WorkAreaProps {
 
 export default function WorkArea({ clinicConfig }: WorkAreaProps) {
   const t = useTranslations('Wizard');
+  const locale = useLocale();
+  const isRtl = locale === 'he';
   const [step, setStep] = useState<Step>(1);
 
   // Initialize with null to force user selection
@@ -276,7 +278,7 @@ export default function WorkArea({ clinicConfig }: WorkAreaProps) {
       >
         <div className="mx-auto min-w-0 max-w-3xl space-y-4 sm:space-y-8">
           {/* Stepper */}
-          <nav aria-label={t('steps.1')}>
+          <nav aria-label={t('steps.1')} dir={isRtl ? 'rtl' : 'ltr'}>
             <ol
               className="flex items-center justify-center gap-2 sm:gap-4 text-base"
               aria-label="Schedule creation steps"
