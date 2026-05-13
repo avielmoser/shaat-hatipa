@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/server/db";
+import { Prisma } from "@prisma/client";
 
 export interface CreateAnalyticsEventInput {
     eventName: string;
@@ -7,7 +8,7 @@ export interface CreateAnalyticsEventInput {
     buttonId?: string | null;
     sessionId?: string | null;
     clinicSlug?: string | null;
-    meta?: any;
+    meta?: Prisma.InputJsonValue;
 }
 
 export class AnalyticsRepository {
@@ -23,8 +24,8 @@ export class AnalyticsRepository {
                 sessionId: data.sessionId ?? null,
                 clinicSlug: data.clinicSlug ?? null,
                 eventType: data.eventType,
-                meta: data.meta ?? {},
-            } as any, // casting to any if prisma types are slightly restrictive on JSON
+                meta: data.meta ?? Prisma.JsonNull,
+            },
         });
     }
 }

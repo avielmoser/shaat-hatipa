@@ -70,13 +70,13 @@ if (dbUrl) {
             }
         }
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         // Re-throw if it's our safety error
-        if (e.message && e.message.includes("FATAL:")) {
+        if (e instanceof Error && e.message && e.message.includes("FATAL:")) {
             throw e;
         }
-        // If malformed URL etc, let Prisma handle it or fail later, but warn.
-        console.warn("[ENV CHECK] Could not validate DB URL safety:", e.message);
+
+        console.warn("[ENV CHECK] Could not validate DB URL safety:", e instanceof Error ? e.message : String(e));
     }
 }
 

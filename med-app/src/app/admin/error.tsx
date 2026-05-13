@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import heMessages from '@/messages/he.json';
+
+const t = heMessages.Admin.Error;
 
 export default function ErrorBoundary({
     error,
@@ -23,11 +26,11 @@ export default function ErrorBoundary({
                 </div>
 
                 <h2 className="text-lg font-bold text-slate-900 mb-2">
-                    שגיאת מערכת
+                    {t.title}
                 </h2>
 
                 <p className="text-sm text-slate-500 mb-6">
-                    אירעה שגיאה בטעינת ממשק הניהול.
+                    {t.message}
                 </p>
 
                 <button
@@ -35,11 +38,11 @@ export default function ErrorBoundary({
                     className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-medium py-2.5 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                     <RefreshCw className="w-4 h-4" />
-                    <span>נסה שוב</span>
+                    <span>{t.retry}</span>
                 </button>
 
                 {process.env.NODE_ENV === "development" && (
-                    <div className="mt-8 text-left bg-slate-100 p-2 rounded text-xs font-mono text-red-700 overflow-auto max-h-32 border border-slate-200" dir="ltr">
+                    <div className="mt-8 text-start bg-slate-100 p-2 rounded text-xs font-mono text-red-700 overflow-auto max-h-32 border border-slate-200" dir="ltr">
                         {error.message}
                     </div>
                 )}

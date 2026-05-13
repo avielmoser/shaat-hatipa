@@ -20,7 +20,7 @@ describe('buildProtocolSchedule', () => {
             phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 4 }],
         };
 
-        const result = buildProtocolSchedule({ ...baseInput, medications: [pills] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [pills] }, {} as any);
         expect(result.length).toBe(4);
         // Check that schedule is created. 
         // Times should be distributed.
@@ -35,7 +35,7 @@ describe('buildProtocolSchedule', () => {
         };
 
         // 5 times * 20 min = 100 min required. Window is 840 min. Feasible.
-        const result = buildProtocolSchedule({ ...baseInput, medications: [physio] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [physio] }, {} as any);
         expect(result.length).toBe(5);
 
         // Verify no overlap
@@ -66,7 +66,7 @@ describe('buildProtocolSchedule', () => {
         };
 
         // This should just work without collision if distributed well.
-        const result = buildProtocolSchedule({ ...baseInput, medications: [pill, physio] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [pill, physio] }, {} as any);
         expect(result.length).toBe(4);
     });
 
@@ -79,7 +79,7 @@ describe('buildProtocolSchedule', () => {
         };
 
         expect(() => {
-            buildProtocolSchedule({ ...baseInput, medications: [physio] });
+            buildProtocolSchedule({ ...baseInput, medications: [physio] }, {} as any);
         }).toThrow(ImpossibleScheduleError);
     });
 
@@ -91,7 +91,7 @@ describe('buildProtocolSchedule', () => {
             minDurationMinutes: 5,
             phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 10 }],
         };
-        const result = buildProtocolSchedule({ ...baseInput, medications: [drops] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [drops] }, {} as any);
         expect(result.length).toBe(10);
 
         const times = result.map(s => {
@@ -114,7 +114,7 @@ describe('buildProtocolSchedule', () => {
 
         // Window 08:00 - 22:00 (14h = 840m)
         // q6h = 08:00, 14:00, 20:00 (next 26:00 out of window)
-        const result = buildProtocolSchedule({ ...baseInput, medications: [headache] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [headache] }, {} as any);
         expect(result.length).toBe(3);
         const times = result.map(s => s.time).sort();
         expect(times).toEqual(['08:00', '14:00', '20:00']);
@@ -128,7 +128,7 @@ describe('buildProtocolSchedule', () => {
             phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 0 }],
         };
 
-        const result = buildProtocolSchedule({ ...baseInput, medications: [eyePain] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [eyePain] }, {} as any);
         expect(result.length).toBe(0);
     });
 
@@ -144,7 +144,7 @@ describe('buildProtocolSchedule', () => {
             phases: [{ dayStart: 1, dayEnd: 1, timesPerDay: 2 }], // 08:00, 15:00 (approx)
         };
 
-        const result = buildProtocolSchedule({ ...baseInput, medications: [q6h, dist] });
+        const result = buildProtocolSchedule({ ...baseInput, medications: [q6h, dist] }, {} as any);
         const q6hSlots = result.filter(s => s.medicationId === 'q6h');
         const distSlots = result.filter(s => s.medicationId === 'dist');
 

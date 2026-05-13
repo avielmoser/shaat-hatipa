@@ -1,5 +1,6 @@
 
 import { prisma } from "@/lib/server/db";
+import { Prisma } from "@prisma/client";
 import { subDays, startOfDay } from "date-fns";
 import { getDateRanges } from "./utils";
 
@@ -14,7 +15,7 @@ export interface AdminEvent {
     id: string;
     eventName: string;
     createdAt: Date;
-    meta: any; // Json type
+    meta: Prisma.JsonValue; // Json type
 }
 
 export interface BusinessKpis {
@@ -114,6 +115,8 @@ export interface BreakdownResult {
     byStep: BreakdownItem[]; // Added byStep as implied by "Breakdowns... Steps"
 }
 
+export type BreakdownRow = { id: string, views: bigint, gens: bigint, exports: bigint };
+
 /**
  * Fetch Breakdown Stats: Top Clinics & Protocols
  */
@@ -124,7 +127,7 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
 
         // --- Clinics ---
         // Group by meta->>'clinicSlug'
-        const clinicStatsRaw = await prisma.$queryRaw<any[]>`
+        const clinicStatsRaw = await prisma.$queryRaw<BreakdownRow[]>`
             SELECT 
                 COALESCE(meta->>'clinicSlug', 'unknown') as id,
                 COUNT(DISTINCT CASE WHEN event_name = 'wizard_viewed' THEN session_id END) as views,
@@ -135,11 +138,11 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
             GROUP BY 1
         `;
 
-        const byClinic: BreakdownItem[] = clinicStatsRaw.map((row: any) => mapBreakdown(row));
+        const byClinic: BreakdownItem[] = clinicStatsRaw.map(mapBreakdown);
 
         // --- Protocols ---
         // Group by meta->>'protocolSlug' OR meta->>'protocolId'
-        const protocolStatsRaw = await prisma.$queryRaw<any[]>`
+        const protocolStatsRaw = await prisma.$queryRaw<BreakdownRow[]>`
             SELECT 
                 COALESCE(meta->>'protocolSlug', meta->>'protocolId', 'unknown') as id,
                 COUNT(DISTINCT CASE WHEN event_name = 'wizard_viewed' THEN session_id END) as views,
@@ -150,7 +153,7 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
             GROUP BY 1
         `;
 
-        const byProtocol: BreakdownItem[] = protocolStatsRaw.map((row: any) => mapBreakdown(row));
+        const byProtocol: BreakdownItem[] = protocolStatsRaw.map(mapBreakdown);
 
         // --- Steps (Where dropoff happens) ---
         // Use column 'step' where event_name = 'step_viewed'
@@ -158,7 +161,7 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
         // Or just return step counts? 
         // The Prompt says: "Steps Use column `step` where `event_name = 'step_viewed'`"
         // Let's create a breakdown for steps based on View count.
-        const stepStatsRaw = await prisma.$queryRaw<any[]>`
+        const stepStatsRaw = await prisma.$queryRaw<BreakdownRow[]>`
             SELECT 
                 step as id,
                 COUNT(DISTINCT session_id) as views,
@@ -171,7 +174,7 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
             GROUP BY 1
         `;
 
-        const byStep: BreakdownItem[] = stepStatsRaw.map((row: any) => ({
+        const byStep: BreakdownItem[] = stepStatsRaw.map((row) => ({
             id: row.id || "unknown",
             label: `Step ${row.id}`,
             schedulesGenerated: 0,
@@ -199,7 +202,7 @@ export async function getAdminBreakdown(rangeDays: number): Promise<QueryResult<
     }
 }
 
-function mapBreakdown(row: any): BreakdownItem {
+function mapBreakdown(row: BreakdownRow): BreakdownItem {
     const views = Number(row.views || 0);
     const gens = Number(row.gens || 0);
     const exports = Number(row.exports || 0);
@@ -402,7 +405,7 @@ export async function getLatestEvents(
     view: 'all' | 'meaningful' = 'all'
 ): Promise<QueryResult<AdminEvent[]>> {
     try {
-        let events: any[];
+        let events: { id: string, eventName: string, createdAt: string | Date, meta: Prisma.JsonValue }[];
 
         if (view === 'meaningful') {
             events = await prisma.$queryRaw<AdminEvent[]>`
@@ -431,8 +434,10 @@ export async function getLatestEvents(
 
         // Map dates if queryRaw returns strings (depends on driver, prisma usually returns Date objects for DateTime)
         // Adjust if necessary.
-        const mappedHelper = events.map(e => ({
-            ...e,
+        const mappedHelper: AdminEvent[] = events.map(e => ({
+            id: e.id,
+            eventName: e.eventName,
+            meta: e.meta,
             createdAt: new Date(e.createdAt)
         }));
 

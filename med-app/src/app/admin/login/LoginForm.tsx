@@ -34,7 +34,7 @@ export default function LoginForm() {
                                 type="password"
                                 required
                                 disabled={isPending}
-                                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed text-left ltr font-mono text-sm shadow-sm"
+                                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed text-start ltr font-mono text-sm shadow-sm"
                                 placeholder="sk-admin-..."
                             />
                         </div>

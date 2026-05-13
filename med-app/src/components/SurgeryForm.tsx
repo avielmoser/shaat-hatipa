@@ -136,10 +136,9 @@ export default function SurgeryForm({
                         <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-4">
                             {protocols.map((key) => {
                                 const isSelected = surgeryType === key;
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const labelKey = `surgeryTypes.${key}.label` as any;
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const descKey = `surgeryTypes.${key}.description` as any;
+                                type TranslationKey = Parameters<typeof t>[0];
+                                const labelKey = `surgeryTypes.${key}.label` as TranslationKey;
+                                const descKey = `surgeryTypes.${key}.description` as TranslationKey;
 
                                 // Try to get config-defined label first (if I added label to ProtocolDefinition)
                                 // But ProtocolDefinition is inside clinicConfig.protocols[key]

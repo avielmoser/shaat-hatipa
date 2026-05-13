@@ -136,7 +136,7 @@ export default async function AdminPage(props: {
 
                 {/* DEBUG PANEL */}
                 {debugStats && (
-                    <details className="bg-white border border-slate-300 rounded-lg p-4 mb-4 text-xs font-mono text-left" dir="ltr">
+                    <details className="bg-white border border-slate-300 rounded-lg p-4 mb-4 text-xs font-mono text-start" dir="ltr">
                         <summary className="cursor-pointer font-bold flex items-center gap-2 text-slate-700">
                             <Bug size={14} /> Debug Analytics (Hidden in Prod)
                         </summary>

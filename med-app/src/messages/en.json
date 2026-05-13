@@ -39,7 +39,9 @@
         "medicalAdviceDisclaimer": "This information is not medical advice.",
         "tagInterlasik": "",
         "tagExport": "Export to Calendar & PDF",
-        "tagProtocol": "Tailored to your clinic’s protocol"
+        "tagProtocol": "Tailored to your clinic’s protocol",
+        "einTalClinicLabel": "Tailored for Ein Tal patients",
+        "defaultClinicLabel": "Tailored to your clinic’s protocol"
     },
     "Wizard": {
         "steps": {
@@ -246,6 +248,50 @@
                 "title": "6. Jurisdiction",
                 "content": "These terms shall be governed by and construed in accordance with the laws of the State of Israel. Any disputes arising from the use of The App shall be subject to the exclusive jurisdiction of the competent courts in Tel Aviv, Israel."
             }
+        }
+    },
+    "Admin": {
+        "Dashboard": {
+            "title": "Dashboard",
+            "Errors": {
+                "Title": "Error Loading Data",
+                "Generic": "An error occurred while loading the data, please try again later.",
+                "Retry": "Retry",
+                "DiagnosticsTitle": "Technical Info (Developers)",
+                "LikelyCause": "Possible cause: Database connection issue or missing environment variables."
+            }
+        },
+        "BreakdownTable": {
+            "title": "Breakdown",
+            "tabs": {
+                "clinics": "Clinics",
+                "protocols": "Protocols"
+            },
+            "columns": {
+                "clinicName": "Clinic Name",
+                "protocolName": "Protocol Name",
+                "schedules": "Schedules Generated",
+                "activation": "Activation",
+                "export": "Export"
+            },
+            "noData": "No data available to display"
+        },
+        "EventsTable": {
+            "title": "Recent Events (Live Feed)",
+            "columns": {
+                "eventName": "Event Name",
+                "time": "Time"
+            },
+            "noData": "No data available for the selected range."
+        },
+        "FunnelWidget": {
+            "title": "Conversion Funnel",
+            "noData": "No funnel data available"
+        },
+        "Error": {
+            "title": "System Error",
+            "message": "An error occurred while loading the admin interface.",
+            "retry": "Try again"
         }
     }
 }

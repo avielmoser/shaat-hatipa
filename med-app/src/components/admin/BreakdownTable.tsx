@@ -5,6 +5,9 @@
 
 import React, { useState } from 'react';
 import { BreakdownItem, BreakdownResult } from '@/server/admin/queries';
+import heMessages from '@/messages/he.json';
+
+const t = heMessages.Admin.BreakdownTable;
 
 interface BreakdownTableProps {
     data: BreakdownResult;
@@ -23,7 +26,7 @@ export default function BreakdownTable({ data }: BreakdownTableProps) {
 
     const TH = ({ label, k }: { label: string, k: SortKey }) => (
         <th
-            className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-50"
+            className="px-6 py-3 text-start text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-50"
             onClick={() => setSortKey(k)}
         >
             <div className="flex items-center gap-1">
@@ -37,7 +40,7 @@ export default function BreakdownTable({ data }: BreakdownTableProps) {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             {/* Tabs / Header */}
             <div className="border-b border-slate-200 flex items-center justify-between p-4">
-                <h3 className="text-lg font-bold text-slate-800">פירוט (Breakdown)</h3>
+                <h3 className="text-lg font-bold text-slate-800">{t.title}</h3>
 
                 <div className="flex bg-slate-100 p-1 rounded-lg">
                     <button
@@ -45,14 +48,14 @@ export default function BreakdownTable({ data }: BreakdownTableProps) {
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'clinics' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
                             }`}
                     >
-                        מרפאות (Clinics)
+                        {t.tabs.clinics}
                     </button>
                     <button
                         onClick={() => setActiveTab('protocols')}
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'protocols' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
                             }`}
                     >
-                        פרוטוקולים (Protocols)
+                        {t.tabs.protocols}
                     </button>
                 </div>
             </div>
@@ -66,19 +69,19 @@ export default function BreakdownTable({ data }: BreakdownTableProps) {
                 <table className="min-w-full divide-y divide-slate-200" dir="rtl">
                     <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                {activeTab === 'clinics' ? 'שם המרפאה' : 'שם הפרוטוקול'}
+                            <th className="px-6 py-3 text-end text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                {activeTab === 'clinics' ? t.columns.clinicName : t.columns.protocolName}
                             </th>
-                            <TH label="נוצרו (Schedules)" k="schedulesGenerated" />
-                            <TH label="המרה (Activation)" k="activationRate" />
-                            <TH label="ייצוא (Export)" k="exportRate" />
+                            <TH label={t.columns.schedules} k="schedulesGenerated" />
+                            <TH label={t.columns.activation} k="activationRate" />
+                            <TH label={t.columns.export} k="exportRate" />
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
                         {sortedItems.length === 0 ? (
                             <tr>
                                 <td colSpan={4} className="px-6 py-8 text-center text-slate-500 text-sm">
-                                    אין נתונים להציג
+                                    {t.noData}
                                 </td>
                             </tr>
                         ) : (

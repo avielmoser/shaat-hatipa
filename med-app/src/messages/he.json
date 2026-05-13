@@ -39,7 +39,9 @@
         "medicalAdviceDisclaimer": "המידע המוצג אינו מהווה ייעוץ רפואי.",
         "tagInterlasik": "",
         "tagExport": "ייצוא ליומן ול-PDF",
-        "tagProtocol": "מותאם לפרוטוקול הקליניקה שלך"
+        "tagProtocol": "מותאם לפרוטוקול הקליניקה שלך",
+        "einTalClinicLabel": "מותאם למטופלי עין טל",
+        "defaultClinicLabel": "מותאם לפרוטוקול הקליניקה שלך"
     },
     "Wizard": {
         "steps": {
@@ -255,6 +257,38 @@
                 "DiagnosticsTitle": "מידע טכני (למפתחים)",
                 "LikelyCause": "סיבה אפשרית: בעיית התחברות למסד הנתונים או הגדרות סביבה חסרות."
             }
+        },
+        "BreakdownTable": {
+            "title": "פירוט (Breakdown)",
+            "tabs": {
+                "clinics": "מרפאות (Clinics)",
+                "protocols": "פרוטוקולים (Protocols)"
+            },
+            "columns": {
+                "clinicName": "שם המרפאה",
+                "protocolName": "שם הפרוטוקול",
+                "schedules": "נוצרו (Schedules)",
+                "activation": "המרה (Activation)",
+                "export": "ייצוא (Export)"
+            },
+            "noData": "אין נתונים להציג"
+        },
+        "EventsTable": {
+            "title": "אירועים אחרונים (Live Feed)",
+            "columns": {
+                "eventName": "שם אירוע",
+                "time": "זמן"
+            },
+            "noData": "אין נתונים להצגה בטווח שנבחר."
+        },
+        "FunnelWidget": {
+            "title": "משפך המרה (Conversion Funnel)",
+            "noData": "אין נתוני משפך להצגה"
+        },
+        "Error": {
+            "title": "שגיאת מערכת",
+            "message": "אירעה שגיאה בטעינת ממשק הניהול.",
+            "retry": "נסה שוב"
         }
     }
 }

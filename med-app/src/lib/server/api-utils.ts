@@ -1,6 +1,6 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
-import { ZodSchema } from "zod";
+import { z, ZodSchema } from "zod";
 
 type ValidationResult<T> =
   | { success: true; data: T }
@@ -27,7 +27,7 @@ export async function validateRequest<T>(
 
     if (!result.success) {
       const errorMessage = result.error.issues
-        .map((e: any) => `${e.path.join(".")}: ${e.message}`)
+        .map((e: z.ZodIssue) => `${e.path.join(".")}: ${e.message}`)
         .join(", ");
 
       return {

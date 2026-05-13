@@ -6,12 +6,12 @@ interface LogEntry {
     timestamp: string;
     level: LogLevel;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     error?: Error | unknown;
 }
 
 class Logger {
-    private log(level: LogLevel, message: string, context?: Record<string, any>, error?: unknown) {
+    private log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: unknown) {
         const entry: LogEntry = {
             timestamp: new Date().toISOString(),
             level,
@@ -40,19 +40,19 @@ class Logger {
         }
     }
 
-    info(message: string, context?: Record<string, any>) {
+    info(message: string, context?: Record<string, unknown>) {
         this.log("info", message, context);
     }
 
-    warn(message: string, context?: Record<string, any>) {
+    warn(message: string, context?: Record<string, unknown>) {
         this.log("warn", message, context);
     }
 
-    error(message: string, error?: unknown, context?: Record<string, any>) {
+    error(message: string, error?: unknown, context?: Record<string, unknown>) {
         this.log("error", message, context, error);
     }
 
-    debug(message: string, context?: Record<string, any>) {
+    debug(message: string, context?: Record<string, unknown>) {
         if (process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "1") {
             this.log("debug", message, context);
         }

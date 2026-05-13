@@ -1,15 +1,15 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 /**
  * Calculates production-grade KPI metrics for the analytics dashboard
  * Strictly scoped to the provided date range (or default) and specific funnel events.
  */
-export async function getFunnelKPIs(prisma: PrismaClient, dateWhereCondition: any) {
+export async function getFunnelKPIs(prisma: PrismaClient, dateWhereCondition: Prisma.AnalyticsEventWhereInput["createdAt"]) {
     // 1. Fetch relevant events (minimal query)
     // We only need eventName, sessionId, createdAt for the specific funnel step events
     const events = await prisma.analyticsEvent.findMany({
         where: {
-            ...dateWhereCondition, // Apply dynamic date range e.g. { createdAt: { gte: ... } }
+            createdAt: dateWhereCondition,
             eventName: { in: ["wizard_viewed", "schedule_generated"] },
             sessionId: { not: null }, // Ignore anonymous/invalid sessions
         },

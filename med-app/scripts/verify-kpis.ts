@@ -46,7 +46,7 @@ async function main() {
             gte: new Date(nowFilter.getTime() - 7 * 24 * 60 * 60 * 1000)
         }
     };
-    const kpis = await getFunnelKPIs(prisma, filter);
+    const kpis = await getFunnelKPIs(prisma, filter.createdAt);
     console.log("Result:", kpis);
 
     // Expected: 

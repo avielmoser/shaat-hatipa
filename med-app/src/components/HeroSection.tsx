@@ -52,10 +52,10 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
   // Clinic Label Logic
   let clinicLabel = "";
   if (clinicConfig?.id === 'ein-tal') {
-    clinicLabel = isRtl ? "מותאם למטופלי עין טל" : "Tailored for Ein Tal patients";
+    clinicLabel = t('einTalClinicLabel');
   } else {
     // Generic / Default
-    clinicLabel = isRtl ? "מותאם לפרוטוקול הקליניקה שלך" : "Tailored to your clinic’s protocol";
+    clinicLabel = t('defaultClinicLabel');
   }
 
   return (
@@ -190,7 +190,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
                   <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-pink-500" />
                   <span className="font-medium text-slate-800 text-xs sm:text-base">Vigamox</span>
                 </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-right w-10 sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-end w-10 sm:w-auto">
                   08:00
                 </span>
               </div>
@@ -199,7 +199,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
                   <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-purple-500" />
                   <span className="font-medium text-slate-800 text-xs sm:text-base">Dicloftil</span>
                 </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-right w-10 sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-end w-10 sm:w-auto">
                   09:00
                 </span>
               </div>
@@ -208,7 +208,7 @@ export default function HeroSection({ clinicConfig }: HeroSectionProps) {
                   <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-amber-400" />
                   <span className="font-medium text-slate-800 text-xs sm:text-base">Vitapos</span>
                 </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-right w-10 sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-slate-900 text-end w-10 sm:w-auto">
                   09:15
                 </span>
               </div>

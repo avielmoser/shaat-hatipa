@@ -126,7 +126,7 @@ function buildPrintableHtml(
         h2 { font-size: 16px; margin: 24px 0 12px; color: #334155; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
-        th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: ${isRtl ? "right" : "left"}; }
+        th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: start; }
         th { background: #f8fafc; color: #475569; font-weight: 600; }
         
         .chip {

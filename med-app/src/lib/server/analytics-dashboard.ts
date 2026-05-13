@@ -146,7 +146,18 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
 
     // --- AGGREGATION IN MEMORY ---
 
-    const sessions = new Map<string, any>();
+    type SessionData = {
+        wizardViewed: boolean;
+        timeModified: boolean;
+        step2Viewed: Date[];
+        step3Viewed: Date[];
+        scheduleGenerated: boolean;
+        calendarExport: boolean;
+        pdfExport: boolean;
+        clinicSlug: string | null;
+        protocolId: string | null;
+    };
+    const sessions = new Map<string, SessionData>();
     // Structure: sessionId -> { 
     //   wizardViewed: boolean, 
     //   timeModified: boolean, 
@@ -170,11 +181,14 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
                 step3Viewed: [] as Date[],
                 scheduleGenerated: false,
                 calendarExport: false,
-                pdfExport: false
+                pdfExport: false,
+                clinicSlug: null,
+                protocolId: null
             });
         }
         const s = sessions.get(sid);
 
+        if (!s) return;
         if (e.eventName === "wizard_viewed") s.wizardViewed = true;
 
         // Time Mod: check event name OR explicit flag if we tracked it differently before
@@ -192,7 +206,7 @@ export async function getDashboardMetrics(prisma: PrismaClient, filters: FilterP
 
         if (e.eventName === "export_clicked") {
             // Check meta for type
-            const type = (e.meta as any)?.exportType;
+            const type = (e.meta as Record<string, unknown>)?.exportType;
             if (type === "ics") s.calendarExport = true;
             if (type === "pdf") s.pdfExport = true;
         }

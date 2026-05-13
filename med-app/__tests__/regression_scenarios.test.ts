@@ -10,6 +10,8 @@ describe('Regression Protocols & Edge Cases', () => {
         it('should handle sleep time being numerically smaller than wake time (next day overlap)', () => {
             const input: ProtocolScheduleInput = {
                 surgeryType: 'INTERLASIK',
+                clinicSlug: 'default',
+                protocolKey: 'custom',
                 surgeryDate: '2025-01-01',
                 wakeTime: '07:00',
                 sleepTime: '01:00', // Implicitly next day
@@ -21,7 +23,7 @@ describe('Regression Protocols & Edge Cases', () => {
                 }]
             };
 
-            const schedule = buildProtocolSchedule(input);
+            const schedule = buildProtocolSchedule(input, {} as any);
             expect(schedule.length).toBeGreaterThan(0);
 
             // Verify times are within 07:00 -> 01:00 range
@@ -42,6 +44,8 @@ describe('Regression Protocols & Edge Cases', () => {
             // Try to schedule something that requires 16 hours spread.
             const input: ProtocolScheduleInput = {
                 surgeryType: 'INTERLASIK',
+                clinicSlug: 'default',
+                protocolKey: 'custom',
                 surgeryDate: '2025-01-01',
                 wakeTime: '07:00',
                 sleepTime: '01:00',
@@ -53,7 +57,7 @@ describe('Regression Protocols & Edge Cases', () => {
                 }]
             };
 
-            const schedule = buildProtocolSchedule(input);
+            const schedule = buildProtocolSchedule(input, {} as any);
             expect(schedule.length).toBe(18);
         });
     });
@@ -64,6 +68,8 @@ describe('Regression Protocols & Edge Cases', () => {
             // Request 14 drops (hourly).
             const input: ProtocolScheduleInput = {
                 surgeryType: 'INTERLASIK',
+                clinicSlug: 'default',
+                protocolKey: 'custom',
                 surgeryDate: '2025-01-01',
                 wakeTime: '08:00',
                 sleepTime: '22:00',
@@ -75,7 +81,7 @@ describe('Regression Protocols & Edge Cases', () => {
                 }]
             };
 
-            const schedule = buildProtocolSchedule(input);
+            const schedule = buildProtocolSchedule(input, {} as any);
             expect(schedule.length).toBe(14);
 
             // Verify distribution
@@ -91,6 +97,8 @@ describe('Regression Protocols & Edge Cases', () => {
         it('should generate valid schedule even if dates are in the past', () => {
             const input: ProtocolScheduleInput = {
                 surgeryType: 'INTERLASIK',
+                clinicSlug: 'default',
+                protocolKey: 'custom',
                 surgeryDate: '2020-01-01', // Way in the past
                 wakeTime: '08:00',
                 sleepTime: '22:00',
@@ -102,7 +110,7 @@ describe('Regression Protocols & Edge Cases', () => {
                 }]
             };
 
-            const schedule = buildProtocolSchedule(input);
+            const schedule = buildProtocolSchedule(input, {} as any);
             expect(schedule.length).toBe(2);
 
             // Verify date is 2020-01-02 (Day 1)

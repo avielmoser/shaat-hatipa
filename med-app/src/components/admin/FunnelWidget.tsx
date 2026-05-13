@@ -1,6 +1,9 @@
 
 import React from 'react';
 import { FunnelStep } from '@/server/admin/queries';
+import heMessages from '@/messages/he.json';
+
+const t = heMessages.Admin.FunnelWidget;
 
 interface FunnelWidgetProps {
     steps: FunnelStep[];
@@ -10,7 +13,7 @@ export default function FunnelWidget({ steps }: FunnelWidgetProps) {
     if (!steps || steps.length === 0) {
         return (
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center text-slate-500">
-                No funnel data available
+                {t.noData}
             </div>
         );
     }
@@ -20,7 +23,7 @@ export default function FunnelWidget({ steps }: FunnelWidgetProps) {
 
     return (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">משפך המרה (Conversion Funnel)</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-6">{t.title}</h3>
 
             <div className="space-y-6">
                 {steps.map((step, index) => {
@@ -32,7 +35,7 @@ export default function FunnelWidget({ steps }: FunnelWidgetProps) {
                         <div key={step.stepName} className="relative">
                             {/* Connector Line */}
                             {!isFirst && (
-                                <div className="absolute top-[-24px] right-8 w-0.5 h-6 bg-slate-200" />
+                                <div className="absolute top-[-24px] end-8 w-0.5 h-6 bg-slate-200" />
                             )}
 
                             <div className="flex items-center gap-4">
