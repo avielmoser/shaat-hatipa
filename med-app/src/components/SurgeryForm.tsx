@@ -211,60 +211,54 @@ export default function SurgeryForm({
                             </h3>
                         </div>
 
-                        <div className="min-w-0 space-y-2.5 p-2.5 sm:space-y-6 sm:p-6">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-6 w-full min-w-0 items-start">
                             {/* Date Input */}
-                            <div className="space-y-1">
-                                <label htmlFor="surgery-date" className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <div className="flex flex-col w-full sm:flex-1 space-y-1 sm:space-y-1.5">
+                                <label htmlFor="surgery-date" className="block text-start text-xs font-semibold uppercase tracking-wider text-slate-500 sm:text-sm">
                                     {t('surgeryDate')}
                                 </label>
-                                <div className="flex min-w-0 flex-col gap-1.5">
-                                    {/* Mobile: cap row width; min-w-0 + flex-1 on input shell avoids RTL flex clipping; no overflow-hidden on wrapper (clips native date UI) */}
-                                    <div className="flex min-w-0 w-full max-w-[min(100%,18rem)] items-center gap-2 self-start sm:max-w-none sm:gap-3 sm:self-stretch">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 sm:h-12 sm:w-12 sm:rounded-xl">
-                                            <Calendar className="h-4 w-4 sm:h-6 sm:w-6" />
-                                        </div>
-                                        <div className="relative min-w-0 flex-1">
-                                            <input
-                                                id="surgery-date"
-                                                type="date"
-                                                dir="ltr"
-                                                value={surgeryDate}
-                                                onChange={(e) => setSurgeryDate(e.target.value)}
-                                                className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-start text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-0 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
-                                            />
-                                        </div>
+                                <div className="flex w-full min-w-0 items-center gap-2 sm:gap-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 sm:h-12 sm:w-12 sm:rounded-xl">
+                                        <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
+                                    </div>
+                                    <div className="relative min-w-0 flex-1">
+                                        <input
+                                            id="surgery-date"
+                                            type="date"
+                                            dir="ltr"
+                                            value={surgeryDate}
+                                            onChange={(e) => setSurgeryDate(e.target.value)}
+                                            className="box-border block min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-start text-base text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-12 sm:rounded-xl sm:px-4 sm:py-3 sm:text-lg sm:focus:ring-4"
+                                        />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Time Inputs */}
-                            <div className="grid min-w-0 grid-cols-1 gap-3 border-t border-slate-100 pt-2.5 sm:grid-cols-2 sm:gap-6 sm:border-0 sm:pt-0">
-                                <TimeInput
-                                    id="wake-time"
-                                    className="min-w-0 w-full max-w-[min(100%,18rem)] justify-self-start sm:max-w-none sm:justify-self-stretch"
-                                    label={t('wakeTime')}
-                                    value={wakeTime}
-                                    onChange={setWakeTime}
-                                    dir={isRtl ? 'rtl' : 'ltr'}
-                                // If invalidTime is true, we want to show the error state.
-                                // Since we only have 'error' string prop, we pass a space if we want red border but no text on this one,
-                                // OR we rely on the second input to carry the error message.
-                                // Let's keep it clean: no error on first, error message on second.
-                                />
+                            {/* Wake Time */}
+                            <TimeInput
+                                id="wake-time"
+                                className="w-full sm:flex-1 text-start"
+                                label={t('wakeTime')}
+                                value={wakeTime}
+                                onChange={setWakeTime}
+                                dir={isRtl ? 'rtl' : 'ltr'}
+                            />
 
-                                <TimeInput
-                                    id="sleep-time"
-                                    className="min-w-0 w-full max-w-[min(100%,18rem)] justify-self-start sm:max-w-none sm:justify-self-stretch"
-                                    label={t('bedtime')}
-                                    value={sleepTime}
-                                    onChange={setSleepTime}
-                                    dir={isRtl ? 'rtl' : 'ltr'}
-                                    error={invalidTime && error ? error : undefined}
-                                />
-                            </div>
+                            {/* Sleep Time */}
+                            <TimeInput
+                                id="sleep-time"
+                                className="w-full sm:flex-1 text-start"
+                                label={t('bedtime')}
+                                value={sleepTime}
+                                onChange={setSleepTime}
+                                dir={isRtl ? 'rtl' : 'ltr'}
+                                error={invalidTime && error ? error : undefined}
+                            />
+                        </div>
 
-                            {/* Helper Text - compact inline style */}
-                            <p className="text-start text-xs leading-tight text-slate-400 sm:leading-snug">
+                        {/* Helper Text */}
+                        <div className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+                            <p className="text-start text-xs leading-tight text-slate-400 sm:text-sm sm:leading-snug">
                                 {t('helperText')}
                             </p>
                         </div>
