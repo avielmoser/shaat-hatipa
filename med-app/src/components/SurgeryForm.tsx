@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { useTranslations, useLocale } from 'next-intl';
-import { Calendar, Check, Eye, Activity } from "lucide-react";
+import { Check, Eye, Activity } from "lucide-react";
 import { SurgeryType } from "../types/prescription";
 import type { ClinicConfig } from "../config/clinics";
 import TimeInput from "./ui/TimeInput";
+import DateInput from "./ui/DateInput";
 
 interface SurgeryFormProps {
     surgeryType: SurgeryType | null;
@@ -39,19 +40,6 @@ export default function SurgeryForm({
     const t = useTranslations('Wizard.step1');
     const locale = useLocale();
     const isRtl = locale === 'he';
-
-    const formattedDate = useMemo(() => {
-        if (!surgeryDate) return "";
-        try {
-            return new Intl.DateTimeFormat(isRtl ? 'he-IL' : 'en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }).format(new Date(surgeryDate + 'T00:00:00'));
-        } catch {
-            return surgeryDate;
-        }
-    }, [surgeryDate, isRtl]);
 
     // Analytics: Track wizard entry
     useEffect(() => {
@@ -225,27 +213,16 @@ export default function SurgeryForm({
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-6 w-full min-w-0 items-start">
-                            {/* Date Input */}
-                            <div className="flex flex-col w-full sm:flex-1 space-y-1 sm:space-y-1.5">
-                                <label htmlFor="surgery-date" className="block text-start text-xs font-semibold uppercase tracking-wider text-slate-500 sm:text-sm">
-                                    {t('surgeryDate')}
-                                </label>
-                                <div className="relative flex w-full items-center">
-                                    <input
-                                        id="surgery-date"
-                                        type="date"
-                                        value={surgeryDate}
-                                        onChange={(e) => setSurgeryDate(e.target.value)}
-                                        className="block min-h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-transparent shadow-sm transition-colors focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 sm:min-h-12 sm:rounded-xl sm:px-4 sm:py-3 cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-datetime-edit]:hidden [&::-webkit-datetime-edit-fields-wrapper]:hidden"
-                                    />
-                                    <div className="pointer-events-none absolute inset-0 flex items-center px-3 sm:px-4">
-                                        <span className="truncate text-base sm:text-lg text-slate-900">{formattedDate}</span>
-                                    </div>
-                                    <div className="pointer-events-none absolute inset-inline-end-2 flex h-8 w-8 items-center justify-center rounded bg-slate-200/50 text-slate-500 sm:inset-inline-end-3 sm:h-9 sm:w-9 sm:rounded-lg">
-                                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Date Input — custom picker, no native browser Reset button */}
+                            <DateInput
+                                id="surgery-date"
+                                label={t('surgeryDate')}
+                                value={surgeryDate}
+                                onChange={(val) => setSurgeryDate(val)}
+                                locale={locale}
+                                dir={isRtl ? 'rtl' : 'ltr'}
+                                className="w-full sm:flex-1"
+                            />
 
                             {/* Wake Time */}
                             <TimeInput
