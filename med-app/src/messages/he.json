@@ -5,6 +5,9 @@
     "common": {
         "clinic_logo_alt": "לוגו מרפאת {name}"
     },
+    "TimePicker": {
+        "confirm": "אישור"
+    },
     "HomePage": {
         "title": "שעת הטיפה",
         "description": "מחולל לוח זמנים לטיפות לאחר ניתוח"

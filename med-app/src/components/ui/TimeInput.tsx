@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { Check, Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface TimeInputProps {
     id: string;
@@ -17,10 +18,18 @@ interface TimeInputProps {
 
 /**
  * TimeInput Component
- * 
+ *
  * ARCHITECTURAL NOTE:
  * Now uses a headless Radix UI Popover to avoid native mobile browser modal bugs (like overflowing viewports
  * and displaying unwanted "Reset" buttons). The Popover ensures predictable styling and logical layout.
+ *
+ * FIX NOTES:
+ * 1. RTL column order: The picker inner container is forced to direction:ltr so HH is always on the
+ *    left and MM is always on the right, regardless of the page's RTL context.
+ * 2. Scroll jump: Instead of querying `[data-selected="true"]` after setState (which reads stale DOM),
+ *    we scroll the clicked element directly via event.currentTarget — no re-render dependency.
+ * 3. i18n: The confirm button label is sourced from the "TimePicker.confirm" translation key.
+ * 4. Type safety: All handler parameters are explicitly typed (string); no `any` is used.
  */
 export default function TimeInput({
     id,
@@ -34,22 +43,23 @@ export default function TimeInput({
     className = "",
     dir = "ltr",
 }: TimeInputProps) {
+    const t = useTranslations("TimePicker");
     const [open, setOpen] = useState(false);
 
     // Temp state for popover so changes don't apply until "Confirm"
-    const [tempHour, setTempHour] = useState(value ? value.split(":")[0] : "08");
-    const [tempMinute, setTempMinute] = useState(value ? value.split(":")[1] : "00");
+    const [tempHour, setTempHour] = useState<string>(value ? value.split(":")[0] : "08");
+    const [tempMinute, setTempMinute] = useState<string>(value ? value.split(":")[1] : "00");
 
     const hoursContainerRef = useRef<HTMLDivElement>(null);
     const minutesContainerRef = useRef<HTMLDivElement>(null);
 
-    const handleOpenChange = (isOpen: boolean) => {
+    const handleOpenChange = (isOpen: boolean): void => {
         setOpen(isOpen);
         if (isOpen) {
             setTempHour(value ? value.split(":")[0] : "08");
             setTempMinute(value ? value.split(":")[1] : "00");
 
-            // Scroll the selected elements into view
+            // Scroll the selected elements into view after the popover is mounted
             setTimeout(() => {
                 if (hoursContainerRef.current) {
                     const selected = hoursContainerRef.current.querySelector('[data-selected="true"]');
@@ -66,9 +76,33 @@ export default function TimeInput({
             }, 10);
         }
     };
-    const handleConfirm = () => {
+
+    const handleConfirm = (): void => {
         onChange(`${tempHour}:${tempMinute}`);
         setOpen(false);
+    };
+
+    /**
+     * FIX #2 – Scroll jump prevention.
+     * We scroll `event.currentTarget` (the clicked <div>) directly into the center of
+     * its scrollable parent. This happens synchronously in the click handler, before
+     * React re-renders, so we never rely on `[data-selected="true"]` in the DOM to
+     * find the newly-selected element (which would point to the OLD selection).
+     */
+    const handleHourClick = (
+        h: string,
+        event: React.MouseEvent<HTMLDivElement>
+    ): void => {
+        setTempHour(h);
+        event.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+    };
+
+    const handleMinuteClick = (
+        m: string,
+        event: React.MouseEvent<HTMLDivElement>
+    ): void => {
+        setTempMinute(m);
+        event.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
     };
 
     const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
@@ -122,13 +156,22 @@ export default function TimeInput({
                             .no-scrollbar::-webkit-scrollbar { display: none; }
                             .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                         ` }} />
-                        
-                        <div className="flex h-48 justify-center gap-2 relative overflow-hidden mb-4 select-none">
+
+                        {/*
+                         * FIX #1 – RTL column order.
+                         * The picker columns must always read HH (left) : MM (right), i.e. LTR order,
+                         * regardless of the surrounding page direction (RTL for Hebrew).
+                         * We apply `direction: ltr` explicitly on this inner container only.
+                         */}
+                        <div
+                            className="flex h-48 justify-center gap-2 relative overflow-hidden mb-4 select-none"
+                            style={{ direction: "ltr" }}
+                        >
                             {/* Selection Overlay */}
                             <div className="absolute top-1/2 inset-inline-0 h-10 -translate-y-1/2 rounded-lg bg-sky-50 border border-sky-100 pointer-events-none" />
-                            
-                            {/* Hours Column */}
-                            <div 
+
+                            {/* Hours Column — always on the left (LTR forced above) */}
+                            <div
                                 ref={hoursContainerRef}
                                 className="flex-1 overflow-y-auto snap-y snap-mandatory no-scrollbar flex flex-col items-center pb-[80px] pt-[80px] px-2 relative z-10"
                             >
@@ -136,11 +179,7 @@ export default function TimeInput({
                                     <div
                                         key={h}
                                         data-selected={tempHour === h}
-                                        onClick={() => {
-                                            setTempHour(h);
-                                            // Smooth scroll to selected
-                                            hoursContainerRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                                        }}
+                                        onClick={(e) => handleHourClick(h, e)}
                                         className={`h-10 shrink-0 snap-center flex items-center justify-center cursor-pointer text-xl transition-colors w-full rounded-md
                                             ${tempHour === h ? "text-sky-700 font-bold" : "text-slate-400 font-medium hover:text-slate-600 hover:bg-slate-50"}
                                         `}
@@ -155,8 +194,8 @@ export default function TimeInput({
                                 :
                             </div>
 
-                            {/* Minutes Column */}
-                            <div 
+                            {/* Minutes Column — always on the right (LTR forced above) */}
+                            <div
                                 ref={minutesContainerRef}
                                 className="flex-1 overflow-y-auto snap-y snap-mandatory no-scrollbar flex flex-col items-center pb-[80px] pt-[80px] px-2 relative z-10"
                             >
@@ -164,10 +203,7 @@ export default function TimeInput({
                                     <div
                                         key={m}
                                         data-selected={tempMinute === m}
-                                        onClick={() => {
-                                            setTempMinute(m);
-                                            minutesContainerRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                                        }}
+                                        onClick={(e) => handleMinuteClick(m, e)}
                                         className={`h-10 shrink-0 snap-center flex items-center justify-center cursor-pointer text-xl transition-colors w-full rounded-md
                                             ${tempMinute === m ? "text-sky-700 font-bold" : "text-slate-400 font-medium hover:text-slate-600 hover:bg-slate-50"}
                                         `}
@@ -178,7 +214,7 @@ export default function TimeInput({
                             </div>
                         </div>
 
-                        {/* Confirm Button */}
+                        {/* FIX #3 – i18n: confirm label is sourced from the "TimePicker.confirm" translation key. */}
                         <button
                             type="button"
                             onClick={handleConfirm}
@@ -186,10 +222,9 @@ export default function TimeInput({
                                 flex w-full min-h-11 items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 sm:py-4 sm:text-lg text-sm font-semibold text-white shadow-sm transition-all hover:bg-sky-500 hover:shadow-md hover:shadow-sky-500/20 active:scale-[0.98]
                             `}
                         >
-                            {/* Flex layout automatically handles RTL logical properties when dir="rtl" */}
                             <span className="flex items-center gap-2">
                                 <Check className="h-5 w-5 sm:h-6 sm:w-6" />
-                                <span>{dir === "rtl" ? "אישור" : "Confirm"}</span>
+                                <span>{t("confirm")}</span>
                             </span>
                         </button>
                     </Popover.Content>

@@ -5,6 +5,9 @@
     "common": {
         "clinic_logo_alt": "{name} clinic logo"
     },
+    "TimePicker": {
+        "confirm": "Confirm"
+    },
     "HomePage": {
         "title": "ShaatHaTipa",
         "description": "Personal drop schedule generator after surgery"
